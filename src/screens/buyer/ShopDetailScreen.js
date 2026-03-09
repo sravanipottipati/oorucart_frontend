@@ -49,15 +49,26 @@ export default function ShopDetailScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Shop Header */}
-      <View style={styles.shopHeader}>
+      {/* Header */}
+      <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.shopName}>{shop.shop_name}</Text>
-        <Text style={styles.shopMeta}>
-          📍 {shop.town}  •  🕐 {shop.estimated_delivery_time} mins  •  ⭐ {shop.rating}
-        </Text>
+        <View style={styles.shopInfo}>
+          <Text style={styles.shopName}>{shop.shop_name}</Text>
+          <View style={styles.metaRow}>
+            <Text style={styles.meta}>📍 {shop.town}</Text>
+            <Text style={styles.metaDot}>•</Text>
+            <Text style={styles.meta}>🕐 {shop.estimated_delivery_time} mins</Text>
+            <Text style={styles.metaDot}>•</Text>
+            <Text style={styles.meta}>⭐ {shop.rating}</Text>
+          </View>
+        </View>
+        <View style={[styles.statusBadge, { backgroundColor: shop.is_open ? '#E8F5E9' : '#FFEBEE' }]}>
+          <Text style={[styles.statusText, { color: shop.is_open ? '#2E7D32' : '#C62828' }]}>
+            {shop.is_open ? 'Open' : 'Closed'}
+          </Text>
+        </View>
       </View>
 
       {/* Products */}
@@ -76,8 +87,18 @@ export default function ShopDetailScreen({ route, navigation }) {
             />
           )}
           contentContainerStyle={styles.list}
-          ListHeaderComponent={<Text style={styles.sectionTitle}>Products</Text>}
-          ListEmptyComponent={<Text style={styles.emptyText}>No products available</Text>}
+          ListHeaderComponent={
+            <View style={styles.listHeader}>
+              <Text style={styles.sectionTitle}>Menu</Text>
+              <Text style={styles.itemCount}>{products.length} items</Text>
+            </View>
+          }
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text style={styles.emptyIcon}>🛒</Text>
+              <Text style={styles.emptyText}>No products available</Text>
+            </View>
+          }
         />
       )}
 
@@ -87,8 +108,11 @@ export default function ShopDetailScreen({ route, navigation }) {
           style={styles.cartBar}
           onPress={() => navigation.navigate('Checkout', { cart, shop })}
         >
-          <Text style={styles.cartBarText}>{totalItems()} item(s) in cart</Text>
-          <Text style={styles.cartBarPrice}>₹{totalPrice().toFixed(2)} →</Text>
+          <View style={styles.cartBadge}>
+            <Text style={styles.cartBadgeText}>{totalItems()}</Text>
+          </View>
+          <Text style={styles.cartBarText}>View Cart</Text>
+          <Text style={styles.cartBarPrice}>₹{totalPrice().toFixed(2)}</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -96,20 +120,44 @@ export default function ShopDetailScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F5' },
-  shopHeader: { backgroundColor: '#2E7D32', padding: 20, paddingTop: 50 },
-  backBtn: { marginBottom: 10 },
-  backText: { color: '#A5D6A7', fontSize: 15 },
-  shopName: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginBottom: 6 },
-  shopMeta: { fontSize: 13, color: '#C8E6C9' },
+  container: { flex: 1, backgroundColor: '#f9f9f9' },
+  header: {
+    backgroundColor: '#fff', padding: 20, paddingTop: 50,
+    borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
+  },
+  backBtn: { marginBottom: 12 },
+  backText: { color: '#2E7D32', fontSize: 15, fontWeight: '600' },
+  shopInfo: { marginBottom: 10 },
+  shopName: { fontSize: 22, fontWeight: 'bold', color: '#111', marginBottom: 6 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  meta: { fontSize: 13, color: '#666' },
+  metaDot: { color: '#ccc' },
+  statusBadge: {
+    alignSelf: 'flex-start', paddingHorizontal: 12,
+    paddingVertical: 5, borderRadius: 20,
+  },
+  statusText: { fontSize: 12, fontWeight: 'bold' },
   list: { padding: 16, paddingBottom: 100 },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 12 },
-  emptyText: { textAlign: 'center', color: '#888', marginTop: 40 },
+  listHeader: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 12,
+  },
+  sectionTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
+  itemCount: { fontSize: 13, color: '#888' },
+  empty: { alignItems: 'center', marginTop: 60 },
+  emptyIcon: { fontSize: 48, marginBottom: 12 },
+  emptyText: { fontSize: 16, color: '#888' },
   cartBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: '#2E7D32', padding: 16,
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    backgroundColor: '#111', padding: 16,
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', paddingHorizontal: 20,
   },
-  cartBarText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  cartBadge: {
+    backgroundColor: '#2E7D32', width: 26, height: 26,
+    borderRadius: 13, justifyContent: 'center', alignItems: 'center',
+  },
+  cartBadgeText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
+  cartBarText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   cartBarPrice: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });

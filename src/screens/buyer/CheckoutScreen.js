@@ -43,6 +43,7 @@ export default function CheckoutScreen({ route, navigation }) {
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Checkout</Text>
+        <Text style={styles.shopName}>from {shop.shop_name}</Text>
       </View>
 
       {/* Order Summary */}
@@ -50,7 +51,12 @@ export default function CheckoutScreen({ route, navigation }) {
         <Text style={styles.sectionTitle}>Order Summary</Text>
         {cartItems.map(item => (
           <View key={item.id} style={styles.orderItem}>
-            <Text style={styles.itemName}>{item.name} x{item.quantity}</Text>
+            <View style={styles.orderItemLeft}>
+              <View style={styles.qtyBadge}>
+                <Text style={styles.qtyBadgeText}>{item.quantity}</Text>
+              </View>
+              <Text style={styles.itemName}>{item.name}</Text>
+            </View>
             <Text style={styles.itemPrice}>
               ₹{(parseFloat(item.price) * item.quantity).toFixed(2)}
             </Text>
@@ -58,15 +64,32 @@ export default function CheckoutScreen({ route, navigation }) {
         ))}
         <View style={styles.divider} />
         <View style={styles.orderItem}>
-          <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalPrice}>₹{totalPrice.toFixed(2)}</Text>
+          <Text style={styles.subtotalLabel}>Subtotal</Text>
+          <Text style={styles.subtotalPrice}>₹{totalPrice.toFixed(2)}</Text>
         </View>
         <View style={styles.orderItem}>
           <Text style={styles.feeLabel}>Platform Fee</Text>
-          <Text style={styles.feeLabel}>₹{shop.platform_fee || 5}</Text>
+          <Text style={styles.feeValue}>₹{shop.platform_fee || 5}</Text>
         </View>
-        <View style={styles.codBadge}>
-          <Text style={styles.codText}>💵 Cash on Delivery</Text>
+        <View style={styles.divider} />
+        <View style={styles.orderItem}>
+          <Text style={styles.totalLabel}>Total</Text>
+          <Text style={styles.totalPrice}>₹{(totalPrice + (shop.platform_fee || 5)).toFixed(2)}</Text>
+        </View>
+      </View>
+
+      {/* Payment Method */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Payment Method</Text>
+        <View style={styles.paymentOption}>
+          <View style={styles.paymentLeft}>
+            <Text style={styles.paymentIcon}>💵</Text>
+            <View>
+              <Text style={styles.paymentName}>Cash on Delivery</Text>
+              <Text style={styles.paymentSub}>Pay when you receive</Text>
+            </View>
+          </View>
+          <View style={styles.selectedDot} />
         </View>
       </View>
 
@@ -85,7 +108,9 @@ export default function CheckoutScreen({ route, navigation }) {
 
       {/* Instructions */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Special Instructions (optional)</Text>
+        <Text style={styles.sectionTitle}>Special Instructions
+          <Text style={styles.optional}> (optional)</Text>
+        </Text>
         <TextInput
           style={styles.input}
           placeholder="e.g. Please pack carefully"
@@ -100,42 +125,81 @@ export default function CheckoutScreen({ route, navigation }) {
       <TouchableOpacity style={styles.button} onPress={placeOrder} disabled={loading}>
         {loading
           ? <ActivityIndicator color="#fff" />
-          : <Text style={styles.buttonText}>Place Order — ₹{totalPrice.toFixed(2)}</Text>}
+          : (
+            <View style={styles.buttonInner}>
+              <Text style={styles.buttonText}>Place Order</Text>
+              <Text style={styles.buttonPrice}>
+                ₹{(totalPrice + (shop.platform_fee || 5)).toFixed(2)}
+              </Text>
+            </View>
+          )}
       </TouchableOpacity>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F5' },
-  header: { backgroundColor: '#2E7D32', padding: 20, paddingTop: 50 },
+  container: { flex: 1, backgroundColor: '#f9f9f9' },
+  header: {
+    backgroundColor: '#fff', padding: 20, paddingTop: 50,
+    borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
+  },
   backBtn: { marginBottom: 10 },
-  backText: { color: '#A5D6A7', fontSize: 15 },
-  title: { fontSize: 22, fontWeight: 'bold', color: '#fff' },
+  backText: { color: '#2E7D32', fontSize: 15, fontWeight: '600' },
+  title: { fontSize: 24, fontWeight: 'bold', color: '#111', marginBottom: 4 },
+  shopName: { fontSize: 13, color: '#888' },
   section: {
     backgroundColor: '#fff', margin: 16, marginBottom: 0,
-    borderRadius: 14, padding: 16, elevation: 1,
+    borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: '#f0f0f0',
   },
-  sectionTitle: { fontSize: 15, fontWeight: 'bold', color: '#1B5E20', marginBottom: 12 },
-  orderItem: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  itemName: { fontSize: 14, color: '#333' },
-  itemPrice: { fontSize: 14, color: '#333' },
-  divider: { height: 1, backgroundColor: '#eee', marginVertical: 8 },
-  totalLabel: { fontSize: 15, fontWeight: 'bold', color: '#222' },
-  totalPrice: { fontSize: 15, fontWeight: 'bold', color: '#2E7D32' },
+  sectionTitle: { fontSize: 15, fontWeight: 'bold', color: '#111', marginBottom: 14 },
+  optional: { fontSize: 13, color: '#aaa', fontWeight: 'normal' },
+  orderItem: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 10,
+  },
+  orderItemLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
+  qtyBadge: {
+    backgroundColor: '#111', width: 22, height: 22,
+    borderRadius: 6, justifyContent: 'center', alignItems: 'center',
+  },
+  qtyBadgeText: { color: '#fff', fontSize: 11, fontWeight: 'bold' },
+  itemName: { fontSize: 14, color: '#333', flex: 1 },
+  itemPrice: { fontSize: 14, color: '#111', fontWeight: '600' },
+  divider: { height: 1, backgroundColor: '#f0f0f0', marginVertical: 10 },
+  subtotalLabel: { fontSize: 14, color: '#555' },
+  subtotalPrice: { fontSize: 14, color: '#111', fontWeight: '600' },
   feeLabel: { fontSize: 13, color: '#888' },
-  codBadge: {
-    backgroundColor: '#E8F5E9', padding: 8,
-    borderRadius: 8, marginTop: 8, alignItems: 'center',
+  feeValue: { fontSize: 13, color: '#888' },
+  totalLabel: { fontSize: 16, fontWeight: 'bold', color: '#111' },
+  totalPrice: { fontSize: 16, fontWeight: 'bold', color: '#2E7D32' },
+  paymentOption: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', backgroundColor: '#f9f9f9',
+    padding: 14, borderRadius: 12, borderWidth: 1, borderColor: '#111',
   },
-  codText: { color: '#2E7D32', fontWeight: '600' },
+  paymentLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  paymentIcon: { fontSize: 24 },
+  paymentName: { fontSize: 14, fontWeight: '600', color: '#111' },
+  paymentSub: { fontSize: 12, color: '#888', marginTop: 2 },
+  selectedDot: {
+    width: 18, height: 18, borderRadius: 9,
+    backgroundColor: '#111', borderWidth: 3, borderColor: '#ddd',
+  },
   input: {
-    borderWidth: 1, borderColor: '#ddd', borderRadius: 10,
-    padding: 12, fontSize: 15, backgroundColor: '#fafafa', textAlignVertical: 'top',
+    borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 12,
+    padding: 14, fontSize: 15, backgroundColor: '#fafafa',
+    textAlignVertical: 'top', color: '#111',
   },
   button: {
-    backgroundColor: '#2E7D32', margin: 16, padding: 16,
-    borderRadius: 14, alignItems: 'center', marginBottom: 40,
+    backgroundColor: '#111', margin: 16, padding: 18,
+    borderRadius: 16, alignItems: 'center', marginBottom: 40,
+  },
+  buttonInner: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    width: '100%', alignItems: 'center',
   },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  buttonPrice: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });

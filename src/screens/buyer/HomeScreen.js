@@ -48,17 +48,29 @@ export default function HomeScreen({ navigation }) {
       </View>
 
       {/* Search */}
-      <View style={styles.searchRow}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Enter your town..."
-          value={searchTown}
-          onChangeText={setSearchTown}
-          onSubmitEditing={() => setTown(searchTown)}
-        />
-        <TouchableOpacity style={styles.searchBtn} onPress={() => setTown(searchTown)}>
-          <Text style={styles.searchBtnText}>Search</Text>
-        </TouchableOpacity>
+      <View style={styles.searchContainer}>
+        <View style={styles.searchRow}>
+          <Text style={styles.searchIcon}>📍</Text>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Enter your town..."
+            value={searchTown}
+            onChangeText={setSearchTown}
+            onSubmitEditing={() => setTown(searchTown)}
+          />
+          <TouchableOpacity style={styles.searchBtn} onPress={() => setTown(searchTown)}>
+            <Text style={styles.searchBtnText}>Search</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Category Pills */}
+      <View style={styles.categories}>
+        {['All', '🥦 Veg', '🍞 Bakery', '🍽 Food', '🛒 Mart'].map((cat) => (
+          <TouchableOpacity key={cat} style={styles.pill}>
+            <Text style={styles.pillText}>{cat}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       {/* Shops List */}
@@ -66,7 +78,8 @@ export default function HomeScreen({ navigation }) {
         <ActivityIndicator size="large" color="#2E7D32" style={{ marginTop: 60 }} />
       ) : shops.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyText}>😕 No shops found in {town}</Text>
+          <Text style={styles.emptyIcon}>😕</Text>
+          <Text style={styles.emptyText}>No shops found in {town}</Text>
           <Text style={styles.emptySubText}>Try a different town name</Text>
         </View>
       ) : (
@@ -87,40 +100,73 @@ export default function HomeScreen({ navigation }) {
             />
           }
           ListHeaderComponent={
-            <Text style={styles.resultsText}>{shops.length} shop(s) in {town}</Text>
+            <Text style={styles.resultsText}>{shops.length} shop(s) near {town}</Text>
           }
         />
       )}
+
+      {/* My Orders FAB */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => navigation.navigate('MyOrders')}
+      >
+        <Text style={styles.fabText}>📦 My Orders</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F5' },
+  container: { flex: 1, backgroundColor: '#f9f9f9' },
   header: {
-    backgroundColor: '#2E7D32', padding: 20, paddingTop: 50,
+    backgroundColor: '#fff', padding: 20, paddingTop: 50,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
   },
-  greeting: { fontSize: 20, fontWeight: 'bold', color: '#fff' },
-  subGreeting: { fontSize: 13, color: '#A5D6A7', marginTop: 2 },
-  logoutBtn: { backgroundColor: '#1B5E20', padding: 8, borderRadius: 8 },
-  logoutText: { color: '#fff', fontSize: 13 },
+  greeting: { fontSize: 20, fontWeight: 'bold', color: '#111' },
+  subGreeting: { fontSize: 13, color: '#888', marginTop: 2 },
+  logoutBtn: {
+    borderWidth: 1, borderColor: '#ddd',
+    padding: 8, paddingHorizontal: 14, borderRadius: 20,
+  },
+  logoutText: { color: '#555', fontSize: 13, fontWeight: '600' },
+  searchContainer: {
+    backgroundColor: '#fff', padding: 12,
+    borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
+  },
   searchRow: {
-    flexDirection: 'row', padding: 16, gap: 10,
-    backgroundColor: '#fff', elevation: 2,
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#f5f5f5', borderRadius: 12, paddingHorizontal: 12,
   },
-  searchInput: {
-    flex: 1, borderWidth: 1, borderColor: '#ddd',
-    borderRadius: 10, padding: 10, fontSize: 15,
-  },
+  searchIcon: { fontSize: 16, marginRight: 8 },
+  searchInput: { flex: 1, padding: 12, fontSize: 15, color: '#111' },
   searchBtn: {
-    backgroundColor: '#2E7D32', padding: 10,
-    borderRadius: 10, justifyContent: 'center',
+    backgroundColor: '#2E7D32', padding: 8,
+    paddingHorizontal: 14, borderRadius: 10,
   },
-  searchBtnText: { color: '#fff', fontWeight: 'bold' },
+  searchBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
+  categories: {
+    flexDirection: 'row', padding: 12, gap: 8,
+    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
+  },
+  pill: {
+    backgroundColor: '#f0f7f0', paddingHorizontal: 14,
+    paddingVertical: 6, borderRadius: 20,
+    borderWidth: 1, borderColor: '#c8e6c9',
+  },
+  pillText: { fontSize: 13, color: '#2E7D32', fontWeight: '600' },
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyText: { fontSize: 18, color: '#555', marginBottom: 8 },
+  emptyIcon: { fontSize: 48, marginBottom: 12 },
+  emptyText: { fontSize: 18, color: '#555', marginBottom: 6, fontWeight: '600' },
   emptySubText: { fontSize: 14, color: '#999' },
-  list: { padding: 16 },
+  list: { padding: 16, paddingBottom: 100 },
   resultsText: { fontSize: 13, color: '#888', marginBottom: 12 },
+  fab: {
+    position: 'absolute', bottom: 24, right: 20,
+    backgroundColor: '#111', paddingHorizontal: 20,
+    paddingVertical: 12, borderRadius: 30, elevation: 4,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2, shadowRadius: 6,
+  },
+  fabText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
 });
