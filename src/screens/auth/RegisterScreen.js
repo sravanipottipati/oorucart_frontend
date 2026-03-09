@@ -6,7 +6,6 @@ import {
 import { useAuth } from '../../context/AuthContext';
 
 export default function RegisterScreen({ navigation }) {
-  const [activeTab, setActiveTab] = useState('buyer');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -41,34 +40,15 @@ export default function RegisterScreen({ navigation }) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={styles.inner}>
+
         {/* Logo */}
         <View style={styles.logoContainer}>
-          <Text style={styles.logoIcon}>🏪</Text>
-          <Text style={styles.logoText}>OoruCart</Text>
+          <Text style={styles.logoIcon}>🛒</Text>
+          <Text style={styles.logoText}>oorucart.</Text>
           <Text style={styles.logoSub}>Your neighbourhood store, online</Text>
         </View>
 
-        {/* Buyer / Seller Tabs */}
-        <View style={styles.tabContainer}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'buyer' && styles.activeTab]}
-            onPress={() => setActiveTab('buyer')}
-          >
-            <Text style={[styles.tabText, activeTab === 'buyer' && styles.activeTabText]}>
-              Buyer
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'vendor' && styles.activeTab]}
-            onPress={() => setActiveTab('vendor')}
-          >
-            <Text style={[styles.tabText, activeTab === 'vendor' && styles.activeTabText]}>
-              Seller
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Form Card */}
+        {/* Card */}
         <View style={styles.card}>
           <Text style={styles.title}>Create Account</Text>
 
@@ -119,51 +99,44 @@ export default function RegisterScreen({ navigation }) {
               Already have an account? <Text style={styles.linkBold}>Sign In</Text>
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity style={styles.sellerLink}>
+            <Text style={styles.sellerLinkText}>Are you a Seller? Register here</Text>
+          </TouchableOpacity>
         </View>
+
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9f9f9' },
-  inner: { flexGrow: 1, alignItems: 'center', padding: 20, paddingTop: 60 },
-  logoContainer: { alignItems: 'center', marginBottom: 30 },
-  logoIcon: { fontSize: 56, marginBottom: 8 },
-  logoText: { fontSize: 28, fontWeight: 'bold', color: '#111', letterSpacing: 0.5 },
-  logoSub: { fontSize: 13, color: '#888', marginTop: 4 },
-  tabContainer: {
-    flexDirection: 'row', backgroundColor: '#eee',
-    borderRadius: 12, padding: 4, marginBottom: 24, width: '100%',
-  },
-  tab: {
-    flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center',
-  },
-  activeTab: {
-    backgroundColor: '#fff', elevation: 2,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1, shadowRadius: 3,
-  },
-  tabText: { fontSize: 15, color: '#888', fontWeight: '600' },
-  activeTabText: { color: '#2E7D32', fontWeight: 'bold' },
+  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  inner: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
+  logoContainer: { alignItems: 'center', marginBottom: 32 },
+  logoIcon: { fontSize: 52, marginBottom: 10 },
+  logoText: { fontSize: 32, fontWeight: 'bold', color: '#111', letterSpacing: -0.5 },
+  logoSub: { fontSize: 13, color: '#888', marginTop: 6 },
   card: {
-    backgroundColor: '#fff', borderRadius: 20, padding: 24,
+    backgroundColor: '#fff', borderRadius: 20, padding: 28,
     width: '100%', elevation: 3,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08, shadowRadius: 8,
+    shadowOpacity: 0.08, shadowRadius: 12,
   },
-  title: { fontSize: 22, fontWeight: 'bold', color: '#111', marginBottom: 20 },
-  label: { fontSize: 14, color: '#444', marginBottom: 6, fontWeight: '600' },
+  title: { fontSize: 24, fontWeight: 'bold', color: '#111', marginBottom: 24 },
+  label: { fontSize: 14, color: '#444', marginBottom: 8, fontWeight: '600' },
   input: {
-    borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 12,
-    padding: 14, fontSize: 15, marginBottom: 16,
+    borderWidth: 1.5, borderColor: '#ececec', borderRadius: 12,
+    padding: 14, fontSize: 15, marginBottom: 18,
     backgroundColor: '#fafafa', color: '#111',
   },
   button: {
     backgroundColor: '#111', padding: 16, borderRadius: 12,
-    alignItems: 'center', marginBottom: 16, marginTop: 4,
+    alignItems: 'center', marginBottom: 18, marginTop: 4,
   },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  link: { textAlign: 'center', color: '#555', fontSize: 14 },
-  linkBold: { color: '#2E7D32', fontWeight: 'bold' },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold', letterSpacing: 0.3 },
+  link: { textAlign: 'center', color: '#555', fontSize: 14, marginBottom: 14 },
+  linkBold: { color: '#111', fontWeight: 'bold' },
+  sellerLink: { alignItems: 'center' },
+  sellerLinkText: { color: '#2E7D32', fontWeight: '600', fontSize: 14 },
 });
