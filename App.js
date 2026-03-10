@@ -18,6 +18,7 @@ import MyOrdersScreen from './src/screens/buyer/MyOrdersScreen';
 import VendorHomeScreen from './src/screens/vendor/VendorHomeScreen';
 import VendorProductsScreen from './src/screens/vendor/VendorProductsScreen';
 import VendorWalletScreen from './src/screens/vendor/VendorWalletScreen';
+import VendorRegisterScreen from './src/screens/vendor/VendorRegisterScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -58,6 +59,7 @@ function AppNavigator() {
         <Stack.Screen name="VendorHome"     component={VendorHomeScreen} />
         <Stack.Screen name="VendorProducts" component={VendorProductsScreen} />
         <Stack.Screen name="VendorWallet"   component={VendorWalletScreen} />
+        <Stack.Screen name="VendorRegister" component={VendorRegisterScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

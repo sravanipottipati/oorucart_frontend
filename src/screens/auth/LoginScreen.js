@@ -17,8 +17,13 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     try {
       const user = await login(phone, password);
-      if (user.user_type === 'buyer') navigation.replace('Home');
-      else Alert.alert('Error', 'This app is for buyers only');
+      if (user.user_type === 'vendor') {
+        navigation.replace('VendorHome');
+      } else if (user.user_type === 'buyer') {
+        navigation.replace('Home');
+      } else {
+        Alert.alert('Error', 'Unknown account type');
+      }
     } catch (e) {
       Alert.alert('Login Failed', 'Invalid phone number or password');
     } finally {
@@ -63,7 +68,11 @@ export default function LoginScreen({ navigation }) {
             secureTextEntry
           />
 
-          <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleLogin}
+            disabled={loading}
+          >
             {loading
               ? <ActivityIndicator color="#fff" />
               : <Text style={styles.buttonText}>Sign In</Text>}
@@ -75,8 +84,11 @@ export default function LoginScreen({ navigation }) {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.sellerLink}>
-            <Text style={styles.sellerLinkText}>Are you a Seller? Login here</Text>
+          <TouchableOpacity
+            style={styles.sellerLink}
+            onPress={() => navigation.navigate('VendorRegister')}
+          >
+            <Text style={styles.sellerLinkText}>Are you a Seller? Register here</Text>
           </TouchableOpacity>
         </View>
 
@@ -87,12 +99,14 @@ export default function LoginScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5' },
-  inner: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
+  inner: {
+    flexGrow: 1, justifyContent: 'center',
+    alignItems: 'center', padding: 24,
+  },
   logoContainer: { alignItems: 'center', marginBottom: 32 },
   logoIcon: { fontSize: 52, marginBottom: 10 },
   logoText: {
-    fontSize: 32, fontWeight: 'bold', color: '#111',
-    letterSpacing: -0.5,
+    fontSize: 32, fontWeight: 'bold', color: '#111', letterSpacing: -0.5,
   },
   logoSub: { fontSize: 13, color: '#888', marginTop: 6 },
   card: {
