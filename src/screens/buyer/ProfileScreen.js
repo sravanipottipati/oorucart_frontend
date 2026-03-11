@@ -20,7 +20,7 @@ export default function ProfileScreen({ navigation }) {
     { icon: '👤', label: 'Edit Profile',   screen: 'EditProfile' },
     { icon: '📍', label: 'My Addresses',   screen: 'Address' },
     { icon: '📦', label: 'My Orders',      screen: 'MyOrders' },
-    { icon: '❤️', label: 'Wishlist',       screen: 'Wishlist' },
+    { icon: '❤️',  label: 'Wishlist',       screen: 'Wishlist' },
     { icon: '❓', label: 'Help & Support', screen: 'HelpSupport' },
     { icon: '📄', label: 'Privacy Policy', screen: null },
   ];
@@ -54,11 +54,9 @@ export default function ProfileScreen({ navigation }) {
               <Text style={styles.editIcon}>✏️</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.profileName}>{user?.full_name || 'User'}</Text>
-          <Text style={styles.profilePhone}>+91 {user?.phone_number || ''}</Text>
-          {user?.email ? (
-            <Text style={styles.profileEmail}>{user.email}</Text>
-          ) : null}
+          <Text style={styles.userName}>{user?.full_name || 'User'}</Text>
+          <Text style={styles.userPhone}>+91 {user?.phone_number || ''}</Text>
+          {user?.email ? <Text style={styles.userEmail}>{user.email}</Text> : null}
         </View>
 
         {/* Menu Items */}
@@ -85,8 +83,10 @@ export default function ProfileScreen({ navigation }) {
 
         {/* Logout */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Text style={styles.logoutText}>🚪 Logout</Text>
+          <Text style={styles.logoutText}>🚪  Logout</Text>
         </TouchableOpacity>
+
+        <Text style={styles.version}>OoruCart v1.0.0</Text>
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -134,32 +134,32 @@ const styles = StyleSheet.create({
   bellIcon: { fontSize: 22 },
 
   profileCard: {
-    backgroundColor: '#fff', borderRadius: 16,
-    margin: 16, padding: 20, alignItems: 'center',
+    backgroundColor: '#fff', margin: 16, borderRadius: 16,
+    padding: 20, alignItems: 'center',
   },
   avatarRow: { width: '100%', alignItems: 'center', marginBottom: 12 },
   avatar: {
-    width: 80, height: 80, borderRadius: 40,
+    width: 72, height: 72, borderRadius: 36,
     backgroundColor: '#2563EB', justifyContent: 'center', alignItems: 'center',
   },
-  avatarText: { fontSize: 28, fontWeight: 'bold', color: '#fff' },
+  avatarText: { color: '#fff', fontSize: 26, fontWeight: 'bold' },
   editIconBtn: {
     position: 'absolute', right: 0, top: 0,
     width: 32, height: 32, borderRadius: 16,
     backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center',
   },
   editIcon: { fontSize: 14 },
-  profileName: { fontSize: 20, fontWeight: 'bold', color: '#111', marginBottom: 4 },
-  profilePhone: { fontSize: 14, color: '#888', marginBottom: 2 },
-  profileEmail: { fontSize: 13, color: '#888' },
+  userName: { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 4 },
+  userPhone: { fontSize: 14, color: '#888', marginBottom: 2 },
+  userEmail: { fontSize: 13, color: '#888' },
 
   menuCard: {
-    backgroundColor: '#fff', borderRadius: 16,
-    marginHorizontal: 16, marginBottom: 12,
+    backgroundColor: '#fff', marginHorizontal: 16,
+    borderRadius: 16, marginBottom: 12, overflow: 'hidden',
   },
   menuItem: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: 16,
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', padding: 16,
   },
   menuItemBorder: { borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
   menuLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
@@ -168,16 +168,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center',
   },
   menuIcon: { fontSize: 18 },
-  menuLabel: { fontSize: 15, color: '#111' },
-  menuArrow: { fontSize: 20, color: '#CCC' },
+  menuLabel: { fontSize: 14, color: '#111', fontWeight: '500' },
+  menuArrow: { fontSize: 20, color: '#9CA3AF' },
 
   logoutBtn: {
-    backgroundColor: '#fff', borderRadius: 16,
-    marginHorizontal: 16, marginBottom: 12,
-    padding: 16, alignItems: 'center',
-    borderWidth: 1, borderColor: '#FEE2E2',
+    backgroundColor: '#fff', marginHorizontal: 16, borderRadius: 16,
+    padding: 16, alignItems: 'center', marginBottom: 12,
   },
   logoutText: { fontSize: 15, color: '#EF4444', fontWeight: '600' },
+  version: { textAlign: 'center', fontSize: 12, color: '#9CA3AF', marginBottom: 8 },
 
   bottomTab: {
     flexDirection: 'row', backgroundColor: '#fff',
