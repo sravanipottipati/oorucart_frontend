@@ -13,6 +13,15 @@ import HomeScreen from './src/screens/buyer/HomeScreen';
 import ShopDetailScreen from './src/screens/buyer/ShopDetailScreen';
 import CheckoutScreen from './src/screens/buyer/CheckoutScreen';
 import MyOrdersScreen from './src/screens/buyer/MyOrdersScreen';
+import OrderSuccessScreen from './src/screens/buyer/OrderSuccessScreen';
+import ProfileScreen from './src/screens/buyer/ProfileScreen';
+import EditProfileScreen from './src/screens/buyer/EditProfileScreen';
+import NotificationsScreen from './src/screens/buyer/NotificationsScreen';
+import WishlistScreen from './src/screens/buyer/WishlistScreen';
+import AddressScreen from './src/screens/buyer/AddressScreen';
+import HelpSupportScreen from './src/screens/buyer/HelpSupportScreen';
+import SearchScreen from './src/screens/buyer/SearchScreen';
+import OrderDetailScreen from './src/screens/buyer/OrderDetailScreen';
 
 // Vendor Screens
 import VendorHomeScreen from './src/screens/vendor/VendorHomeScreen';
@@ -28,7 +37,7 @@ function AppNavigator() {
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#2E7D32" />
+        <ActivityIndicator size="large" color="#2563EB" />
       </View>
     );
   }
@@ -50,16 +59,26 @@ function AppNavigator() {
         <Stack.Screen name="Register" component={RegisterScreen} />
 
         {/* Buyer */}
-        <Stack.Screen name="Home"       component={HomeScreen} />
-        <Stack.Screen name="ShopDetail" component={ShopDetailScreen} />
-        <Stack.Screen name="Checkout"   component={CheckoutScreen} />
-        <Stack.Screen name="MyOrders"   component={MyOrdersScreen} />
+        <Stack.Screen name="Home"          component={HomeScreen} />
+        <Stack.Screen name="ShopDetail"    component={ShopDetailScreen} />
+        <Stack.Screen name="Checkout"      component={CheckoutScreen} />
+        <Stack.Screen name="MyOrders"      component={MyOrdersScreen} />
+        <Stack.Screen name="OrderSuccess"  component={OrderSuccessScreen} />
+        <Stack.Screen name="Profile"       component={ProfileScreen} />
+        <Stack.Screen name="EditProfile"   component={EditProfileScreen} />
+        <Stack.Screen name="Notifications" component={NotificationsScreen} />
+        <Stack.Screen name="Wishlist"      component={WishlistScreen} />
+        <Stack.Screen name="Address"       component={AddressScreen} />
+        <Stack.Screen name="HelpSupport"   component={HelpSupportScreen} />
+        <Stack.Screen name="Search"        component={SearchScreen} />
+        <Stack.Screen name="OrderDetail"   component={OrderDetailScreen} />
 
         {/* Vendor */}
         <Stack.Screen name="VendorHome"     component={VendorHomeScreen} />
         <Stack.Screen name="VendorProducts" component={VendorProductsScreen} />
         <Stack.Screen name="VendorWallet"   component={VendorWalletScreen} />
         <Stack.Screen name="VendorRegister" component={VendorRegisterScreen} />
+
       </Stack.Navigator>
     </NavigationContainer>
   );
