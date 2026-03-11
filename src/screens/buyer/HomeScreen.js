@@ -3,7 +3,6 @@ import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, RefreshControl,
 } from 'react-native';
-import { useAuth } from '../../context/AuthContext';
 import client from '../../api/client';
 
 const CATEGORIES = [
@@ -20,17 +19,15 @@ const CATEGORIES = [
 const SHOP_COLORS = ['#4CAF50', '#FF7043', '#FFA726', '#42A5F5', '#AB47BC', '#26A69A'];
 
 export default function HomeScreen({ navigation }) {
-  const { logout } = useAuth();
   const [shops, setShops]           = useState([]);
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [category, setCategory]     = useState('all');
-  const [town, setTown]             = useState('Nellore');
+  const [town]                      = useState('Nellore');
 
   const fetchShops = async () => {
     try {
       const res = await client.get('/vendors/nearby/?town=Nellore');
-      console.log('API response:', JSON.stringify(res.data));
       if (Array.isArray(res.data)) {
         setShops(res.data);
       } else if (res.data.shops) {
@@ -52,11 +49,6 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => { fetchShops(); }, []);
 
   const onRefresh = () => { setRefreshing(true); fetchShops(); };
-
-  const handleLogout = async () => {
-    await logout();
-    navigation.replace('Login');
-  };
 
   const filteredShops = shops.filter(shop =>
     category === 'all' || shop.category === category
@@ -123,9 +115,6 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate('Notifications')}
           >
             <Text style={styles.iconBtnText}>🔔</Text>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>3</Text>
-            </View>
           </TouchableOpacity>
         </View>
       </View>
@@ -225,13 +214,6 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.tabIcon}>👤</Text>
           <Text style={styles.tabLabel}>Profile</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={handleLogout}
-        >
-          <Text style={styles.tabIcon}>🚪</Text>
-          <Text style={[styles.tabLabel, { color: '#EF4444' }]}>Logout</Text>
-        </TouchableOpacity>
       </View>
 
     </View>
@@ -252,16 +234,10 @@ const styles = StyleSheet.create({
   locationArrow: { fontSize: 14, color: '#111' },
   headerRight: { flexDirection: 'row', gap: 8 },
   iconBtn: {
-    position: 'relative', width: 38, height: 38, borderRadius: 19,
+    width: 38, height: 38, borderRadius: 19,
     backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center',
   },
   iconBtnText: { fontSize: 18 },
-  badge: {
-    position: 'absolute', top: 0, right: 0, backgroundColor: '#EF4444',
-    borderRadius: 8, minWidth: 16, height: 16,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  badgeText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
 
   searchBar: {
     flexDirection: 'row', alignItems: 'center',
