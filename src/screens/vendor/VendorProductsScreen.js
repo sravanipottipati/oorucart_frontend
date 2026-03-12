@@ -1,241 +1,251 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, FlatList, StyleSheet, ActivityIndicator,
-  Alert, TouchableOpacity, RefreshControl, TextInput, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet,
+  ScrollView, ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
 import client from '../../api/client';
 
 export default function VendorProductsScreen({ navigation }) {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts]   = useState([]);
+  const [loading, setLoading]     = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [name, setName] = useState('');
-  const [price, setPrice] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('vegetables');
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => { fetchProducts(); }, []);
 
   const fetchProducts = async () => {
     try {
-      const res = await client.get('/vendors/myshop/');
-      const shopId = res.data.vendor.id;
-      const prod = await client.get(`/vendors/${shopId}/products/`);
-      setProducts(prod.data.products);
+      const shopRes = await client.get('/vendors/myshop/');
+      const shop    = shopRes.data;
+      const res     = await client.get(`/vendors/${shop.id}/products/`);
+      const data    = Array.isArray(res.data) ? res.data : res.data.products || [];
+      setProducts(data);
     } catch (e) {
-      Alert.alert('Error', 'Could not load products');
+      console.log('Error:', e.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  const addProduct = async () => {
-    if (!name || !price) return Alert.alert('Error', 'Name and price are required');
-    setSaving(true);
-    try {
-      await client.post('/vendors/products/add/', {
-        name, price: parseFloat(price), description, category,
-      });
-      Alert.alert('Success', 'Product added!');
-      setName(''); setPrice(''); setDescription(''); setCategory('vegetables');
-      setShowAddForm(false);
-      fetchProducts();
-    } catch (e) {
-      Alert.alert('Error', 'Could not add product');
-    } finally {
-      setSaving(false);
-    }
+  useEffect(() => { fetchProducts(); }, []);
+  const onRefresh = () => { setRefreshing(true); fetchProducts(); };
+
+  const handleDelete = (productId, productName) => {
+    Alert.alert('Delete Product', `Delete "${productName}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete', style: 'destructive',
+        onPress: async () => {
+          try {
+            await client.delete(`/vendors/products/${productId}/`);
+            fetchProducts();
+          } catch (e) {
+            Alert.alert('Error', 'Could not delete product');
+          }
+        },
+      },
+    ]);
   };
-
-  const CATEGORIES = ['vegetables', 'bakery', 'restaurant', 'supermarket'];
-  const categoryEmoji = { vegetables: '🥦', bakery: '🍞', restaurant: '🍽', supermarket: '🛒' };
-
-  const renderProduct = ({ item }) => (
-    <View style={styles.productCard}>
-      <View style={styles.productLeft}>
-        <View style={styles.productEmoji}>
-          <Text style={styles.emojiText}>{categoryEmoji[item.category] || '🛒'}</Text>
-        </View>
-        <View style={styles.productInfo}>
-          <Text style={styles.productName}>{item.name}</Text>
-          {item.description ? <Text style={styles.productDesc}>{item.description}</Text> : null}
-          <Text style={styles.productCategory}>{item.category}</Text>
-        </View>
-      </View>
-      <View style={styles.productRight}>
-        <Text style={styles.productPrice}>Rs.{item.price}</Text>
-        <View style={[styles.availBadge, { backgroundColor: item.is_available ? '#E8F5E9' : '#FFEBEE' }]}>
-          <Text style={[styles.availText, { color: item.is_available ? '#2E7D32' : '#C62828' }]}>
-            {item.is_available ? 'Available' : 'Unavailable'}
-          </Text>
-        </View>
-      </View>
-    </View>
-  );
 
   return (
     <View style={styles.container}>
+
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>My Products</Text>
+        <Text style={styles.headerTitle}>Products</Text>
         <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => setShowAddForm(!showAddForm)}
+          style={styles.bellBtn}
+          onPress={() => navigation.navigate('VendorNotifications')}
         >
-          <Text style={styles.addBtnText}>{showAddForm ? '✕ Cancel' : '+ Add'}</Text>
+          <Text style={styles.bellIcon}>🔔</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Add Product Form */}
-      {showAddForm && (
-        <ScrollView style={styles.form}>
-          <Text style={styles.formTitle}>Add New Product</Text>
+      {/* Add Button + Count */}
+      <View style={styles.topRow}>
+        <TouchableOpacity
+          style={styles.addBtn}
+          onPress={() => navigation.navigate('VendorAddProduct', { onGoBack: fetchProducts })}
+        >
+          <Text style={styles.addBtnText}>+ Add New Product</Text>
+        </TouchableOpacity>
+        <View style={styles.countBox}>
+          <Text style={styles.countLabel}>Total Products</Text>
+          <Text style={styles.countValue}>{products.length}</Text>
+        </View>
+      </View>
 
-          <Text style={styles.label}>Product Name *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. Fresh Tomatoes"
-            value={name}
-            onChangeText={setName}
-          />
-
-          <Text style={styles.label}>Price (Rs.) *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. 40"
-            value={price}
-            onChangeText={setPrice}
-            keyboardType="numeric"
-          />
-
-          <Text style={styles.label}>Description (optional)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. Fresh from farm"
-            value={description}
-            onChangeText={setDescription}
-          />
-
-          <Text style={styles.label}>Category</Text>
-          <View style={styles.categoryRow}>
-            {CATEGORIES.map(cat => (
+      {loading ? (
+        <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 40 }} />
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          contentContainerStyle={{ padding: 16 }}
+        >
+          {products.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyEmoji}>📦</Text>
+              <Text style={styles.emptyTitle}>No products yet</Text>
+              <Text style={styles.emptySubtitle}>Add your first product!</Text>
               <TouchableOpacity
-                key={cat}
-                style={[styles.catBtn, category === cat && styles.catBtnActive]}
-                onPress={() => setCategory(cat)}
+                style={styles.addFirstBtn}
+                onPress={() => navigation.navigate('VendorAddProduct', { onGoBack: fetchProducts })}
               >
-                <Text style={[styles.catBtnText, category === cat && styles.catBtnTextActive]}>
-                  {categoryEmoji[cat]} {cat}
-                </Text>
+                <Text style={styles.addFirstBtnText}>+ Add Product</Text>
               </TouchableOpacity>
-            ))}
-          </View>
-
-          <TouchableOpacity style={styles.saveBtn} onPress={addProduct} disabled={saving}>
-            <Text style={styles.saveBtnText}>
-              {saving ? 'Saving...' : 'Save Product'}
-            </Text>
-          </TouchableOpacity>
+            </View>
+          ) : (
+            products.map(product => (
+              <View key={product.id} style={styles.productCard}>
+                <View style={styles.productInfo}>
+                  <Text style={styles.productName}>{product.name}</Text>
+                  {product.description ? (
+                    <Text style={styles.productDesc} numberOfLines={1}>
+                      {product.description}
+                    </Text>
+                  ) : null}
+                  <View style={[
+                    styles.availableBadge,
+                    { backgroundColor: product.is_available ? '#DCFCE7' : '#F3F4F6' }
+                  ]}>
+                    <Text style={[
+                      styles.availableText,
+                      { color: product.is_available ? '#16A34A' : '#9CA3AF' }
+                    ]}>
+                      {product.is_available ? '● In Stock' : '● Out of Stock'}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.productRight}>
+                  <Text style={styles.productPrice}>₹{product.price}</Text>
+                  <View style={styles.actionBtns}>
+                    <TouchableOpacity
+                      style={styles.editBtn}
+                      onPress={() => navigation.navigate('VendorEditProduct', {
+                        product,
+                        onGoBack: fetchProducts,
+                      })}
+                    >
+                      <Text style={styles.editBtnText}>✏️</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.deleteBtn}
+                      onPress={() => handleDelete(product.id, product.name)}
+                    >
+                      <Text style={styles.deleteBtnText}>🗑</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            ))
+          )}
+          <View style={{ height: 100 }} />
         </ScrollView>
       )}
 
-      {/* Products List */}
-      {!showAddForm && (
-        loading ? (
-          <ActivityIndicator size="large" color="#2E7D32" style={{ marginTop: 60 }} />
-        ) : products.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>🛍</Text>
-            <Text style={styles.emptyText}>No products yet</Text>
-            <Text style={styles.emptySubText}>Tap + Add to add your first product!</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={products}
-            keyExtractor={(item) => item.id}
-            renderItem={renderProduct}
-            contentContainerStyle={styles.list}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={() => { setRefreshing(true); fetchProducts(); }}
-              />
-            }
-            ListHeaderComponent={
-              <Text style={styles.countText}>{products.length} product(s)</Text>
-            }
-          />
-        )
-      )}
+      {/* Bottom Tab */}
+      <View style={styles.bottomTab}>
+        <TouchableOpacity
+          style={styles.tabItem}
+          onPress={() => navigation.navigate('VendorHome')}
+        >
+          <Text style={styles.tabIcon}>⊞</Text>
+          <Text style={styles.tabLabel}>Dashboard</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.tabItem}
+          onPress={() => navigation.navigate('VendorOrders')}
+        >
+          <Text style={styles.tabIcon}>📋</Text>
+          <Text style={styles.tabLabel}>Orders</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabItem}>
+          <Text style={[styles.tabIcon, { color: '#2563EB' }]}>📦</Text>
+          <Text style={styles.tabLabelActive}>Products</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.tabItem}
+          onPress={() => navigation.navigate('VendorProfile')}
+        >
+          <Text style={styles.tabIcon}>👤</Text>
+          <Text style={styles.tabLabel}>Profile</Text>
+        </TouchableOpacity>
+      </View>
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9f9f9' },
+  container: { flex: 1, backgroundColor: '#F8F9FA' },
+
   header: {
-    backgroundColor: '#fff', padding: 20, paddingTop: 50,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
+    paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12,
+    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
-  backBtn: { padding: 4 },
-  backText: { color: '#2E7D32', fontSize: 15, fontWeight: '600' },
-  title: { fontSize: 18, fontWeight: 'bold', color: '#111' },
-  addBtn: { backgroundColor: '#111', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20 },
-  addBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
-  form: {
-    backgroundColor: '#fff', margin: 16, borderRadius: 16,
-    padding: 16, borderWidth: 1, borderColor: '#f0f0f0',
+  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#111' },
+  bellBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
+  bellIcon: { fontSize: 22 },
+
+  topRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 16, paddingVertical: 14, backgroundColor: '#fff',
+    borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
-  formTitle: { fontSize: 16, fontWeight: 'bold', color: '#111', marginBottom: 14 },
-  label: { fontSize: 13, color: '#444', fontWeight: '600', marginBottom: 6 },
-  input: {
-    borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10,
-    padding: 12, fontSize: 15, marginBottom: 14, backgroundColor: '#fafafa',
+  addBtn: {
+    backgroundColor: '#2563EB', borderRadius: 12,
+    paddingHorizontal: 16, paddingVertical: 10,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
   },
-  categoryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  catBtn: {
-    borderWidth: 1, borderColor: '#ddd', borderRadius: 20,
-    paddingHorizontal: 12, paddingVertical: 6,
-  },
-  catBtnActive: { backgroundColor: '#111', borderColor: '#111' },
-  catBtnText: { fontSize: 12, color: '#555', textTransform: 'capitalize' },
-  catBtnTextActive: { color: '#fff', fontWeight: 'bold' },
-  saveBtn: {
-    backgroundColor: '#111', padding: 14, borderRadius: 12,
-    alignItems: 'center', marginBottom: 20,
-  },
-  saveBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
-  list: { padding: 16 },
-  countText: { fontSize: 13, color: '#888', marginBottom: 12 },
-  empty: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
-  emptyIcon: { fontSize: 56, marginBottom: 14 },
-  emptyText: { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 6 },
-  emptySubText: { fontSize: 14, color: '#888' },
+  addBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  countBox: { alignItems: 'flex-end' },
+  countLabel: { fontSize: 11, color: '#888' },
+  countValue: { fontSize: 24, fontWeight: 'bold', color: '#111' },
+
   productCard: {
-    backgroundColor: '#fff', borderRadius: 14, padding: 14,
-    marginBottom: 10, flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', borderWidth: 1, borderColor: '#f0f0f0', elevation: 1,
+    flexDirection: 'row', justifyContent: 'space-between',
+    backgroundColor: '#fff', borderRadius: 14,
+    marginBottom: 10, padding: 16,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
   },
-  productLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  productEmoji: {
-    width: 48, height: 48, borderRadius: 12,
-    backgroundColor: '#f0f7f0', justifyContent: 'center',
-    alignItems: 'center', marginRight: 12,
-  },
-  emojiText: { fontSize: 24 },
-  productInfo: { flex: 1 },
-  productName: { fontSize: 15, fontWeight: '600', color: '#111', marginBottom: 2 },
-  productDesc: { fontSize: 12, color: '#888', marginBottom: 2 },
-  productCategory: { fontSize: 11, color: '#aaa', textTransform: 'capitalize' },
-  productRight: { alignItems: 'flex-end', gap: 6 },
+  productInfo: { flex: 1, paddingRight: 12 },
+  productName: { fontSize: 15, fontWeight: 'bold', color: '#111', marginBottom: 4 },
+  productDesc: { fontSize: 12, color: '#888', marginBottom: 6 },
+  availableBadge: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
+  availableText: { fontSize: 11, fontWeight: '600' },
+  productRight: { alignItems: 'flex-end', justifyContent: 'space-between' },
   productPrice: { fontSize: 16, fontWeight: 'bold', color: '#111' },
-  availBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
-  availText: { fontSize: 11, fontWeight: 'bold' },
+  actionBtns: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  editBtn: {
+    width: 34, height: 34, borderRadius: 8,
+    backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center',
+  },
+  editBtnText: { fontSize: 16 },
+  deleteBtn: {
+    width: 34, height: 34, borderRadius: 8,
+    backgroundColor: '#FEF2F2', justifyContent: 'center', alignItems: 'center',
+  },
+  deleteBtnText: { fontSize: 16 },
+
+  emptyState: { alignItems: 'center', marginTop: 60 },
+  emptyEmoji: { fontSize: 50, marginBottom: 12 },
+  emptyTitle: { fontSize: 16, fontWeight: 'bold', color: '#111', marginBottom: 6 },
+  emptySubtitle: { fontSize: 13, color: '#888', marginBottom: 20 },
+  addFirstBtn: {
+    backgroundColor: '#2563EB', borderRadius: 12,
+    paddingHorizontal: 24, paddingVertical: 12,
+  },
+  addFirstBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+
+  bottomTab: {
+    flexDirection: 'row', backgroundColor: '#fff',
+    borderTopWidth: 1, borderTopColor: '#F0F0F0',
+    paddingBottom: 24, paddingTop: 10,
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+  },
+  tabItem: { flex: 1, alignItems: 'center' },
+  tabIcon: { fontSize: 22, marginBottom: 2, color: '#9CA3AF' },
+  tabLabel: { fontSize: 11, color: '#9CA3AF' },
+  tabLabelActive: { fontSize: 11, color: '#2563EB', fontWeight: 'bold' },
 });

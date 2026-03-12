@@ -25,9 +25,16 @@ import OrderDetailScreen from './src/screens/buyer/OrderDetailScreen';
 
 // Vendor Screens
 import VendorHomeScreen from './src/screens/vendor/VendorHomeScreen';
+import VendorOrdersScreen from './src/screens/vendor/VendorOrdersScreen';
+import VendorOrderDetailScreen from './src/screens/vendor/VendorOrderDetailScreen';
 import VendorProductsScreen from './src/screens/vendor/VendorProductsScreen';
+import VendorAddProductScreen from './src/screens/vendor/VendorAddProductScreen';
+import VendorEditProductScreen from './src/screens/vendor/VendorEditProductScreen';
 import VendorWalletScreen from './src/screens/vendor/VendorWalletScreen';
+import VendorProfileScreen from './src/screens/vendor/VendorProfileScreen';
 import VendorRegisterScreen from './src/screens/vendor/VendorRegisterScreen';
+import VendorNotificationsScreen from './src/screens/vendor/VendorNotificationsScreen';
+import VendorHelpScreen from './src/screens/vendor/VendorHelpScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -74,10 +81,17 @@ function AppNavigator() {
         <Stack.Screen name="OrderDetail"   component={OrderDetailScreen} />
 
         {/* Vendor */}
-        <Stack.Screen name="VendorHome"     component={VendorHomeScreen} />
-        <Stack.Screen name="VendorProducts" component={VendorProductsScreen} />
-        <Stack.Screen name="VendorWallet"   component={VendorWalletScreen} />
-        <Stack.Screen name="VendorRegister" component={VendorRegisterScreen} />
+        <Stack.Screen name="VendorHome"          component={VendorHomeScreen} />
+        <Stack.Screen name="VendorOrders"        component={VendorOrdersScreen} />
+        <Stack.Screen name="VendorOrderDetail"   component={VendorOrderDetailScreen} />
+        <Stack.Screen name="VendorProducts"      component={VendorProductsScreen} />
+        <Stack.Screen name="VendorAddProduct"    component={VendorAddProductScreen} />
+        <Stack.Screen name="VendorEditProduct"   component={VendorEditProductScreen} />
+        <Stack.Screen name="VendorWallet"        component={VendorWalletScreen} />
+        <Stack.Screen name="VendorProfile"       component={VendorProfileScreen} />
+        <Stack.Screen name="VendorRegister"      component={VendorRegisterScreen} />
+        <Stack.Screen name="VendorNotifications" component={VendorNotificationsScreen} />
+        <Stack.Screen name="VendorHelp"          component={VendorHelpScreen} />
 
       </Stack.Navigator>
     </NavigationContainer>
