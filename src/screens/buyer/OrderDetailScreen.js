@@ -6,42 +6,39 @@ import {
 import client from '../../api/client';
 
 const STATUS_STEPS = ['placed', 'accepted', 'preparing', 'dispatched', 'delivered'];
-
 const STATUS_INFO = {
-  placed:     { label: 'Order Placed',      icon: '📋', desc: 'Your order has been placed' },
-  accepted:   { label: 'Order Accepted',    icon: '✅', desc: 'Vendor accepted your order' },
-  preparing:  { label: 'Being Prepared',    icon: '👨‍🍳', desc: 'Vendor is preparing your order' },
-  dispatched: { label: 'Out for Delivery',  icon: '🛵', desc: 'Your order is on the way' },
-  delivered:  { label: 'Delivered',         icon: '🎉', desc: 'Order delivered successfully!' },
-  cancelled:  { label: 'Cancelled',         icon: '❌', desc: 'Order was cancelled' },
-  rejected:   { label: 'Rejected',          icon: '❌', desc: 'Order was rejected by vendor' },
+  placed:     { label: 'Order Placed',     icon: '📋', desc: 'Your order has been placed' },
+  accepted:   { label: 'Order Accepted',   icon: '✅', desc: 'Vendor accepted your order' },
+  preparing:  { label: 'Being Prepared',   icon: '👨‍🍳', desc: 'Vendor is preparing your order' },
+  dispatched: { label: 'Out for Delivery', icon: '🛵', desc: 'Your order is on the way' },
+  delivered:  { label: 'Delivered',        icon: '🎉', desc: 'Order delivered successfully!' },
+  cancelled:  { label: 'Cancelled',        icon: '❌', desc: 'Order was cancelled' },
+  rejected:   { label: 'Rejected',         icon: '❌', desc: 'Order was rejected by vendor' },
 };
 
 export default function OrderDetailScreen({ navigation, route }) {
   const { orderId }           = route.params;
   const [order, setOrder]     = useState(null);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState(false);
 
-  useEffect(() => {
-    const fetchOrder = async () => {
-      try {
-        const res = await client.get(`/orders/${orderId}/`);
-        setOrder(res.data);
-      } catch (e) {
-        console.log('Error:', e.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchOrder();
-  }, [orderId]);
+  const fetchOrder = async () => {
+    try {
+      const res = await client.get(`/orders/${orderId}/`);
+      setOrder(res.data);
+    } catch (e) {
+      console.log('Error:', e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchOrder(); }, [orderId]);
 
   const handleTrackLocation = () => {
     const address = encodeURIComponent(order.delivery_address);
     const url = `https://www.google.com/maps/search/?api=1&query=${address}`;
-    Linking.openURL(url).catch(() =>
-      Alert.alert('Error', 'Could not open maps')
-    );
+    Linking.openURL(url).catch(() => Alert.alert('Error', 'Could not open maps'));
   };
 
   const handleCallVendor = () => {
@@ -54,21 +51,16 @@ export default function OrderDetailScreen({ navigation, route }) {
     const itemsList = order.items?.map(
       item => `  • ${item.product_name || item.name} x${item.quantity} = ₹${(item.quantity * parseFloat(item.price)).toFixed(0)}`
     ).join('\n');
-
     const date = new Date(order.created_at).toLocaleString('en-IN', {
       day: 'numeric', month: 'short', year: 'numeric',
       hour: '2-digit', minute: '2-digit',
     });
-
     const statusInfo = STATUS_INFO[order.status];
-
     const message =
 `🛒 *OoruCart Order Receipt*
-
 📦 Order ID: #${order.id?.slice(0, 8).toUpperCase()}
 📅 Date: ${date}
 ${statusInfo?.icon} Status: ${statusInfo?.label}
-
 🏪 Shop: ${order.shop_name || order.vendor_name || 'Shop'}
 📍 Deliver to: ${order.delivery_address}
 
@@ -77,14 +69,37 @@ ${itemsList}
 
 💰 Total: ₹${order.total_amount}
 💵 Payment: Cash on Delivery
-
 Powered by OoruCart 🛍`;
-
     try {
       await Share.share({ message });
     } catch (e) {
       console.log('Share error:', e.message);
     }
+  };
+
+  const handleCancelOrder = () => {
+    Alert.alert(
+      'Cancel Order',
+      'Are you sure you want to cancel this order?',
+      [
+        { text: 'No, Keep it', style: 'cancel' },
+        {
+          text: 'Yes, Cancel',
+          style: 'destructive',
+          onPress: async () => {
+            setCancelling(true);
+            try {
+              await client.post(`/orders/${order.id}/status/`, { status: 'cancelled' });
+              await fetchOrder();
+            } catch (e) {
+              Alert.alert('Error', 'Could not cancel order. Please try again.');
+            } finally {
+              setCancelling(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   if (loading) {
@@ -103,10 +118,12 @@ Powered by OoruCart 🛍`;
     );
   }
 
-  const currentStep   = STATUS_STEPS.indexOf(order.status);
-  const isCancelled   = ['cancelled', 'rejected'].includes(order.status);
-  const statusInfo    = STATUS_INFO[order.status] || STATUS_INFO.placed;
-  const date          = new Date(order.created_at).toLocaleString('en-IN', {
+  const currentStep = STATUS_STEPS.indexOf(order.status);
+  const isCancelled = ['cancelled', 'rejected'].includes(order.status);
+  const isDelivered = order.status === 'delivered';
+  const canCancel   = ['placed', 'accepted'].includes(order.status);
+  const statusInfo  = STATUS_INFO[order.status] || STATUS_INFO.placed;
+  const date        = new Date(order.created_at).toLocaleString('en-IN', {
     day: 'numeric', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
@@ -128,7 +145,11 @@ Powered by OoruCart 🛍`;
       <ScrollView showsVerticalScrollIndicator={false}>
 
         {/* Status Banner */}
-        <View style={[styles.statusBanner, isCancelled && styles.statusBannerRed]}>
+        <View style={[
+          styles.statusBanner,
+          isCancelled && styles.statusBannerRed,
+          isDelivered && styles.statusBannerGreen,
+        ]}>
           <Text style={styles.statusBannerIcon}>{statusInfo.icon}</Text>
           <View>
             <Text style={styles.statusBannerTitle}>{statusInfo.label}</Text>
@@ -141,9 +162,9 @@ Powered by OoruCart 🛍`;
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Order Progress</Text>
             {STATUS_STEPS.map((step, index) => {
-              const info    = STATUS_INFO[step];
-              const isDone  = currentStep >= index;
-              const isLast  = index === STATUS_STEPS.length - 1;
+              const info   = STATUS_INFO[step];
+              const isDone = currentStep >= index;
+              const isLast = index === STATUS_STEPS.length - 1;
               return (
                 <View key={step} style={styles.stepRow}>
                   <View style={styles.stepLeft}>
@@ -158,9 +179,7 @@ Powered by OoruCart 🛍`;
                     <Text style={[styles.stepLabel, isDone && styles.stepLabelDone]}>
                       {info.label}
                     </Text>
-                    {isDone && (
-                      <Text style={styles.stepDesc}>{info.desc}</Text>
-                    )}
+                    {isDone && <Text style={styles.stepDesc}>{info.desc}</Text>}
                   </View>
                 </View>
               );
@@ -191,7 +210,6 @@ Powered by OoruCart 🛍`;
           <Text style={styles.cardTitle}>Delivery Details</Text>
           <Text style={styles.fieldLabel}>Deliver to</Text>
           <Text style={styles.fieldValue}>{order.delivery_address}</Text>
-
           <View style={styles.actionBtns}>
             <TouchableOpacity style={styles.mapsBtn} onPress={handleTrackLocation}>
               <Text style={styles.mapsBtnText}>📍 View on Maps</Text>
@@ -246,6 +264,19 @@ Powered by OoruCart 🛍`;
           <Text style={styles.shareReceiptText}>📤  Share Order Receipt</Text>
         </TouchableOpacity>
 
+        {/* Cancel Order — only shown for placed/accepted */}
+        {canCancel && (
+          <TouchableOpacity
+            style={styles.cancelBtn}
+            onPress={handleCancelOrder}
+            disabled={cancelling}
+          >
+            <Text style={styles.cancelBtnText}>
+              {cancelling ? 'Cancelling...' : '✕  Cancel Order'}
+            </Text>
+          </TouchableOpacity>
+        )}
+
         <View style={{ height: 40 }} />
       </ScrollView>
     </View>
@@ -272,32 +303,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 14,
     backgroundColor: '#2563EB', margin: 16, borderRadius: 16, padding: 16,
   },
-  statusBannerRed: { backgroundColor: '#EF4444' },
-  statusBannerIcon: { fontSize: 32 },
+  statusBannerRed:   { backgroundColor: '#EF4444' },
+  statusBannerGreen: { backgroundColor: '#16A34A' },
+  statusBannerIcon:  { fontSize: 32 },
   statusBannerTitle: { fontSize: 16, fontWeight: 'bold', color: '#fff', marginBottom: 2 },
-  statusBannerDesc: { fontSize: 12, color: 'rgba(255,255,255,0.85)' },
+  statusBannerDesc:  { fontSize: 12, color: 'rgba(255,255,255,0.85)' },
 
   card: {
     backgroundColor: '#fff', borderRadius: 16,
     margin: 16, marginBottom: 0, padding: 16,
   },
   cardTitle: { fontSize: 15, fontWeight: 'bold', color: '#111', marginBottom: 14 },
-  divider: { height: 1, backgroundColor: '#F5F5F5', marginVertical: 4 },
+  divider:   { height: 1, backgroundColor: '#F5F5F5', marginVertical: 4 },
 
-  stepRow: { flexDirection: 'row', marginBottom: 0 },
-  stepLeft: { alignItems: 'center', width: 28, marginRight: 12 },
+  stepRow:      { flexDirection: 'row', marginBottom: 0 },
+  stepLeft:     { alignItems: 'center', width: 28, marginRight: 12 },
   stepDot: {
     width: 22, height: 22, borderRadius: 11,
     backgroundColor: '#E5E7EB', justifyContent: 'center', alignItems: 'center',
   },
-  stepDotDone: { backgroundColor: '#2563EB' },
-  stepDotText: { fontSize: 11, color: '#fff', fontWeight: 'bold' },
-  stepLine: { width: 2, flex: 1, minHeight: 24, backgroundColor: '#E5E7EB', marginVertical: 2 },
-  stepLineDone: { backgroundColor: '#2563EB' },
-  stepInfo: { flex: 1, paddingBottom: 16 },
-  stepLabel: { fontSize: 13, color: '#9CA3AF', fontWeight: '500', marginTop: 2 },
-  stepLabelDone: { color: '#111', fontWeight: '600' },
-  stepDesc: { fontSize: 11, color: '#888', marginTop: 2 },
+  stepDotDone:    { backgroundColor: '#2563EB' },
+  stepDotText:    { fontSize: 11, color: '#fff', fontWeight: 'bold' },
+  stepLine:       { width: 2, flex: 1, minHeight: 24, backgroundColor: '#E5E7EB', marginVertical: 2 },
+  stepLineDone:   { backgroundColor: '#2563EB' },
+  stepInfo:       { flex: 1, paddingBottom: 16 },
+  stepLabel:      { fontSize: 13, color: '#9CA3AF', fontWeight: '500', marginTop: 2 },
+  stepLabelDone:  { color: '#111', fontWeight: '600' },
+  stepDesc:       { fontSize: 11, color: '#888', marginTop: 2 },
 
   infoRow: {
     flexDirection: 'row', justifyContent: 'space-between',
@@ -308,6 +340,7 @@ const styles = StyleSheet.create({
 
   fieldLabel: { fontSize: 12, color: '#888', marginBottom: 4 },
   fieldValue: { fontSize: 14, color: '#111', fontWeight: '500', lineHeight: 20, marginBottom: 12 },
+
   actionBtns: { flexDirection: 'row', gap: 10, marginTop: 4 },
   mapsBtn: {
     flex: 1, backgroundColor: '#EFF6FF',
@@ -330,17 +363,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center',
   },
   itemQtyText: { fontSize: 13, fontWeight: 'bold', color: '#2563EB' },
-  itemInfo: { flex: 1 },
-  itemName: { fontSize: 14, fontWeight: '600', color: '#111', marginBottom: 2 },
-  itemUnit: { fontSize: 12, color: '#888' },
-  itemPrice: { fontSize: 14, fontWeight: 'bold', color: '#111' },
+  itemInfo:    { flex: 1 },
+  itemName:    { fontSize: 14, fontWeight: '600', color: '#111', marginBottom: 2 },
+  itemUnit:    { fontSize: 12, color: '#888' },
+  itemPrice:   { fontSize: 14, fontWeight: 'bold', color: '#111' },
 
-  billRow: {
-    flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6,
-  },
-  billLabel: { fontSize: 13, color: '#888' },
-  billValue: { fontSize: 13, color: '#111' },
-  billTotal: { borderTopWidth: 1, borderTopColor: '#F5F5F5', marginTop: 4, paddingTop: 10 },
+  billRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
+  billLabel:      { fontSize: 13, color: '#888' },
+  billValue:      { fontSize: 13, color: '#111' },
+  billTotal:      { borderTopWidth: 1, borderTopColor: '#F5F5F5', marginTop: 4, paddingTop: 10 },
   billTotalLabel: { fontSize: 14, fontWeight: 'bold', color: '#111' },
   billTotalValue: { fontSize: 15, fontWeight: 'bold', color: '#2563EB' },
 
@@ -350,4 +381,11 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: '#E5E7EB',
   },
   shareReceiptText: { fontSize: 15, color: '#111', fontWeight: '600' },
+
+  cancelBtn: {
+    backgroundColor: '#FEF2F2', marginHorizontal: 16, marginTop: 12,
+    borderRadius: 14, padding: 16, alignItems: 'center',
+    borderWidth: 1.5, borderColor: '#EF4444',
+  },
+  cancelBtnText: { fontSize: 15, color: '#EF4444', fontWeight: 'bold' },
 });
