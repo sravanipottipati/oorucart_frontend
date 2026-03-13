@@ -1,10 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet,
+  ScrollView, ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
+import client from '../../api/client';
 
 export default function WishlistScreen({ navigation }) {
-  const [wishlist, setWishlist] = useState([]);
+  const [wishlist, setWishlist]     = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchWishlist = async () => {
+    try {
+      const res = await client.get('/vendors/wishlist/');
+      setWishlist(res.data.wishlist || []);
+    } catch (e) {
+      console.log('Error:', e.message);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => { fetchWishlist(); }, []);
+  const onRefresh = () => { setRefreshing(true); fetchWishlist(); };
+
+  const handleRemove = async (productId, name) => {
+    Alert.alert('Remove', `Remove "${name}" from wishlist?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove', style: 'destructive',
+        onPress: async () => {
+          try {
+            await client.post('/vendors/wishlist/', { product_id: productId });
+            fetchWishlist();
+          } catch (e) {
+            Alert.alert('Error', 'Could not remove from wishlist');
+          }
+        },
+      },
+    ]);
+  };
 
   return (
     <View style={styles.container}>
@@ -14,50 +50,75 @@ export default function WishlistScreen({ navigation }) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Wishlist</Text>
-        <View style={{ width: 36 }} />
+        <Text style={styles.headerTitle}>My Wishlist</Text>
+        <View style={styles.countBadge}>
+          <Text style={styles.countText}>{wishlist.length}</Text>
+        </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {wishlist.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>❤️</Text>
-            <Text style={styles.emptyTitle}>Your wishlist is empty</Text>
-            <Text style={styles.emptySubtitle}>
-              Save your favourite products here to order them later!
-            </Text>
-            <TouchableOpacity
-              style={styles.shopBtn}
-              onPress={() => navigation.navigate('Home')}
-            >
-              <Text style={styles.shopBtnText}>Explore Shops</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          wishlist.map((item, index) => (
-            <View key={index} style={styles.wishCard}>
-              <View style={styles.wishIconBox}>
-                <Text style={styles.wishIcon}>📦</Text>
-              </View>
-              <View style={styles.wishInfo}>
-                <Text style={styles.wishName}>{item.name}</Text>
-                <Text style={styles.wishShop}>{item.shopName}</Text>
-                <Text style={styles.wishPrice}>₹{item.price}</Text>
-              </View>
+      {loading ? (
+        <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 40 }} />
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          contentContainerStyle={{ padding: 16 }}
+        >
+          {wishlist.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyEmoji}>❤️</Text>
+              <Text style={styles.emptyTitle}>Your wishlist is empty</Text>
+              <Text style={styles.emptySubtitle}>
+                Save products you love by tapping ♡ on any product
+              </Text>
               <TouchableOpacity
-                style={styles.addBtn}
-                onPress={() => navigation.navigate('ShopDetail', {
-                  vendorId: item.shopId,
-                  shopName: item.shopName,
-                })}
+                style={styles.shopBtn}
+                onPress={() => navigation.navigate('Home')}
               >
-                <Text style={styles.addBtnText}>ADD</Text>
+                <Text style={styles.shopBtnText}>Browse Shops</Text>
               </TouchableOpacity>
             </View>
-          ))
-        )}
-        <View style={{ height: 40 }} />
-      </ScrollView>
+          ) : (
+            wishlist.map(item => (
+              <TouchableOpacity
+                key={item.id}
+                style={styles.productCard}
+                onPress={() => navigation.navigate('ShopDetail', { vendorId: item.shop_id })}
+              >
+                <View style={styles.productIconBox}>
+                  <Text style={styles.productIcon}>🛍</Text>
+                </View>
+                <View style={styles.productInfo}>
+                  <Text style={styles.productName}>{item.name}</Text>
+                  <Text style={styles.shopName}>🏪 {item.shop_name}</Text>
+                  <Text style={styles.townName}>📍 {item.town}</Text>
+                  <View style={[
+                    styles.availBadge,
+                    { backgroundColor: item.is_available ? '#DCFCE7' : '#F3F4F6' }
+                  ]}>
+                    <Text style={[
+                      styles.availText,
+                      { color: item.is_available ? '#16A34A' : '#9CA3AF' }
+                    ]}>
+                      {item.is_available ? '● In Stock' : '● Out of Stock'}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.productRight}>
+                  <Text style={styles.productPrice}>₹{item.price}</Text>
+                  <TouchableOpacity
+                    style={styles.removeBtn}
+                    onPress={() => handleRemove(item.product_id, item.name)}
+                  >
+                    <Text style={styles.removeIcon}>🗑</Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -73,42 +134,48 @@ const styles = StyleSheet.create({
   backBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   backText: { fontSize: 24, color: '#111' },
   headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
+  countBadge: {
+    backgroundColor: '#EFF6FF', borderRadius: 12,
+    paddingHorizontal: 10, paddingVertical: 4,
+  },
+  countText: { fontSize: 13, color: '#2563EB', fontWeight: 'bold' },
 
-  emptyState: {
-    alignItems: 'center', marginTop: 80, paddingHorizontal: 32,
-  },
-  emptyEmoji: { fontSize: 64, marginBottom: 16 },
-  emptyTitle: { fontSize: 20, fontWeight: 'bold', color: '#111', marginBottom: 10 },
-  emptySubtitle: {
-    fontSize: 14, color: '#888', textAlign: 'center',
-    lineHeight: 20, marginBottom: 28,
-  },
+  emptyState: { alignItems: 'center', marginTop: 60, paddingHorizontal: 32 },
+  emptyEmoji: { fontSize: 52, marginBottom: 12 },
+  emptyTitle: { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 6 },
+  emptySubtitle: { fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 24, lineHeight: 20 },
   shopBtn: {
-    backgroundColor: '#2563EB', borderRadius: 14,
-    paddingHorizontal: 32, paddingVertical: 14,
+    backgroundColor: '#2563EB', borderRadius: 12,
+    paddingHorizontal: 24, paddingVertical: 12,
   },
-  shopBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
+  shopBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
 
-  wishCard: {
+  productCard: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#fff', marginHorizontal: 16,
-    marginTop: 12, borderRadius: 14, padding: 14,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 6, elevation: 2,
+    backgroundColor: '#fff', borderRadius: 14,
+    padding: 14, marginBottom: 10, gap: 12,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
   },
-  wishIconBox: {
-    width: 52, height: 52, borderRadius: 12,
-    backgroundColor: '#F3F4F6', justifyContent: 'center',
-    alignItems: 'center', marginRight: 12,
+  productIconBox: {
+    width: 52, height: 52, borderRadius: 26,
+    backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center',
   },
-  wishIcon: { fontSize: 26 },
-  wishInfo: { flex: 1 },
-  wishName: { fontSize: 14, fontWeight: 'bold', color: '#111', marginBottom: 2 },
-  wishShop: { fontSize: 12, color: '#888', marginBottom: 4 },
-  wishPrice: { fontSize: 14, fontWeight: '600', color: '#2563EB' },
-  addBtn: {
-    borderWidth: 1.5, borderColor: '#2563EB',
-    borderRadius: 8, paddingHorizontal: 16, paddingVertical: 6,
+  productIcon: { fontSize: 26 },
+  productInfo: { flex: 1 },
+  productName: { fontSize: 14, fontWeight: 'bold', color: '#111', marginBottom: 3 },
+  shopName: { fontSize: 12, color: '#555', marginBottom: 2 },
+  townName: { fontSize: 11, color: '#888', marginBottom: 6 },
+  availBadge: {
+    alignSelf: 'flex-start', paddingHorizontal: 8,
+    paddingVertical: 3, borderRadius: 20,
   },
-  addBtnText: { color: '#2563EB', fontWeight: 'bold', fontSize: 13 },
+  availText: { fontSize: 11, fontWeight: '600' },
+  productRight: { alignItems: 'flex-end', gap: 10 },
+  productPrice: { fontSize: 16, fontWeight: 'bold', color: '#2563EB' },
+  removeBtn: {
+    width: 34, height: 34, borderRadius: 8,
+    backgroundColor: '#FEF2F2', justifyContent: 'center', alignItems: 'center',
+  },
+  removeIcon: { fontSize: 16 },
 });

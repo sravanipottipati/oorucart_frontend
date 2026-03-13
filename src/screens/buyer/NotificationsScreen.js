@@ -1,53 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet,
+  ScrollView, ActivityIndicator, RefreshControl,
 } from 'react-native';
+import client from '../../api/client';
 
-const NOTIFICATIONS = [
-  {
-    id: 1, type: 'order', read: false,
-    title: 'Order Accepted!',
-    message: 'Ravi Vegetables has accepted your order.',
-    time: '2 mins ago', icon: '✅',
-  },
-  {
-    id: 2, type: 'order', read: false,
-    title: 'Order is being prepared',
-    message: 'Your order from Ravi Vegetables is being prepared.',
-    time: '10 mins ago', icon: '👨‍🍳',
-  },
-  {
-    id: 3, type: 'promo', read: true,
-    title: 'New shops in Nellore!',
-    message: '3 new shops have joined OoruCart in your area.',
-    time: '1 hour ago', icon: '🏪',
-  },
-  {
-    id: 4, type: 'order', read: true,
-    title: 'Order Delivered!',
-    message: 'Your order from Ravi Vegetables was delivered.',
-    time: 'Yesterday', icon: '🎉',
-  },
-  {
-    id: 5, type: 'promo', read: true,
-    title: 'Welcome to OoruCart!',
-    message: 'Discover local shops and order fresh products.',
-    time: '2 days ago', icon: '👋',
-  },
-];
+const TYPE_CONFIG = {
+  order_placed:    { icon: '📋', bg: '#EFF6FF' },
+  order_accepted:  { icon: '✅', bg: '#DCFCE7' },
+  order_rejected:  { icon: '❌', bg: '#FEF2F2' },
+  order_preparing: { icon: '👨‍🍳', bg: '#FFF7ED' },
+  order_dispatched:{ icon: '🛵', bg: '#F0FDF4' },
+  order_delivered: { icon: '🎉', bg: '#DCFCE7' },
+  order_cancelled: { icon: '❌', bg: '#FEF2F2' },
+  new_order:       { icon: '📦', bg: '#EFF6FF' },
+  settlement:      { icon: '💰', bg: '#DCFCE7' },
+};
+
+const getTimeAgo = (dateStr) => {
+  const diff = Math.floor((new Date() - new Date(dateStr)) / 60000);
+  if (diff < 1)    return 'just now';
+  if (diff < 60)   return `${diff} mins ago`;
+  if (diff < 1440) return `${Math.floor(diff / 60)} hrs ago`;
+  return `${Math.floor(diff / 1440)} days ago`;
+};
 
 export default function NotificationsScreen({ navigation }) {
-  const [notifications, setNotifications] = useState(NOTIFICATIONS);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [refreshing, setRefreshing]       = useState(false);
 
-  const markAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const fetchNotifications = async () => {
+    try {
+      const res  = await client.get('/orders/notifications/');
+      setNotifications(res.data.notifications || []);
+    } catch (e) {
+      console.log('Error:', e.message);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
 
-  const markRead = (id) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  useEffect(() => { fetchNotifications(); }, []);
+  const onRefresh = () => { setRefreshing(true); fetchNotifications(); };
+
+  const markAllRead = async () => {
+    try {
+      await client.post('/orders/notifications/read/');
+      fetchNotifications();
+    } catch (e) {
+      console.log('Error:', e.message);
+    }
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const markRead = async (id, orderId) => {
+    try {
+      await client.post(`/orders/notifications/${id}/read/`);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+      if (orderId) navigation.navigate('OrderDetail', { orderId });
+    } catch (e) {
+      console.log('Error:', e.message);
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
     <View style={styles.container}>
@@ -57,46 +74,63 @@ export default function NotificationsScreen({ navigation }) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notifications</Text>
+        <View>
+          <Text style={styles.headerTitle}>Notifications</Text>
+          {unreadCount > 0 && (
+            <Text style={styles.headerSub}>{unreadCount} unread</Text>
+          )}
+        </View>
         {unreadCount > 0 ? (
-          <TouchableOpacity onPress={markAllRead}>
-            <Text style={styles.markAllText}>Mark all read</Text>
+          <TouchableOpacity onPress={markAllRead} style={styles.markAllBtn}>
+            <Text style={styles.markAllIcon}>✓</Text>
           </TouchableOpacity>
         ) : (
-          <View style={{ width: 70 }} />
+          <View style={{ width: 36 }} />
         )}
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {notifications.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>🔔</Text>
-            <Text style={styles.emptyTitle}>No notifications</Text>
-            <Text style={styles.emptySubtitle}>You're all caught up!</Text>
-          </View>
-        ) : (
-          notifications.map(item => (
-            <TouchableOpacity
-              key={item.id}
-              style={[styles.notifCard, !item.read && styles.notifCardUnread]}
-              onPress={() => markRead(item.id)}
-            >
-              <View style={[styles.iconBox, !item.read && styles.iconBoxUnread]}>
-                <Text style={styles.iconText}>{item.icon}</Text>
-              </View>
-              <View style={styles.notifInfo}>
-                <Text style={[styles.notifTitle, !item.read && styles.notifTitleUnread]}>
-                  {item.title}
-                </Text>
-                <Text style={styles.notifMessage}>{item.message}</Text>
-                <Text style={styles.notifTime}>{item.time}</Text>
-              </View>
-              {!item.read && <View style={styles.unreadDot} />}
-            </TouchableOpacity>
-          ))
-        )}
-        <View style={{ height: 40 }} />
-      </ScrollView>
+      {loading ? (
+        <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 40 }} />
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
+          {notifications.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyEmoji}>🔔</Text>
+              <Text style={styles.emptyTitle}>No notifications yet</Text>
+              <Text style={styles.emptySubtitle}>
+                Order updates will appear here
+              </Text>
+            </View>
+          ) : (
+            notifications.map(item => {
+              const config = TYPE_CONFIG[item.type] || { icon: '🔔', bg: '#F3F4F6' };
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[styles.notifCard, !item.is_read && styles.notifCardUnread]}
+                  onPress={() => markRead(item.id, item.order_id)}
+                >
+                  <View style={[styles.iconBox, { backgroundColor: config.bg }]}>
+                    <Text style={styles.iconText}>{config.icon}</Text>
+                  </View>
+                  <View style={styles.notifInfo}>
+                    <Text style={[styles.notifTitle, !item.is_read && styles.notifTitleUnread]}>
+                      {item.title}
+                    </Text>
+                    <Text style={styles.notifMessage}>{item.message}</Text>
+                    <Text style={styles.notifTime}>{getTimeAgo(item.created_at)}</Text>
+                  </View>
+                  {!item.is_read && <View style={styles.unreadDot} />}
+                </TouchableOpacity>
+              );
+            })
+          )}
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -112,20 +146,28 @@ const styles = StyleSheet.create({
   backBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   backText: { fontSize: 24, color: '#111' },
   headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
-  markAllText: { fontSize: 13, color: '#2563EB', fontWeight: '600' },
+  headerSub: { fontSize: 12, color: '#888', marginTop: 2 },
+  markAllBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center',
+  },
+  markAllIcon: { fontSize: 18, color: '#2563EB', fontWeight: 'bold' },
+
+  emptyState: { alignItems: 'center', marginTop: 80 },
+  emptyEmoji: { fontSize: 52, marginBottom: 12 },
+  emptyTitle: { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 6 },
+  emptySubtitle: { fontSize: 14, color: '#888', textAlign: 'center' },
 
   notifCard: {
     flexDirection: 'row', alignItems: 'flex-start',
     backgroundColor: '#fff', padding: 16,
     borderBottomWidth: 1, borderBottomColor: '#F5F5F5',
   },
-  notifCardUnread: { backgroundColor: '#F0F7FF' },
+  notifCardUnread: { backgroundColor: '#F8FAFF' },
   iconBox: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: '#F3F4F6', justifyContent: 'center',
-    alignItems: 'center', marginRight: 12,
+    width: 46, height: 46, borderRadius: 23,
+    justifyContent: 'center', alignItems: 'center', marginRight: 12,
   },
-  iconBoxUnread: { backgroundColor: '#DBEAFE' },
   iconText: { fontSize: 22 },
   notifInfo: { flex: 1 },
   notifTitle: { fontSize: 14, fontWeight: '500', color: '#555', marginBottom: 4 },
@@ -136,9 +178,4 @@ const styles = StyleSheet.create({
     width: 10, height: 10, borderRadius: 5,
     backgroundColor: '#2563EB', marginTop: 4,
   },
-
-  emptyState: { alignItems: 'center', marginTop: 80 },
-  emptyEmoji: { fontSize: 60, marginBottom: 16 },
-  emptyTitle: { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 8 },
-  emptySubtitle: { fontSize: 13, color: '#888' },
 });

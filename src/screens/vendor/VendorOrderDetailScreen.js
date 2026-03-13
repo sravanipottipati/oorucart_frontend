@@ -1,20 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, Alert,
+  ScrollView, ActivityIndicator, Alert, Linking, Share,
 } from 'react-native';
 import client from '../../api/client';
 
 const STATUS_FLOW = {
-  placed:     { next: 'accepted',   nextLabel: 'Accept Order',     color: '#EA580C', bg: '#FFF7ED' },
-  accepted:   { next: 'preparing',  nextLabel: 'Start Preparing',  color: '#16A34A', bg: '#F0FDF4' },
-  preparing:  { next: 'dispatched', nextLabel: 'Mark Ready',       color: '#2563EB', bg: '#EFF6FF' },
-  dispatched: { next: 'delivered',  nextLabel: 'Mark Delivered',   color: '#16A34A', bg: '#F0FDF4' },
+  placed:     { next: 'accepted',   nextLabel: 'Accept Order',   },
+  accepted:   { next: 'preparing',  nextLabel: 'Start Preparing',},
+  preparing:  { next: 'dispatched', nextLabel: 'Mark Ready',     },
+  dispatched: { next: 'delivered',  nextLabel: 'Mark Delivered', },
+};
+
+const STATUS_COLORS = {
+  placed:     { bg: '#FFF7ED', text: '#EA580C' },
+  accepted:   { bg: '#F0FDF4', text: '#16A34A' },
+  preparing:  { bg: '#EFF6FF', text: '#2563EB' },
+  dispatched: { bg: '#F0FDF4', text: '#16A34A' },
+  delivered:  { bg: '#DCFCE7', text: '#16A34A' },
+  cancelled:  { bg: '#FEF2F2', text: '#DC2626' },
+  rejected:   { bg: '#FEF2F2', text: '#DC2626' },
 };
 
 export default function VendorOrderDetailScreen({ navigation, route }) {
-  const { orderId }       = route.params;
-  const [order, setOrder] = useState(null);
+  const { orderId }             = route.params;
+  const [order, setOrder]       = useState(null);
   const [loading, setLoading]   = useState(true);
   const [updating, setUpdating] = useState(false);
 
@@ -37,7 +47,7 @@ export default function VendorOrderDetailScreen({ navigation, route }) {
       await client.post(`/orders/${orderId}/status/`, { status: newStatus });
       await fetchOrder();
       if (newStatus === 'delivered') {
-        Alert.alert('✅ Order Delivered', 'Order marked as delivered!');
+        Alert.alert('✅ Delivered', 'Order marked as delivered!');
       }
     } catch (e) {
       Alert.alert('Error', 'Failed to update status');
@@ -49,11 +59,49 @@ export default function VendorOrderDetailScreen({ navigation, route }) {
   const handleReject = () => {
     Alert.alert('Reject Order', 'Are you sure you want to reject this order?', [
       { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Reject', style: 'destructive',
-        onPress: () => handleUpdateStatus('rejected'),
-      },
+      { text: 'Reject', style: 'destructive', onPress: () => handleUpdateStatus('rejected') },
     ]);
+  };
+
+  const handleViewLocation = () => {
+    const address = encodeURIComponent(order.delivery_address);
+    const url = `https://www.google.com/maps/search/?api=1&query=${address}`;
+    Linking.openURL(url).catch(() =>
+      Alert.alert('Error', 'Could not open maps')
+    );
+  };
+
+  const handleShare = async () => {
+    const itemsList = order.items?.map(
+      item =>
+        `  • ${item.product_name || item.name} x${item.quantity} = ₹${(item.quantity * parseFloat(item.price)).toFixed(0)}`
+    ).join('\n');
+
+    const date = new Date(order.created_at).toLocaleString('en-IN', {
+      day: 'numeric', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+
+    const message =
+`🛒 *OoruCart Order Details*
+
+📦 Order ID: #${order.id?.slice(0, 8).toUpperCase()}
+📅 Date: ${date}
+💰 Total: ₹${order.total_amount}
+📍 Deliver to: ${order.delivery_address}
+👤 Customer: ${order.buyer_name || 'Customer'}
+
+*Items:*
+${itemsList}
+
+🏪 Platform Fee: ₹${order.platform_fee || 5}
+💵 Payment: Cash on Delivery`;
+
+    try {
+      await Share.share({ message });
+    } catch (e) {
+      console.log('Share error:', e.message);
+    }
   };
 
   if (loading) {
@@ -72,23 +120,13 @@ export default function VendorOrderDetailScreen({ navigation, route }) {
     );
   }
 
-  const flow       = STATUS_FLOW[order.status];
-  const date       = new Date(order.created_at).toLocaleString('en-IN', {
+  const flow         = STATUS_FLOW[order.status];
+  const statusColor  = STATUS_COLORS[order.status] || STATUS_COLORS.placed;
+  const isClosed     = ['cancelled', 'rejected', 'delivered'].includes(order.status);
+  const date         = new Date(order.created_at).toLocaleString('en-IN', {
     day: 'numeric', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
-  const isCancelled = ['cancelled', 'rejected', 'delivered'].includes(order.status);
-
-  const statusColors = {
-    placed:     { bg: '#FFF7ED', text: '#EA580C' },
-    accepted:   { bg: '#F0FDF4', text: '#16A34A' },
-    preparing:  { bg: '#EFF6FF', text: '#2563EB' },
-    dispatched: { bg: '#F0FDF4', text: '#16A34A' },
-    delivered:  { bg: '#DCFCE7', text: '#16A34A' },
-    cancelled:  { bg: '#FEF2F2', text: '#DC2626' },
-    rejected:   { bg: '#FEF2F2', text: '#DC2626' },
-  };
-  const statusColor = statusColors[order.status] || statusColors.placed;
 
   return (
     <View style={styles.container}>
@@ -100,10 +138,10 @@ export default function VendorOrderDetailScreen({ navigation, route }) {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Order Details</Text>
         <TouchableOpacity
-          style={styles.bellBtn}
-          onPress={() => navigation.navigate('VendorNotifications')}
+          style={styles.shareHeaderBtn}
+          onPress={handleShare}
         >
-          <Text style={styles.bellIcon}>🔔</Text>
+          <Text style={styles.shareHeaderIcon}>📤</Text>
         </TouchableOpacity>
       </View>
 
@@ -113,11 +151,11 @@ export default function VendorOrderDetailScreen({ navigation, route }) {
         <View style={styles.card}>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Order ID</Text>
-            <Text style={styles.infoValue}>Order #{order.id?.slice(0, 8).toUpperCase()}</Text>
+            <Text style={styles.infoValue}>#{order.id?.slice(0, 8).toUpperCase()}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Order Date & Time</Text>
+            <Text style={styles.infoLabel}>Date & Time</Text>
             <Text style={styles.infoValue}>{date}</Text>
           </View>
           <View style={styles.divider} />
@@ -136,30 +174,60 @@ export default function VendorOrderDetailScreen({ navigation, route }) {
               </Text>
             </View>
           </View>
+          <View style={styles.divider} />
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Payment</Text>
+            <Text style={[styles.infoValue, { color: '#16A34A', fontWeight: '600' }]}>
+              💵 Cash on Delivery
+            </Text>
+          </View>
         </View>
 
         {/* Customer Details */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Customer Details</Text>
-          <Text style={styles.fieldLabel}>Name</Text>
-          <Text style={styles.fieldValue}>{order.buyer_name || 'Customer'}</Text>
-          <Text style={styles.fieldLabel}>Phone</Text>
-          <Text style={styles.fieldValue}>+91 {order.buyer_phone || '—'}</Text>
+          <View style={styles.customerRow}>
+            <View style={styles.customerAvatar}>
+              <Text style={styles.customerAvatarText}>
+                {(order.buyer_name || 'C')[0].toUpperCase()}
+              </Text>
+            </View>
+            <View>
+              <Text style={styles.customerName}>{order.buyer_name || 'Customer'}</Text>
+              <Text style={styles.customerPhone}>+91 {order.buyer_phone || '—'}</Text>
+            </View>
+          </View>
+          <View style={styles.divider} />
           <Text style={styles.fieldLabel}>Delivery Address</Text>
           <Text style={styles.fieldValue}>{order.delivery_address}</Text>
-          <TouchableOpacity style={styles.viewLocationBtn}>
-            <Text style={styles.viewLocationText}>View Location</Text>
+
+          {/* View Location Button */}
+          <TouchableOpacity style={styles.viewLocationBtn} onPress={handleViewLocation}>
+            <Text style={styles.viewLocationText}>📍  View Location on Maps</Text>
+          </TouchableOpacity>
+
+          {/* Share Order Button */}
+          <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
+            <Text style={styles.shareBtnText}>📤  Share Order Details</Text>
           </TouchableOpacity>
         </View>
 
         {/* Order Items */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Order Items</Text>
+          <Text style={styles.cardTitle}>
+            Order Items ({order.items?.length || 0})
+          </Text>
           {order.items?.map((item, i) => (
-            <View key={i} style={[styles.itemRow, i < order.items.length - 1 && styles.itemRowBorder]}>
-              <View>
+            <View
+              key={i}
+              style={[styles.itemRow, i < order.items.length - 1 && styles.itemRowBorder]}
+            >
+              <View style={styles.itemQtyBox}>
+                <Text style={styles.itemQtyText}>{item.quantity}</Text>
+              </View>
+              <View style={styles.itemInfo}>
                 <Text style={styles.itemName}>{item.product_name || item.name}</Text>
-                <Text style={styles.itemDesc}>Qty: {item.quantity}</Text>
+                <Text style={styles.itemUnit}>₹{parseFloat(item.price).toFixed(0)} each</Text>
               </View>
               <Text style={styles.itemPrice}>
                 ₹{(item.quantity * parseFloat(item.price)).toFixed(0)}
@@ -167,13 +235,19 @@ export default function VendorOrderDetailScreen({ navigation, route }) {
             </View>
           ))}
           <View style={styles.divider} />
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Platform Fee</Text>
-            <Text style={styles.infoValue}>₹{order.platform_fee || 5}</Text>
+          <View style={styles.billRow}>
+            <Text style={styles.billLabel}>Item Total</Text>
+            <Text style={styles.billValue}>
+              ₹{(parseFloat(order.total_amount) - parseFloat(order.platform_fee || 5)).toFixed(0)}
+            </Text>
           </View>
-          <View style={styles.infoRow}>
-            <Text style={[styles.infoLabel, { fontWeight: 'bold', color: '#111' }]}>Total</Text>
-            <Text style={[styles.infoValue, { fontWeight: 'bold' }]}>₹{order.total_amount}</Text>
+          <View style={styles.billRow}>
+            <Text style={styles.billLabel}>Platform Fee</Text>
+            <Text style={styles.billValue}>₹{order.platform_fee || 5}</Text>
+          </View>
+          <View style={[styles.billRow, styles.billTotal]}>
+            <Text style={styles.billTotalLabel}>Total</Text>
+            <Text style={styles.billTotalValue}>₹{order.total_amount}</Text>
           </View>
         </View>
 
@@ -181,7 +255,7 @@ export default function VendorOrderDetailScreen({ navigation, route }) {
       </ScrollView>
 
       {/* Action Buttons */}
-      {!isCancelled && flow && (
+      {!isClosed && flow && (
         <View style={styles.footer}>
           {order.status === 'placed' && (
             <TouchableOpacity
@@ -221,14 +295,15 @@ const styles = StyleSheet.create({
   backBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   backText: { fontSize: 24, color: '#111' },
   headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
-  bellBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
-  bellIcon: { fontSize: 22 },
+  shareHeaderBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
+  shareHeaderIcon: { fontSize: 22 },
 
   card: {
     backgroundColor: '#fff', borderRadius: 16,
     margin: 16, marginBottom: 0, padding: 16,
   },
   cardTitle: { fontSize: 15, fontWeight: 'bold', color: '#111', marginBottom: 14 },
+  divider: { height: 1, backgroundColor: '#F5F5F5', marginVertical: 4 },
 
   infoRow: {
     flexDirection: 'row', justifyContent: 'space-between',
@@ -236,12 +311,20 @@ const styles = StyleSheet.create({
   },
   infoLabel: { fontSize: 13, color: '#888' },
   infoValue: { fontSize: 13, color: '#111', fontWeight: '500' },
-  divider: { height: 1, backgroundColor: '#F5F5F5' },
-
   statusBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 },
   statusText: { fontSize: 12, fontWeight: '600' },
 
-  fieldLabel: { fontSize: 12, color: '#888', marginTop: 12, marginBottom: 4 },
+  customerRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12,
+  },
+  customerAvatar: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: '#2563EB', justifyContent: 'center', alignItems: 'center',
+  },
+  customerAvatarText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  customerName: { fontSize: 15, fontWeight: 'bold', color: '#111', marginBottom: 2 },
+  customerPhone: { fontSize: 13, color: '#888' },
+  fieldLabel: { fontSize: 12, color: '#888', marginTop: 8, marginBottom: 4 },
   fieldValue: { fontSize: 14, color: '#111', fontWeight: '500', lineHeight: 20 },
 
   viewLocationBtn: {
@@ -249,15 +332,39 @@ const styles = StyleSheet.create({
     borderRadius: 10, padding: 12, alignItems: 'center',
   },
   viewLocationText: { fontSize: 14, color: '#2563EB', fontWeight: '600' },
+  shareBtn: {
+    marginTop: 8, backgroundColor: '#F0FDF4',
+    borderRadius: 10, padding: 12, alignItems: 'center',
+  },
+  shareBtnText: { fontSize: 14, color: '#16A34A', fontWeight: '600' },
 
   itemRow: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', paddingVertical: 12,
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 12, gap: 12,
   },
   itemRowBorder: { borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
+  itemQtyBox: {
+    width: 30, height: 30, borderRadius: 8,
+    backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center',
+  },
+  itemQtyText: { fontSize: 13, fontWeight: 'bold', color: '#2563EB' },
+  itemInfo: { flex: 1 },
   itemName: { fontSize: 14, fontWeight: '600', color: '#111', marginBottom: 2 },
-  itemDesc: { fontSize: 12, color: '#888' },
+  itemUnit: { fontSize: 12, color: '#888' },
   itemPrice: { fontSize: 14, fontWeight: 'bold', color: '#111' },
+
+  billRow: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    paddingVertical: 6,
+  },
+  billLabel: { fontSize: 13, color: '#888' },
+  billValue: { fontSize: 13, color: '#111' },
+  billTotal: {
+    borderTopWidth: 1, borderTopColor: '#F5F5F5',
+    marginTop: 4, paddingTop: 10,
+  },
+  billTotalLabel: { fontSize: 14, fontWeight: 'bold', color: '#111' },
+  billTotalValue: { fontSize: 15, fontWeight: 'bold', color: '#111' },
 
   footer: {
     flexDirection: 'row', gap: 10,

@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, RefreshControl,
+  ScrollView, ActivityIndicator,
 } from 'react-native';
 import client from '../../api/client';
 
 export default function ShopDetailScreen({ navigation, route }) {
   const { vendorId, shopName } = route.params;
-  const [shop, setShop]           = useState(null);
-  const [products, setProducts]   = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [cart, setCart]           = useState({});
-  const [search, setSearch]       = useState('');
+  const [shop, setShop]         = useState(null);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [cart, setCart]         = useState({});
 
   const fetchShopData = async () => {
     try {
@@ -58,19 +57,30 @@ export default function ShopDetailScreen({ navigation, route }) {
   const cartTotal = products.reduce((sum, p) => {
     return sum + (cart[p.id] || 0) * parseFloat(p.price);
   }, 0);
-
   const cartCount = Object.values(cart).reduce((a, b) => a + b, 0);
-
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
 
   const ProductCard = ({ product }) => {
     const qty = cart[product.id] || 0;
+    const [wishlisted, setWishlisted] = useState(false);
+
+    const toggleWishlist = async () => {
+      try {
+        await client.post('/vendors/wishlist/', { product_id: product.id });
+        setWishlisted(prev => !prev);
+      } catch (e) {
+        console.log('Wishlist error:', e.message);
+      }
+    };
+
     return (
       <View style={styles.productCard}>
         <View style={styles.productInfo}>
-          <Text style={styles.productName}>{product.name}</Text>
+          <View style={styles.productNameRow}>
+            <Text style={styles.productName}>{product.name}</Text>
+            <TouchableOpacity onPress={toggleWishlist} style={styles.wishlistBtn}>
+              <Text style={styles.wishlistIcon}>{wishlisted ? '❤️' : '🤍'}</Text>
+            </TouchableOpacity>
+          </View>
           {product.description ? (
             <Text style={styles.productDesc}>{product.description}</Text>
           ) : null}
@@ -131,42 +141,47 @@ export default function ShopDetailScreen({ navigation, route }) {
             {shop?.category} • {shop?.town} • {shop?.estimated_delivery_time || 30} mins
           </Text>
         </View>
-        <TouchableOpacity style={styles.headerIconBtn}>
+        <TouchableOpacity
+          style={styles.headerIconBtn}
+          onPress={() => navigation.navigate('Notifications')}
+        >
           <Text style={styles.headerIcon}>🔔</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Open Badge */}
-      <View style={styles.openBadgeRow}>
+      {/* Shop Info Row */}
+      <View style={styles.shopInfoRow}>
         <View style={[styles.openBadge, { backgroundColor: shop?.is_open ? '#E8F5E9' : '#F5F5F5' }]}>
           <Text style={[styles.openBadgeText, { color: shop?.is_open ? '#2E7D32' : '#999' }]}>
             {shop?.is_open ? '● Open' : '● Closed'}
           </Text>
         </View>
-      </View>
-
-      {/* Search */}
-      <View style={styles.searchBar}>
-        <Text style={styles.searchIcon}>🔍</Text>
-        <Text style={styles.searchPlaceholder}>Search products</Text>
+        {shop?.delivery_type && (
+          <View style={styles.deliveryBadge}>
+            <Text style={styles.deliveryBadgeText}>🛵 {shop.delivery_type}</Text>
+          </View>
+        )}
+        <TouchableOpacity
+          style={styles.wishlistNavBtn}
+          onPress={() => navigation.navigate('Wishlist')}
+        >
+          <Text style={styles.wishlistNavText}>❤️ Wishlist</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Products */}
-      <ScrollView
-        style={styles.productsList}
-        showsVerticalScrollIndicator={false}
-      >
-        {filteredProducts.length === 0 ? (
+      <ScrollView style={styles.productsList} showsVerticalScrollIndicator={false}>
+        {products.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>📦</Text>
-            <Text style={styles.emptyTitle}>No products found</Text>
+            <Text style={styles.emptyTitle}>No products available</Text>
           </View>
         ) : (
-          filteredProducts.map(product => (
+          products.map(product => (
             <ProductCard key={product.id} product={product} />
           ))
         )}
-        <View style={{ height: 100 }} />
+        <View style={{ height: 140 }} />
       </ScrollView>
 
       {/* Cart Footer */}
@@ -174,14 +189,11 @@ export default function ShopDetailScreen({ navigation, route }) {
         <TouchableOpacity
           style={styles.cartFooter}
           onPress={() => navigation.navigate('Checkout', {
-            cart,
-            products,
-            shop,
-            cartTotal,
+            cart, products, shop, cartTotal,
           })}
         >
           <View style={styles.cartFooterLeft}>
-            <Text style={styles.cartFooterCount}>{cartCount} items</Text>
+            <Text style={styles.cartFooterCount}>{cartCount} item{cartCount > 1 ? 's' : ''}</Text>
             <Text style={styles.cartFooterShop}>{shop?.shop_name}</Text>
           </View>
           <View style={styles.cartFooterRight}>
@@ -207,9 +219,12 @@ export default function ShopDetailScreen({ navigation, route }) {
           <Text style={styles.tabIcon}>📋</Text>
           <Text style={styles.tabLabel}>Orders</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem}>
-          <Text style={styles.tabIcon}>🛒</Text>
-          <Text style={styles.tabLabel}>Cart</Text>
+        <TouchableOpacity
+          style={styles.tabItem}
+          onPress={() => navigation.navigate('Wishlist')}
+        >
+          <Text style={styles.tabIcon}>❤️</Text>
+          <Text style={styles.tabLabel}>Wishlist</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.tabItem}
@@ -241,17 +256,23 @@ const styles = StyleSheet.create({
   headerIconBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   headerIcon: { fontSize: 20 },
 
-  openBadgeRow: { paddingHorizontal: 16, paddingTop: 12 },
-  openBadge: { alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20 },
-  openBadgeText: { fontSize: 13, fontWeight: '600' },
-
-  searchBar: {
+  shopInfoRow: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#F3F4F6', borderRadius: 12,
-    margin: 16, padding: 12,
+    paddingHorizontal: 16, paddingVertical: 10,
+    gap: 8, borderBottomWidth: 1, borderBottomColor: '#F5F5F5',
   },
-  searchIcon: { fontSize: 16, marginRight: 8 },
-  searchPlaceholder: { fontSize: 14, color: '#9CA3AF' },
+  openBadge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20 },
+  openBadgeText: { fontSize: 12, fontWeight: '600' },
+  deliveryBadge: {
+    backgroundColor: '#EFF6FF', paddingHorizontal: 12,
+    paddingVertical: 5, borderRadius: 20,
+  },
+  deliveryBadgeText: { fontSize: 12, color: '#2563EB', fontWeight: '500' },
+  wishlistNavBtn: {
+    marginLeft: 'auto', backgroundColor: '#FFF0F0',
+    paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20,
+  },
+  wishlistNavText: { fontSize: 12, color: '#EF4444', fontWeight: '600' },
 
   productsList: { flex: 1, paddingHorizontal: 16 },
 
@@ -260,7 +281,13 @@ const styles = StyleSheet.create({
     paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#F5F5F5',
   },
   productInfo: { flex: 1, paddingRight: 12 },
-  productName: { fontSize: 15, fontWeight: '600', color: '#111', marginBottom: 4 },
+  productNameRow: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 4,
+  },
+  productName: { fontSize: 15, fontWeight: '600', color: '#111', flex: 1 },
+  wishlistBtn: { padding: 4 },
+  wishlistIcon: { fontSize: 18 },
   productDesc: { fontSize: 12, color: '#888', marginBottom: 6, lineHeight: 16 },
   productPrice: { fontSize: 15, fontWeight: 'bold', color: '#111' },
   productRight: { alignItems: 'center', gap: 8 },
@@ -290,8 +317,8 @@ const styles = StyleSheet.create({
 
   cartFooter: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    backgroundColor: '#2563EB', margin: 16, borderRadius: 14,
-    padding: 16, position: 'absolute', bottom: 70, left: 0, right: 0,
+    backgroundColor: '#2563EB', marginHorizontal: 16, borderRadius: 14,
+    padding: 16, position: 'absolute', bottom: 74, left: 0, right: 0,
   },
   cartFooterLeft: {},
   cartFooterCount: { color: '#fff', fontSize: 13, opacity: 0.85 },

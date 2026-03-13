@@ -1,58 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet,
+  ScrollView, ActivityIndicator, RefreshControl,
 } from 'react-native';
+import client from '../../api/client';
 
-const NOTIFICATIONS = [
-  {
-    id: 1, read: false, icon: '📦',
-    iconBg: '#EFF6FF',
-    title: 'New Order Received',
-    message: 'Order #A3E55C9C received for ₹40',
-    time: '2 mins ago',
-  },
-  {
-    id: 2, read: true, icon: '✅',
-    iconBg: '#DCFCE7',
-    title: 'Order Delivered',
-    message: 'Order #406FEC75 successfully delivered',
-    time: '30 mins ago',
-  },
-  {
-    id: 3, read: true, icon: '💰',
-    iconBg: '#DCFCE7',
-    title: 'Settlement Completed',
-    message: '₹500 credited to your account',
-    time: 'Today, 10:30 AM',
-  },
-  {
-    id: 4, read: true, icon: '⚠️',
-    iconBg: '#FFF7ED',
-    title: 'Low Stock Alert',
-    message: 'Fresh Tomatoes stock is running low',
-    time: 'Yesterday',
-  },
-  {
-    id: 5, read: true, icon: '❌',
-    iconBg: '#FEF2F2',
-    title: 'Order Cancelled',
-    message: 'Order #D0E0BE60 cancelled by customer',
-    time: '2 days ago',
-  },
-];
+const TYPE_CONFIG = {
+  new_order:       { icon: '📦', bg: '#EFF6FF' },
+  order_cancelled: { icon: '❌', bg: '#FEF2F2' },
+  order_delivered: { icon: '✅', bg: '#DCFCE7' },
+  settlement:      { icon: '💰', bg: '#DCFCE7' },
+  order_placed:    { icon: '🛒', bg: '#FFF7ED' },
+};
+
+const getTimeAgo = (dateStr) => {
+  const diff = Math.floor((new Date() - new Date(dateStr)) / 60000);
+  if (diff < 1)    return 'just now';
+  if (diff < 60)   return `${diff} mins ago`;
+  if (diff < 1440) return `${Math.floor(diff / 60)} hrs ago`;
+  return `${Math.floor(diff / 1440)} days ago`;
+};
 
 export default function VendorNotificationsScreen({ navigation }) {
-  const [notifications, setNotifications] = useState(NOTIFICATIONS);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [refreshing, setRefreshing]       = useState(false);
 
-  const markAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const fetchNotifications = async () => {
+    try {
+      const res = await client.get('/orders/notifications/');
+      setNotifications(res.data.notifications || []);
+    } catch (e) {
+      console.log('Error:', e.message);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
 
-  const markRead = (id) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  useEffect(() => { fetchNotifications(); }, []);
+  const onRefresh = () => { setRefreshing(true); fetchNotifications(); };
+
+  const markAllRead = async () => {
+    try {
+      await client.post('/orders/notifications/read/');
+      fetchNotifications();
+    } catch (e) {
+      console.log('Error:', e.message);
+    }
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const markRead = async (id, orderId) => {
+    try {
+      await client.post(`/orders/notifications/${id}/read/`);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+      if (orderId) navigation.navigate('VendorOrderDetail', { orderId });
+    } catch (e) {
+      console.log('Error:', e.message);
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
     <View style={styles.container}>
@@ -64,7 +72,9 @@ export default function VendorNotificationsScreen({ navigation }) {
         </TouchableOpacity>
         <View>
           <Text style={styles.headerTitle}>Notifications</Text>
-          <Text style={styles.headerSub}>{notifications.length} Notifications</Text>
+          {unreadCount > 0 && (
+            <Text style={styles.headerSub}>{unreadCount} unread</Text>
+          )}
         </View>
         {unreadCount > 0 ? (
           <TouchableOpacity onPress={markAllRead} style={styles.markAllBtn}>
@@ -75,28 +85,46 @@ export default function VendorNotificationsScreen({ navigation }) {
         )}
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {notifications.map(item => (
-          <TouchableOpacity
-            key={item.id}
-            style={[styles.notifCard, !item.read && styles.notifCardUnread]}
-            onPress={() => markRead(item.id)}
-          >
-            <View style={[styles.iconBox, { backgroundColor: item.iconBg }]}>
-              <Text style={styles.iconText}>{item.icon}</Text>
+      {loading ? (
+        <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 40 }} />
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
+          {notifications.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyEmoji}>🔔</Text>
+              <Text style={styles.emptyTitle}>No notifications yet</Text>
+              <Text style={styles.emptySubtitle}>New orders will appear here</Text>
             </View>
-            <View style={styles.notifInfo}>
-              <Text style={[styles.notifTitle, !item.read && styles.notifTitleUnread]}>
-                {item.title}
-              </Text>
-              <Text style={styles.notifMessage}>{item.message}</Text>
-              <Text style={styles.notifTime}>{item.time}</Text>
-            </View>
-            {!item.read && <View style={styles.unreadDot} />}
-          </TouchableOpacity>
-        ))}
-        <View style={{ height: 40 }} />
-      </ScrollView>
+          ) : (
+            notifications.map(item => {
+              const config = TYPE_CONFIG[item.type] || { icon: '🔔', bg: '#F3F4F6' };
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[styles.notifCard, !item.is_read && styles.notifCardUnread]}
+                  onPress={() => markRead(item.id, item.order_id)}
+                >
+                  <View style={[styles.iconBox, { backgroundColor: config.bg }]}>
+                    <Text style={styles.iconText}>{config.icon}</Text>
+                  </View>
+                  <View style={styles.notifInfo}>
+                    <Text style={[styles.notifTitle, !item.is_read && styles.notifTitleUnread]}>
+                      {item.title}
+                    </Text>
+                    <Text style={styles.notifMessage}>{item.message}</Text>
+                    <Text style={styles.notifTime}>{getTimeAgo(item.created_at)}</Text>
+                  </View>
+                  {!item.is_read && <View style={styles.unreadDot} />}
+                </TouchableOpacity>
+              );
+            })
+          )}
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -118,6 +146,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center',
   },
   markAllIcon: { fontSize: 18, color: '#2563EB', fontWeight: 'bold' },
+
+  emptyState: { alignItems: 'center', marginTop: 80 },
+  emptyEmoji: { fontSize: 52, marginBottom: 12 },
+  emptyTitle: { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 6 },
+  emptySubtitle: { fontSize: 14, color: '#888', textAlign: 'center' },
 
   notifCard: {
     flexDirection: 'row', alignItems: 'flex-start',

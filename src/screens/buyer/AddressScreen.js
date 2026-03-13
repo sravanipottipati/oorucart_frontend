@@ -1,54 +1,104 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, TextInput, Alert,
+  ScrollView, ActivityIndicator, Alert, Modal, TextInput,
 } from 'react-native';
+import client from '../../api/client';
+
+const LABELS = ['Home', 'Work', 'Other'];
 
 export default function AddressScreen({ navigation }) {
-  const [addresses, setAddresses] = useState([
-    {
-      id: 1, type: 'Home', address: '12-3-456, Main Road, Nellore - 524001',
-      isDefault: true,
-    },
-  ]);
-  const [showForm, setShowForm]   = useState(false);
-  const [newAddress, setNewAddress] = useState('');
-  const [newType, setNewType]       = useState('Home');
+  const [addresses, setAddresses]   = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [modalVisible, setModal]    = useState(false);
+  const [editAddress, setEdit]      = useState(null);
+  const [label, setLabel]           = useState('Home');
+  const [fullAddress, setFullAddr]  = useState('');
+  const [town, setTown]             = useState('');
+  const [pincode, setPincode]       = useState('');
+  const [saving, setSaving]         = useState(false);
 
-  const ADDRESS_TYPES = ['Home', 'Work', 'Other'];
-
-  const handleAdd = () => {
-    if (!newAddress.trim()) {
-      Alert.alert('Error', 'Please enter an address');
-      return;
+  const fetchAddresses = async () => {
+    try {
+      const res = await client.get('/users/addresses/');
+      setAddresses(Array.isArray(res.data) ? res.data : []);
+    } catch (e) {
+      console.log('Error:', e.message);
+    } finally {
+      setLoading(false);
     }
-    setAddresses(prev => [
-      ...prev,
-      {
-        id: Date.now(),
-        type: newType,
-        address: newAddress,
-        isDefault: prev.length === 0,
-      },
-    ]);
-    setNewAddress('');
-    setNewType('Home');
-    setShowForm(false);
   };
 
-  const handleDelete = (id) => {
-    Alert.alert('Delete Address', 'Are you sure?', [
+  useEffect(() => { fetchAddresses(); }, []);
+
+  const openAdd = () => {
+    setEdit(null);
+    setLabel('Home');
+    setFullAddr('');
+    setTown('');
+    setPincode('');
+    setModal(true);
+  };
+
+  const openEdit = (addr) => {
+    setEdit(addr);
+    setLabel(addr.label);
+    setFullAddr(addr.full_address);
+    setTown(addr.town);
+    setPincode(addr.pincode || '');
+    setModal(true);
+  };
+
+  const handleSave = async () => {
+    if (!fullAddress.trim()) { Alert.alert('Error', 'Please enter address'); return; }
+    if (!town.trim())        { Alert.alert('Error', 'Please enter town'); return; }
+    setSaving(true);
+    try {
+      if (editAddress) {
+        await client.patch(`/users/addresses/${editAddress.id}/`, {
+          label, full_address: fullAddress, town, pincode,
+        });
+      } else {
+        await client.post('/users/addresses/', {
+          label, full_address: fullAddress, town, pincode,
+        });
+      }
+      setModal(false);
+      fetchAddresses();
+    } catch (e) {
+      Alert.alert('Error', 'Could not save address');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = (addr) => {
+    Alert.alert('Delete Address', `Delete "${addr.label}" address?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete', style: 'destructive',
-        onPress: () => setAddresses(prev => prev.filter(a => a.id !== id)),
+        onPress: async () => {
+          try {
+            await client.delete(`/users/addresses/${addr.id}/`);
+            fetchAddresses();
+          } catch (e) {
+            Alert.alert('Error', 'Could not delete address');
+          }
+        },
       },
     ]);
   };
 
-  const handleSetDefault = (id) => {
-    setAddresses(prev => prev.map(a => ({ ...a, isDefault: a.id === id })));
+  const handleSetDefault = async (addr) => {
+    try {
+      await client.post(`/users/addresses/${addr.id}/default/`);
+      fetchAddresses();
+    } catch (e) {
+      Alert.alert('Error', 'Could not set default');
+    }
   };
+
+  const labelIcon = (l) => l === 'Home' ? '🏠' : l === 'Work' ? '💼' : '📍';
 
   return (
     <View style={styles.container}>
@@ -59,108 +109,145 @@ export default function AddressScreen({ navigation }) {
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Addresses</Text>
-        <TouchableOpacity onPress={() => setShowForm(!showForm)}>
-          <Text style={styles.addBtn}>+ Add</Text>
+        <TouchableOpacity style={styles.addBtn} onPress={openAdd}>
+          <Text style={styles.addBtnText}>+ Add</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      {loading ? (
+        <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 40 }} />
+      ) : (
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16 }}>
 
-        {/* Add Address Form */}
-        {showForm && (
-          <View style={styles.formCard}>
-            <Text style={styles.formTitle}>Add New Address</Text>
+          {addresses.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyEmoji}>📍</Text>
+              <Text style={styles.emptyTitle}>No addresses saved</Text>
+              <Text style={styles.emptySubtitle}>Add your delivery address</Text>
+              <TouchableOpacity style={styles.addFirstBtn} onPress={openAdd}>
+                <Text style={styles.addFirstBtnText}>+ Add Address</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            addresses.map(addr => (
+              <View key={addr.id} style={[styles.addressCard, addr.is_default && styles.addressCardDefault]}>
+                <View style={styles.cardTop}>
+                  <View style={styles.labelRow}>
+                    <Text style={styles.labelIcon}>{labelIcon(addr.label)}</Text>
+                    <Text style={styles.labelText}>{addr.label}</Text>
+                    {addr.is_default && (
+                      <View style={styles.defaultBadge}>
+                        <Text style={styles.defaultBadgeText}>Default</Text>
+                      </View>
+                    )}
+                  </View>
+                  <View style={styles.cardActions}>
+                    <TouchableOpacity onPress={() => openEdit(addr)} style={styles.editBtn}>
+                      <Text style={styles.editBtnText}>✏️</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleDelete(addr)} style={styles.deleteBtn}>
+                      <Text style={styles.deleteBtnText}>🗑</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                <Text style={styles.addressText}>{addr.full_address}</Text>
+                <Text style={styles.townText}>{addr.town}{addr.pincode ? ` - ${addr.pincode}` : ''}</Text>
+                {!addr.is_default && (
+                  <TouchableOpacity
+                    style={styles.setDefaultBtn}
+                    onPress={() => handleSetDefault(addr)}
+                  >
+                    <Text style={styles.setDefaultText}>Set as Default</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            ))
+          )}
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      )}
 
-            {/* Type selector */}
-            <View style={styles.typeRow}>
-              {ADDRESS_TYPES.map(type => (
+      {/* Add/Edit Modal */}
+      <Modal visible={modalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {editAddress ? 'Edit Address' : 'Add New Address'}
+              </Text>
+              <TouchableOpacity onPress={() => setModal(false)}>
+                <Text style={styles.modalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Label Selector */}
+            <Text style={styles.fieldLabel}>Label</Text>
+            <View style={styles.labelSelector}>
+              {LABELS.map(l => (
                 <TouchableOpacity
-                  key={type}
-                  style={[styles.typeBtn, newType === type && styles.typeBtnActive]}
-                  onPress={() => setNewType(type)}
+                  key={l}
+                  style={[styles.labelChip, label === l && styles.labelChipActive]}
+                  onPress={() => setLabel(l)}
                 >
-                  <Text style={[styles.typeBtnText, newType === type && styles.typeBtnTextActive]}>
-                    {type === 'Home' ? '🏠' : type === 'Work' ? '💼' : '📍'} {type}
+                  <Text style={[styles.labelChipText, label === l && styles.labelChipTextActive]}>
+                    {labelIcon(l)} {l}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
+            <Text style={styles.fieldLabel}>Full Address</Text>
             <TextInput
-              style={styles.addressInput}
-              placeholder="Enter full address"
+              style={[styles.input, styles.textArea]}
+              placeholder="House no, Street, Area"
               placeholderTextColor="#9CA3AF"
-              value={newAddress}
-              onChangeText={setNewAddress}
+              value={fullAddress}
+              onChangeText={setFullAddr}
               multiline
               numberOfLines={3}
             />
 
-            <View style={styles.formBtns}>
-              <TouchableOpacity
-                style={styles.cancelBtn}
-                onPress={() => setShowForm(false)}
-              >
-                <Text style={styles.cancelBtnText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.saveBtn} onPress={handleAdd}>
-                <Text style={styles.saveBtnText}>Save Address</Text>
-              </TouchableOpacity>
+            <View style={styles.rowFields}>
+              <View style={styles.halfField}>
+                <Text style={styles.fieldLabel}>Town</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Town"
+                  placeholderTextColor="#9CA3AF"
+                  value={town}
+                  onChangeText={setTown}
+                />
+              </View>
+              <View style={styles.halfField}>
+                <Text style={styles.fieldLabel}>Pincode</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="524001"
+                  placeholderTextColor="#9CA3AF"
+                  value={pincode}
+                  onChangeText={setPincode}
+                  keyboardType="numeric"
+                  maxLength={6}
+                />
+              </View>
             </View>
-          </View>
-        )}
 
-        {/* Address List */}
-        {addresses.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>📍</Text>
-            <Text style={styles.emptyTitle}>No addresses saved</Text>
-            <Text style={styles.emptySubtitle}>Add a delivery address to get started</Text>
             <TouchableOpacity
-              style={styles.addFirstBtn}
-              onPress={() => setShowForm(true)}
+              style={styles.saveBtn}
+              onPress={handleSave}
+              disabled={saving}
             >
-              <Text style={styles.addFirstBtnText}>+ Add Address</Text>
+              {saving
+                ? <ActivityIndicator color="#fff" />
+                : <Text style={styles.saveBtnText}>
+                    {editAddress ? 'Save Changes' : 'Add Address'}
+                  </Text>
+              }
             </TouchableOpacity>
           </View>
-        ) : (
-          addresses.map(item => (
-            <View key={item.id} style={styles.addressCard}>
-              <View style={styles.addressTop}>
-                <View style={styles.addressTypeRow}>
-                  <View style={styles.typeIconBox}>
-                    <Text style={styles.typeIcon}>
-                      {item.type === 'Home' ? '🏠' : item.type === 'Work' ? '💼' : '📍'}
-                    </Text>
-                  </View>
-                  <Text style={styles.addressType}>{item.type}</Text>
-                  {item.isDefault && (
-                    <View style={styles.defaultBadge}>
-                      <Text style={styles.defaultText}>Default</Text>
-                    </View>
-                  )}
-                </View>
-                <TouchableOpacity onPress={() => handleDelete(item.id)}>
-                  <Text style={styles.deleteBtn}>🗑</Text>
-                </TouchableOpacity>
-              </View>
+        </View>
+      </Modal>
 
-              <Text style={styles.addressText}>{item.address}</Text>
-
-              {!item.isDefault && (
-                <TouchableOpacity
-                  style={styles.setDefaultBtn}
-                  onPress={() => handleSetDefault(item.id)}
-                >
-                  <Text style={styles.setDefaultText}>Set as Default</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          ))
-        )}
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
     </View>
   );
 }
@@ -176,78 +263,94 @@ const styles = StyleSheet.create({
   backBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   backText: { fontSize: 24, color: '#111' },
   headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
-  addBtn: { fontSize: 14, color: '#2563EB', fontWeight: '600' },
+  addBtn: {
+    backgroundColor: '#2563EB', borderRadius: 10,
+    paddingHorizontal: 14, paddingVertical: 7,
+  },
+  addBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
 
-  formCard: {
-    backgroundColor: '#fff', borderRadius: 16,
-    margin: 16, padding: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 6, elevation: 2,
+  emptyState: { alignItems: 'center', marginTop: 60 },
+  emptyEmoji: { fontSize: 52, marginBottom: 12 },
+  emptyTitle: { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 6 },
+  emptySubtitle: { fontSize: 14, color: '#888', marginBottom: 24 },
+  addFirstBtn: {
+    backgroundColor: '#2563EB', borderRadius: 12,
+    paddingHorizontal: 24, paddingVertical: 12,
   },
-  formTitle: { fontSize: 15, fontWeight: 'bold', color: '#111', marginBottom: 14 },
-  typeRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
-  typeBtn: {
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-    borderWidth: 1.5, borderColor: '#E5E7EB', backgroundColor: '#F9FAFB',
-  },
-  typeBtnActive: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
-  typeBtnText: { fontSize: 13, color: '#555' },
-  typeBtnTextActive: { color: '#2563EB', fontWeight: '600' },
-  addressInput: {
-    borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12,
-    padding: 12, fontSize: 14, color: '#111',
-    minHeight: 80, textAlignVertical: 'top',
-    backgroundColor: '#F9FAFB', marginBottom: 14,
-  },
-  formBtns: { flexDirection: 'row', gap: 10 },
-  cancelBtn: {
-    flex: 1, borderWidth: 1.5, borderColor: '#E5E7EB',
-    borderRadius: 12, padding: 12, alignItems: 'center',
-  },
-  cancelBtnText: { fontSize: 14, color: '#555', fontWeight: '600' },
-  saveBtn: {
-    flex: 2, backgroundColor: '#2563EB',
-    borderRadius: 12, padding: 12, alignItems: 'center',
-  },
-  saveBtnText: { fontSize: 14, color: '#fff', fontWeight: 'bold' },
+  addFirstBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
 
   addressCard: {
     backgroundColor: '#fff', borderRadius: 16,
-    marginHorizontal: 16, marginTop: 12, padding: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 6, elevation: 2,
+    padding: 16, marginBottom: 12,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
   },
-  addressTop: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', marginBottom: 10,
+  addressCardDefault: { borderWidth: 1.5, borderColor: '#2563EB' },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  labelIcon: { fontSize: 18 },
+  labelText: { fontSize: 14, fontWeight: 'bold', color: '#111' },
+  defaultBadge: {
+    backgroundColor: '#EFF6FF', borderRadius: 20,
+    paddingHorizontal: 8, paddingVertical: 2,
   },
-  addressTypeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  typeIconBox: {
-    width: 32, height: 32, borderRadius: 16,
+  defaultBadgeText: { fontSize: 11, color: '#2563EB', fontWeight: '600' },
+  cardActions: { flexDirection: 'row', gap: 8 },
+  editBtn: {
+    width: 32, height: 32, borderRadius: 8,
     backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center',
   },
-  typeIcon: { fontSize: 16 },
-  addressType: { fontSize: 14, fontWeight: 'bold', color: '#111' },
-  defaultBadge: {
-    backgroundColor: '#DCFCE7', borderRadius: 20,
-    paddingHorizontal: 10, paddingVertical: 3,
+  editBtnText: { fontSize: 14 },
+  deleteBtn: {
+    width: 32, height: 32, borderRadius: 8,
+    backgroundColor: '#FEF2F2', justifyContent: 'center', alignItems: 'center',
   },
-  defaultText: { fontSize: 11, color: '#16A34A', fontWeight: '600' },
-  deleteBtn: { fontSize: 18 },
-  addressText: { fontSize: 13, color: '#555', lineHeight: 20, marginBottom: 10 },
+  deleteBtnText: { fontSize: 14 },
+  addressText: { fontSize: 14, color: '#111', lineHeight: 20, marginBottom: 4 },
+  townText: { fontSize: 13, color: '#888', marginBottom: 10 },
   setDefaultBtn: {
-    alignSelf: 'flex-start', borderWidth: 1.5, borderColor: '#2563EB',
-    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6,
+    alignSelf: 'flex-start', borderWidth: 1, borderColor: '#2563EB',
+    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 5,
   },
   setDefaultText: { fontSize: 12, color: '#2563EB', fontWeight: '600' },
 
-  emptyState: { alignItems: 'center', marginTop: 80, paddingHorizontal: 32 },
-  emptyEmoji: { fontSize: 60, marginBottom: 16 },
-  emptyTitle: { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 8 },
-  emptySubtitle: { fontSize: 13, color: '#888', textAlign: 'center', marginBottom: 24 },
-  addFirstBtn: {
-    backgroundColor: '#2563EB', borderRadius: 14,
-    paddingHorizontal: 32, paddingVertical: 14,
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
   },
-  addFirstBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
+  modalBox: {
+    backgroundColor: '#fff', borderTopLeftRadius: 24,
+    borderTopRightRadius: 24, padding: 20, paddingBottom: 40,
+  },
+  modalHeader: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 16,
+  },
+  modalTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
+  modalClose: { fontSize: 20, color: '#9CA3AF' },
+
+  fieldLabel: { fontSize: 13, fontWeight: '600', color: '#555', marginBottom: 6, marginTop: 12 },
+  input: {
+    borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12,
+    padding: 12, fontSize: 14, color: '#111', backgroundColor: '#F9FAFB',
+  },
+  textArea: { minHeight: 70, textAlignVertical: 'top' },
+  rowFields: { flexDirection: 'row', gap: 12 },
+  halfField: { flex: 1 },
+
+  labelSelector: { flexDirection: 'row', gap: 8 },
+  labelChip: {
+    flex: 1, borderWidth: 1, borderColor: '#E5E7EB',
+    borderRadius: 10, padding: 10, alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+  },
+  labelChipActive: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
+  labelChipText: { fontSize: 13, color: '#555', fontWeight: '500' },
+  labelChipTextActive: { color: '#2563EB', fontWeight: 'bold' },
+
+  saveBtn: {
+    backgroundColor: '#2563EB', borderRadius: 14,
+    padding: 16, alignItems: 'center', marginTop: 20,
+  },
+  saveBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });
