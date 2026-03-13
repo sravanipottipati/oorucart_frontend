@@ -1,8 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Change this to your Mac IP when testing on phone
-const BASE_URL = 'http://127.0.0.1:8000/api';
+const BASE_URL = 'http://192.168.1.30:8000/api';
 
 const client = axios.create({
   baseURL: BASE_URL,

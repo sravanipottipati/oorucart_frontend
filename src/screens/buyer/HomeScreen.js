@@ -4,6 +4,7 @@ import {
   ScrollView, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import client from '../../api/client';
+import { useCart } from '../../context/CartContext';
 
 const CATEGORIES = [
   { id: 'all',         label: 'All',        emoji: '🛍' },
@@ -24,6 +25,8 @@ export default function HomeScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [category, setCategory]     = useState('all');
   const [town]                      = useState('Nellore');
+
+  const { cart, shop: cartShop, products: cartProducts, cartCount, cartTotal } = useCart();
 
   const fetchShops = async () => {
     try {
@@ -47,7 +50,6 @@ export default function HomeScreen({ navigation }) {
   };
 
   useEffect(() => { fetchShops(); }, []);
-
   const onRefresh = () => { setRefreshing(true); fetchShops(); };
 
   const filteredShops = shops.filter(shop =>
@@ -187,6 +189,30 @@ export default function HomeScreen({ navigation }) {
         <View style={{ height: 100 }} />
       </ScrollView>
 
+      {/* Global Cart Bar — shows when cart has items */}
+      {cartCount > 0 && (
+        <TouchableOpacity
+          style={styles.cartBar}
+          onPress={() => navigation.navigate('ShopDetail', {
+            vendorId: cartShop?.id,
+            shopName: cartShop?.shop_name,
+          })}
+        >
+          <View style={styles.cartBarLeft}>
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{cartCount}</Text>
+            </View>
+            <Text style={styles.cartBarItems}>
+              {cartCount} item{cartCount > 1 ? 's' : ''} added
+            </Text>
+          </View>
+          <View style={styles.cartBarRight}>
+            <Text style={styles.cartBarShop}>{cartShop?.shop_name}</Text>
+            <Text style={styles.cartBarTotal}>₹{cartTotal.toFixed(0)} →</Text>
+          </View>
+        </TouchableOpacity>
+      )}
+
       {/* Bottom Tab Bar */}
       <View style={styles.bottomTab}>
         <TouchableOpacity style={styles.tabItem}>
@@ -202,10 +228,26 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.tabItem}
-          onPress={() => navigation.navigate('Cart')}
+          onPress={() => {
+            if (cartCount > 0 && cartShop) {
+              navigation.navigate('ShopDetail', {
+                vendorId: cartShop.id,
+                shopName: cartShop.shop_name,
+              });
+            } else {
+              navigation.navigate('MyOrders');
+            }
+          }}
         >
-          <Text style={styles.tabIcon}>🛒</Text>
-          <Text style={styles.tabLabel}>Cart</Text>
+          <View style={styles.cartTabContainer}>
+            <Text style={styles.tabIcon}>🛒</Text>
+            {cartCount > 0 && (
+              <View style={styles.cartTabBadge}>
+                <Text style={styles.cartTabBadgeText}>{cartCount}</Text>
+              </View>
+            )}
+          </View>
+          <Text style={[styles.tabLabel, cartCount > 0 && { color: '#2563EB' }]}>Cart</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.tabItem}
@@ -292,6 +334,33 @@ const styles = StyleSheet.create({
   emptyEmoji: { fontSize: 50, marginBottom: 12 },
   emptyTitle: { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 6 },
   emptySubtitle: { fontSize: 13, color: '#888' },
+
+  // Global Cart Bar
+  cartBar: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    backgroundColor: '#2563EB', marginHorizontal: 16, borderRadius: 14,
+    padding: 14, position: 'absolute', bottom: 74, left: 0, right: 0,
+  },
+  cartBarLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  cartBadge: {
+    backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 8,
+    width: 28, height: 28, justifyContent: 'center', alignItems: 'center',
+  },
+  cartBadgeText: { color: '#fff', fontSize: 13, fontWeight: 'bold' },
+  cartBarItems: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  cartBarRight: { alignItems: 'flex-end' },
+  cartBarShop: { color: 'rgba(255,255,255,0.8)', fontSize: 11, marginBottom: 2 },
+  cartBarTotal: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
+
+  // Cart tab badge
+  cartTabContainer: { position: 'relative' },
+  cartTabBadge: {
+    position: 'absolute', top: -4, right: -8,
+    backgroundColor: '#EF4444', borderRadius: 8,
+    minWidth: 16, height: 16, justifyContent: 'center', alignItems: 'center',
+    paddingHorizontal: 3,
+  },
+  cartTabBadgeText: { color: '#fff', fontSize: 9, fontWeight: 'bold' },
 
   bottomTab: {
     flexDirection: 'row', backgroundColor: '#fff',

@@ -1,16 +1,68 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator,
+  ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
 import client from '../../api/client';
+import { useCart } from '../../context/CartContext';
+
+const ProductCard = ({ product, qty, onAdd, onRemove }) => {
+  const [wishlisted, setWishlisted] = useState(false);
+
+  const toggleWishlist = async () => {
+    try {
+      await client.post('/vendors/wishlist/', { product_id: product.id });
+      setWishlisted(prev => !prev);
+    } catch (e) {
+      console.log('Wishlist error:', e.message);
+    }
+  };
+
+  return (
+    <View style={styles.productCard}>
+      <View style={styles.productInfo}>
+        <View style={styles.productNameRow}>
+          <Text style={styles.productName}>{product.name}</Text>
+          <TouchableOpacity onPress={toggleWishlist} style={styles.wishlistBtn}>
+            <Text style={styles.wishlistIcon}>{wishlisted ? '❤️' : '🤍'}</Text>
+          </TouchableOpacity>
+        </View>
+        {product.description ? (
+          <Text style={styles.productDesc}>{product.description}</Text>
+        ) : null}
+        <Text style={styles.productPrice}>₹{product.price}</Text>
+      </View>
+      <View style={styles.productRight}>
+        <View style={styles.productImageBox}>
+          <Text style={styles.productEmoji}>🥬</Text>
+        </View>
+        {qty === 0 ? (
+          <TouchableOpacity style={styles.addBtn} onPress={() => onAdd(product)}>
+            <Text style={styles.addBtnText}>ADD</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.qtyControl}>
+            <TouchableOpacity style={styles.qtyBtn} onPress={() => onRemove(product)}>
+              <Text style={styles.qtyBtnText}>−</Text>
+            </TouchableOpacity>
+            <Text style={styles.qtyText}>{qty}</Text>
+            <TouchableOpacity style={styles.qtyBtn} onPress={() => onAdd(product)}>
+              <Text style={styles.qtyBtnText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+};
 
 export default function ShopDetailScreen({ navigation, route }) {
   const { vendorId, shopName } = route.params;
   const [shop, setShop]         = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading]   = useState(true);
-  const [cart, setCart]         = useState({});
+
+  const { cart, shop: cartShop, addToCart, removeFromCart, cartCount, cartTotal } = useCart();
 
   const fetchShopData = async () => {
     try {
@@ -35,88 +87,24 @@ export default function ShopDetailScreen({ navigation, route }) {
 
   useEffect(() => { fetchShopData(); }, []);
 
-  const addToCart = (product) => {
-    setCart(prev => ({
-      ...prev,
-      [product.id]: (prev[product.id] || 0) + 1,
-    }));
-  };
-
-  const removeFromCart = (product) => {
-    setCart(prev => {
-      const newCart = { ...prev };
-      if (newCart[product.id] > 1) {
-        newCart[product.id]--;
-      } else {
-        delete newCart[product.id];
-      }
-      return newCart;
-    });
-  };
-
-  const cartTotal = products.reduce((sum, p) => {
-    return sum + (cart[p.id] || 0) * parseFloat(p.price);
-  }, 0);
-  const cartCount = Object.values(cart).reduce((a, b) => a + b, 0);
-
-  const ProductCard = ({ product }) => {
-    const qty = cart[product.id] || 0;
-    const [wishlisted, setWishlisted] = useState(false);
-
-    const toggleWishlist = async () => {
-      try {
-        await client.post('/vendors/wishlist/', { product_id: product.id });
-        setWishlisted(prev => !prev);
-      } catch (e) {
-        console.log('Wishlist error:', e.message);
-      }
-    };
-
-    return (
-      <View style={styles.productCard}>
-        <View style={styles.productInfo}>
-          <View style={styles.productNameRow}>
-            <Text style={styles.productName}>{product.name}</Text>
-            <TouchableOpacity onPress={toggleWishlist} style={styles.wishlistBtn}>
-              <Text style={styles.wishlistIcon}>{wishlisted ? '❤️' : '🤍'}</Text>
-            </TouchableOpacity>
-          </View>
-          {product.description ? (
-            <Text style={styles.productDesc}>{product.description}</Text>
-          ) : null}
-          <Text style={styles.productPrice}>₹{product.price}</Text>
-        </View>
-        <View style={styles.productRight}>
-          <View style={styles.productImageBox}>
-            <Text style={styles.productEmoji}>🥬</Text>
-          </View>
-          {qty === 0 ? (
-            <TouchableOpacity
-              style={styles.addBtn}
-              onPress={() => addToCart(product)}
-            >
-              <Text style={styles.addBtnText}>ADD</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.qtyControl}>
-              <TouchableOpacity
-                style={styles.qtyBtn}
-                onPress={() => removeFromCart(product)}
-              >
-                <Text style={styles.qtyBtnText}>−</Text>
-              </TouchableOpacity>
-              <Text style={styles.qtyText}>{qty}</Text>
-              <TouchableOpacity
-                style={styles.qtyBtn}
-                onPress={() => addToCart(product)}
-              >
-                <Text style={styles.qtyBtnText}>+</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-      </View>
-    );
+  const handleAddToCart = (product) => {
+    // Warn if adding from different shop
+    if (cartShop && cartShop.id !== vendorId && cartCount > 0) {
+      Alert.alert(
+        'Start New Cart?',
+        `Your cart has items from "${cartShop.shop_name}". Starting a new cart will clear it.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Start New Cart',
+            style: 'destructive',
+            onPress: () => addToCart(product, shop),
+          },
+        ]
+      );
+      return;
+    }
+    addToCart(product, shop);
   };
 
   if (loading) {
@@ -178,18 +166,27 @@ export default function ShopDetailScreen({ navigation, route }) {
           </View>
         ) : (
           products.map(product => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard
+              key={product.id}
+              product={product}
+              qty={cart[product.id] || 0}
+              onAdd={handleAddToCart}
+              onRemove={removeFromCart}
+            />
           ))
         )}
         <View style={{ height: 140 }} />
       </ScrollView>
 
-      {/* Cart Footer */}
-      {cartCount > 0 && (
+      {/* Cart Footer — shows from global cart */}
+      {cartCount > 0 && cartShop?.id === vendorId && (
         <TouchableOpacity
           style={styles.cartFooter}
           onPress={() => navigation.navigate('Checkout', {
-            cart, products, shop, cartTotal,
+            cart,
+            products,
+            shop,
+            cartTotal,
           })}
         >
           <View style={styles.cartFooterLeft}>
@@ -205,31 +202,19 @@ export default function ShopDetailScreen({ navigation, route }) {
 
       {/* Bottom Tab */}
       <View style={styles.bottomTab}>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate('Home')}
-        >
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Home')}>
           <Text style={styles.tabIcon}>🏠</Text>
           <Text style={styles.tabLabel}>Home</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate('MyOrders')}
-        >
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('MyOrders')}>
           <Text style={styles.tabIcon}>📋</Text>
           <Text style={styles.tabLabel}>Orders</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate('Wishlist')}
-        >
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Wishlist')}>
           <Text style={styles.tabIcon}>❤️</Text>
           <Text style={styles.tabLabel}>Wishlist</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate('Profile')}
-        >
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Profile')}>
           <Text style={styles.tabIcon}>👤</Text>
           <Text style={styles.tabLabel}>Profile</Text>
         </TouchableOpacity>
@@ -305,11 +290,12 @@ const styles = StyleSheet.create({
 
   qtyControl: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#2563EB', borderRadius: 8, overflow: 'hidden',
+    backgroundColor: '#2563EB', borderRadius: 8,
+    minWidth: 100, justifyContent: 'space-between',
   },
-  qtyBtn: { paddingHorizontal: 10, paddingVertical: 6 },
+  qtyBtn: { paddingHorizontal: 12, paddingVertical: 8 },
   qtyBtnText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  qtyText: { color: '#fff', fontSize: 14, fontWeight: 'bold', paddingHorizontal: 8 },
+  qtyText: { color: '#fff', fontSize: 16, fontWeight: 'bold', minWidth: 24, textAlign: 'center' },
 
   emptyState: { alignItems: 'center', marginTop: 60 },
   emptyEmoji: { fontSize: 50, marginBottom: 12 },

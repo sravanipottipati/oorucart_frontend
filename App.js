@@ -2,13 +2,11 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { CartProvider } from './src/context/CartContext';
 import { ActivityIndicator, View } from 'react-native';
 
-// Auth Screens
 import LoginScreen from './src/screens/auth/LoginScreen';
 import RegisterScreen from './src/screens/auth/RegisterScreen';
-
-// Buyer Screens
 import HomeScreen from './src/screens/buyer/HomeScreen';
 import ShopDetailScreen from './src/screens/buyer/ShopDetailScreen';
 import CheckoutScreen from './src/screens/buyer/CheckoutScreen';
@@ -22,8 +20,6 @@ import AddressScreen from './src/screens/buyer/AddressScreen';
 import HelpSupportScreen from './src/screens/buyer/HelpSupportScreen';
 import SearchScreen from './src/screens/buyer/SearchScreen';
 import OrderDetailScreen from './src/screens/buyer/OrderDetailScreen';
-
-// Vendor Screens
 import VendorHomeScreen from './src/screens/vendor/VendorHomeScreen';
 import VendorOrdersScreen from './src/screens/vendor/VendorOrdersScreen';
 import VendorOrderDetailScreen from './src/screens/vendor/VendorOrderDetailScreen';
@@ -40,7 +36,6 @@ const Stack = createNativeStackNavigator();
 
 function AppNavigator() {
   const { user, loading } = useAuth();
-
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -48,24 +43,16 @@ function AppNavigator() {
       </View>
     );
   }
-
   const getInitialRoute = () => {
     if (!user) return 'Login';
     if (user.user_type === 'vendor') return 'VendorHome';
     return 'Home';
   };
-
   return (
     <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName={getInitialRoute()}
-        screenOptions={{ headerShown: false }}
-      >
-        {/* Auth */}
+      <Stack.Navigator initialRouteName={getInitialRoute()} screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login"    component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
-
-        {/* Buyer */}
         <Stack.Screen name="Home"          component={HomeScreen} />
         <Stack.Screen name="ShopDetail"    component={ShopDetailScreen} />
         <Stack.Screen name="Checkout"      component={CheckoutScreen} />
@@ -79,8 +66,6 @@ function AppNavigator() {
         <Stack.Screen name="HelpSupport"   component={HelpSupportScreen} />
         <Stack.Screen name="Search"        component={SearchScreen} />
         <Stack.Screen name="OrderDetail"   component={OrderDetailScreen} />
-
-        {/* Vendor */}
         <Stack.Screen name="VendorHome"          component={VendorHomeScreen} />
         <Stack.Screen name="VendorOrders"        component={VendorOrdersScreen} />
         <Stack.Screen name="VendorOrderDetail"   component={VendorOrderDetailScreen} />
@@ -92,7 +77,6 @@ function AppNavigator() {
         <Stack.Screen name="VendorRegister"      component={VendorRegisterScreen} />
         <Stack.Screen name="VendorNotifications" component={VendorNotificationsScreen} />
         <Stack.Screen name="VendorHelp"          component={VendorHelpScreen} />
-
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -101,7 +85,9 @@ function AppNavigator() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppNavigator />
+      <CartProvider>
+        <AppNavigator />
+      </CartProvider>
     </AuthProvider>
   );
 }
