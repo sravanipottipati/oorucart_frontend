@@ -20,6 +20,7 @@ import AddressScreen from './src/screens/buyer/AddressScreen';
 import HelpSupportScreen from './src/screens/buyer/HelpSupportScreen';
 import SearchScreen from './src/screens/buyer/SearchScreen';
 import OrderDetailScreen from './src/screens/buyer/OrderDetailScreen';
+import TownSelectionScreen from './src/screens/buyer/TownSelectionScreen';
 import VendorHomeScreen from './src/screens/vendor/VendorHomeScreen';
 import VendorOrdersScreen from './src/screens/vendor/VendorOrdersScreen';
 import VendorOrderDetailScreen from './src/screens/vendor/VendorOrderDetailScreen';
@@ -36,6 +37,7 @@ const Stack = createNativeStackNavigator();
 
 function AppNavigator() {
   const { user, loading } = useAuth();
+
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -43,16 +45,25 @@ function AppNavigator() {
       </View>
     );
   }
+
   const getInitialRoute = () => {
     if (!user) return 'Login';
     if (user.user_type === 'vendor') return 'VendorHome';
+    if (user.user_type === 'buyer' && !user.town) return 'TownSelection';
     return 'Home';
   };
+
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName={getInitialRoute()} screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+        initialRouteName={getInitialRoute()}
+        screenOptions={{ headerShown: false }}
+      >
+        {/* Auth */}
         <Stack.Screen name="Login"    component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
+
+        {/* Buyer */}
         <Stack.Screen name="Home"          component={HomeScreen} />
         <Stack.Screen name="ShopDetail"    component={ShopDetailScreen} />
         <Stack.Screen name="Checkout"      component={CheckoutScreen} />
@@ -66,6 +77,9 @@ function AppNavigator() {
         <Stack.Screen name="HelpSupport"   component={HelpSupportScreen} />
         <Stack.Screen name="Search"        component={SearchScreen} />
         <Stack.Screen name="OrderDetail"   component={OrderDetailScreen} />
+        <Stack.Screen name="TownSelection" component={TownSelectionScreen} />
+
+        {/* Vendor */}
         <Stack.Screen name="VendorHome"          component={VendorHomeScreen} />
         <Stack.Screen name="VendorOrders"        component={VendorOrdersScreen} />
         <Stack.Screen name="VendorOrderDetail"   component={VendorOrderDetailScreen} />

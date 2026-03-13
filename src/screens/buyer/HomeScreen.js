@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import client from '../../api/client';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 
 const CATEGORIES = [
   { id: 'all',         label: 'All',        emoji: '🛍' },
@@ -24,13 +25,14 @@ export default function HomeScreen({ navigation }) {
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [category, setCategory]     = useState('all');
-  const [town]                      = useState('Nellore');
 
-  const { cart, shop: cartShop, products: cartProducts, cartCount, cartTotal } = useCart();
+  const { user }                                                        = useAuth();
+  const { cart, shop: cartShop, cartCount, cartTotal }                  = useCart();
+  const town                                                            = user?.town || 'Nellore';
 
   const fetchShops = async () => {
     try {
-      const res = await client.get('/vendors/nearby/?town=Nellore');
+      const res = await client.get(`/vendors/nearby/?town=${town}`);
       if (Array.isArray(res.data)) {
         setShops(res.data);
       } else if (res.data.shops) {
@@ -100,10 +102,13 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={styles.deliverTo}>Deliver to</Text>
-          <View style={styles.locationRow}>
+          <TouchableOpacity
+            style={styles.locationRow}
+            onPress={() => navigation.navigate('TownSelection')}
+          >
             <Text style={styles.locationText}>📍 {town}</Text>
             <Text style={styles.locationArrow}> ▾</Text>
-          </View>
+          </TouchableOpacity>
         </View>
         <View style={styles.headerRight}>
           <TouchableOpacity
@@ -128,7 +133,7 @@ export default function HomeScreen({ navigation }) {
         activeOpacity={0.8}
       >
         <Text style={styles.searchIcon}>🔍</Text>
-        <Text style={styles.searchPlaceholder}>Search shops or products</Text>
+        <Text style={styles.searchPlaceholder}>Search shops or products in {town}</Text>
       </TouchableOpacity>
 
       <ScrollView
@@ -166,9 +171,9 @@ export default function HomeScreen({ navigation }) {
 
         {/* Nearby Shops */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Nearby Shops</Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAll}>See All ›</Text>
+          <Text style={styles.sectionTitle}>Shops in {town}</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('TownSelection')}>
+            <Text style={styles.seeAll}>Change Town ›</Text>
           </TouchableOpacity>
         </View>
 
@@ -177,8 +182,14 @@ export default function HomeScreen({ navigation }) {
         ) : filteredShops.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>🏪</Text>
-            <Text style={styles.emptyTitle}>No shops found</Text>
-            <Text style={styles.emptySubtitle}>Try a different category</Text>
+            <Text style={styles.emptyTitle}>No shops in {town}</Text>
+            <Text style={styles.emptySubtitle}>Try a different category or change town</Text>
+            <TouchableOpacity
+              style={styles.changeTownBtn}
+              onPress={() => navigation.navigate('TownSelection')}
+            >
+              <Text style={styles.changeTownBtnText}>Change Town</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           filteredShops.map((shop, index) => (
@@ -189,7 +200,7 @@ export default function HomeScreen({ navigation }) {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Global Cart Bar — shows when cart has items */}
+      {/* Global Cart Bar */}
       {cartCount > 0 && (
         <TouchableOpacity
           style={styles.cartBar}
@@ -330,12 +341,16 @@ const styles = StyleSheet.create({
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   statusText: { fontSize: 12, fontWeight: '600' },
 
-  emptyState: { alignItems: 'center', marginTop: 60 },
+  emptyState: { alignItems: 'center', marginTop: 60, paddingHorizontal: 32 },
   emptyEmoji: { fontSize: 50, marginBottom: 12 },
   emptyTitle: { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 6 },
-  emptySubtitle: { fontSize: 13, color: '#888' },
+  emptySubtitle: { fontSize: 13, color: '#888', marginBottom: 20, textAlign: 'center' },
+  changeTownBtn: {
+    backgroundColor: '#2563EB', borderRadius: 12,
+    paddingHorizontal: 24, paddingVertical: 12,
+  },
+  changeTownBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
 
-  // Global Cart Bar
   cartBar: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     backgroundColor: '#2563EB', marginHorizontal: 16, borderRadius: 14,
@@ -352,7 +367,6 @@ const styles = StyleSheet.create({
   cartBarShop: { color: 'rgba(255,255,255,0.8)', fontSize: 11, marginBottom: 2 },
   cartBarTotal: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
 
-  // Cart tab badge
   cartTabContainer: { position: 'relative' },
   cartTabBadge: {
     position: 'absolute', top: -4, right: -8,
