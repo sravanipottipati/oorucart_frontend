@@ -51,7 +51,7 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  useEffect(() => { fetchShops(); }, []);
+  useEffect(() => { fetchShops(); }, [town]);
   const onRefresh = () => { setRefreshing(true); fetchShops(); };
 
   const filteredShops = shops.filter(shop =>

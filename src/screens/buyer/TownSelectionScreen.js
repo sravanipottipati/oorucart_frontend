@@ -3,32 +3,45 @@ import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, TextInput, Alert,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import client from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 
 const POPULAR_TOWNS = [
-  { name: 'Nellore',      state: 'Andhra Pradesh' },
-  { name: 'Ongole',       state: 'Andhra Pradesh' },
-  { name: 'Kadapa',       state: 'Andhra Pradesh' },
-  { name: 'Kurnool',      state: 'Andhra Pradesh' },
-  { name: 'Tirupati',     state: 'Andhra Pradesh' },
-  { name: 'Vizianagaram', state: 'Andhra Pradesh' },
-  { name: 'Eluru',        state: 'Andhra Pradesh' },
-  { name: 'Machilipatnam',state: 'Andhra Pradesh' },
-  { name: 'Warangal',     state: 'Telangana' },
-  { name: 'Karimnagar',   state: 'Telangana' },
-  { name: 'Nizamabad',    state: 'Telangana' },
-  { name: 'Khammam',      state: 'Telangana' },
-  { name: 'Rajahmundry',  state: 'Andhra Pradesh' },
-  { name: 'Kakinada',     state: 'Andhra Pradesh' },
-  { name: 'Anantapur',    state: 'Andhra Pradesh' },
+  { name: 'Nellore',       state: 'Andhra Pradesh' },
+  { name: 'Ongole',        state: 'Andhra Pradesh' },
+  { name: 'Kadapa',        state: 'Andhra Pradesh' },
+  { name: 'Kurnool',       state: 'Andhra Pradesh' },
+  { name: 'Tirupati',      state: 'Andhra Pradesh' },
+  { name: 'Vizianagaram',  state: 'Andhra Pradesh' },
+  { name: 'Eluru',         state: 'Andhra Pradesh' },
+  { name: 'Machilipatnam', state: 'Andhra Pradesh' },
+  { name: 'Rajahmundry',   state: 'Andhra Pradesh' },
+  { name: 'Kakinada',      state: 'Andhra Pradesh' },
+  { name: 'Anantapur',     state: 'Andhra Pradesh' },
+  { name: 'Warangal',      state: 'Telangana' },
+  { name: 'Karimnagar',    state: 'Telangana' },
+  { name: 'Nizamabad',     state: 'Telangana' },
+  { name: 'Khammam',       state: 'Telangana' },
+  { name: 'Hyderabad',     state: 'Telangana' },
+  { name: 'Vijayawada',    state: 'Andhra Pradesh' },
+  { name: 'Guntur',        state: 'Andhra Pradesh' },
+  { name: 'Visakhapatnam', state: 'Andhra Pradesh' },
+  { name: 'Mysuru',        state: 'Karnataka' },
+  { name: 'Hubli',         state: 'Karnataka' },
+  { name: 'Mangaluru',     state: 'Karnataka' },
+  { name: 'Madurai',       state: 'Tamil Nadu' },
+  { name: 'Coimbatore',    state: 'Tamil Nadu' },
+  { name: 'Salem',         state: 'Tamil Nadu' },
+  { name: 'Trichy',        state: 'Tamil Nadu' },
+  { name: 'Tirunelveli',   state: 'Tamil Nadu' },
 ];
 
 export default function TownSelectionScreen({ navigation }) {
-  const [search, setSearch]       = useState('');
-  const [selected, setSelected]   = useState('');
-  const [loading, setLoading]     = useState(false);
-  const { user, login }           = useAuth();
+  const [search, setSearch]     = useState('');
+  const [selected, setSelected] = useState('');
+  const [loading, setLoading]   = useState(false);
+  const { user, setUser }       = useAuth();
 
   const filtered = POPULAR_TOWNS.filter(t =>
     t.name.toLowerCase().includes(search.toLowerCase())
@@ -42,14 +55,17 @@ export default function TownSelectionScreen({ navigation }) {
     }
     setLoading(true);
     try {
-      const res = await client.patch('/users/profile/', { town });
-      // Update stored user with town
+      await client.patch('/users/profile/', { town });
       const updatedUser = { ...user, town };
-      await require('@react-native-async-storage/async-storage').default
-        .setItem('user', JSON.stringify(updatedUser));
+      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
       navigation.replace('Home');
     } catch (e) {
       console.log('Town update error:', e.message);
+      // Still navigate even if API fails
+      const updatedUser = { ...user, town };
+      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
       navigation.replace('Home');
     } finally {
       setLoading(false);
@@ -89,45 +105,64 @@ export default function TownSelectionScreen({ navigation }) {
       {/* Selected Banner */}
       {selected ? (
         <View style={styles.selectedBanner}>
-          <Text style={styles.selectedText}>📍 {selected} selected</Text>
+          <Text style={styles.selectedText}>📍 {selected} selected ✓</Text>
         </View>
       ) : null}
 
       {/* Town List */}
       <ScrollView style={styles.townList} showsVerticalScrollIndicator={false}>
-        <Text style={styles.listTitle}>Popular Towns</Text>
-        {filtered.map(town => (
-          <TouchableOpacity
-            key={town.name}
-            style={[styles.townItem, selected === town.name && styles.townItemActive]}
-            onPress={() => { setSelected(town.name); setSearch(town.name); }}
-          >
-            <View style={styles.townLeft}>
-              <Text style={styles.townIcon}>🏘</Text>
-              <View>
-                <Text style={[styles.townName, selected === town.name && styles.townNameActive]}>
-                  {town.name}
-                </Text>
-                <Text style={styles.townState}>{town.state}</Text>
+        <Text style={styles.listTitle}>
+          {search ? `Results for "${search}"` : 'Popular Towns'}
+        </Text>
+
+        {filtered.length === 0 ? (
+          <View style={styles.noResults}>
+            <Text style={styles.noResultsText}>
+              No town found — you can still type your town name and confirm!
+            </Text>
+          </View>
+        ) : (
+          filtered.map(town => (
+            <TouchableOpacity
+              key={town.name}
+              style={[styles.townItem, selected === town.name && styles.townItemActive]}
+              onPress={() => { setSelected(town.name); setSearch(town.name); }}
+            >
+              <View style={styles.townLeft}>
+                <Text style={styles.townIcon}>🏘</Text>
+                <View>
+                  <Text style={[styles.townName, selected === town.name && styles.townNameActive]}>
+                    {town.name}
+                  </Text>
+                  <Text style={styles.townState}>{town.state}</Text>
+                </View>
               </View>
-            </View>
-            {selected === town.name && (
-              <Text style={styles.checkmark}>✓</Text>
-            )}
-          </TouchableOpacity>
-        ))}
+              {selected === town.name && (
+                <Text style={styles.checkmark}>✓</Text>
+              )}
+            </TouchableOpacity>
+          ))
+        )}
         <View style={{ height: 100 }} />
       </ScrollView>
 
       {/* Confirm Button */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.confirmBtn, !selected && !search.trim() && styles.confirmBtnDisabled]}
+          style={[
+            styles.confirmBtn,
+            !selected && !search.trim() && styles.confirmBtnDisabled,
+          ]}
           onPress={handleConfirm}
-          disabled={loading}
+          disabled={loading || (!selected && !search.trim())}
         >
           <Text style={styles.confirmBtnText}>
-            {loading ? 'Saving...' : `Confirm — ${selected || search.trim() || 'Select a town'}`}
+            {loading
+              ? 'Saving...'
+              : selected || search.trim()
+                ? `Confirm — ${selected || search.trim()}`
+                : 'Select a town to continue'
+            }
           </Text>
         </TouchableOpacity>
       </View>
@@ -165,6 +200,9 @@ const styles = StyleSheet.create({
 
   townList:  { flex: 1, paddingHorizontal: 16 },
   listTitle: { fontSize: 13, color: '#888', fontWeight: '600', marginBottom: 8, marginTop: 4 },
+
+  noResults: { alignItems: 'center', paddingVertical: 24 },
+  noResultsText: { fontSize: 13, color: '#888', textAlign: 'center', lineHeight: 20 },
 
   townItem: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
