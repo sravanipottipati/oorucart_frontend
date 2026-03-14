@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, RefreshControl,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import client from '../../api/client';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
@@ -26,13 +27,19 @@ export default function HomeScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [category, setCategory]     = useState('all');
 
-  const { user }                                                        = useAuth();
-  const { cart, shop: cartShop, cartCount, cartTotal }                  = useCart();
-  const town                                                            = user?.town || 'Nellore';
+  const { user }                               = useAuth();
+  const { cart, shop: cartShop, cartCount, cartTotal } = useCart();
+  const [town, setTown]                        = useState(user?.town || 'Nellore');
 
-  const fetchShops = async () => {
+  // Update town when user changes
+  useEffect(() => {
+    if (user?.town) setTown(user.town);
+  }, [user?.town]);
+
+  const fetchShops = async (currentTown) => {
+    const t = currentTown || town;
     try {
-      const res = await client.get(`/vendors/nearby/?town=${town}`);
+      const res = await client.get(`/vendors/nearby/?town=${t}`);
       if (Array.isArray(res.data)) {
         setShops(res.data);
       } else if (res.data.shops) {
@@ -51,8 +58,19 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  useEffect(() => { fetchShops(); }, [town]);
-  const onRefresh = () => { setRefreshing(true); fetchShops(); };
+  // Refetch when town changes
+  useEffect(() => { fetchShops(town); }, [town]);
+
+  // Refetch when screen comes back into focus (after town change)
+  useFocusEffect(
+    useCallback(() => {
+      const currentTown = user?.town || 'Nellore';
+      setTown(currentTown);
+      fetchShops(currentTown);
+    }, [user?.town])
+  );
+
+  const onRefresh = () => { setRefreshing(true); fetchShops(town); };
 
   const filteredShops = shops.filter(shop =>
     category === 'all' || shop.category === category

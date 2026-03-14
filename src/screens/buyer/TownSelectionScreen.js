@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, TextInput, Alert,
+  ScrollView, TextInput, Alert, ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Location from 'expo-location';
 import client from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 
@@ -19,14 +20,14 @@ const POPULAR_TOWNS = [
   { name: 'Rajahmundry',   state: 'Andhra Pradesh' },
   { name: 'Kakinada',      state: 'Andhra Pradesh' },
   { name: 'Anantapur',     state: 'Andhra Pradesh' },
+  { name: 'Vijayawada',    state: 'Andhra Pradesh' },
+  { name: 'Guntur',        state: 'Andhra Pradesh' },
+  { name: 'Visakhapatnam', state: 'Andhra Pradesh' },
   { name: 'Warangal',      state: 'Telangana' },
   { name: 'Karimnagar',    state: 'Telangana' },
   { name: 'Nizamabad',     state: 'Telangana' },
   { name: 'Khammam',       state: 'Telangana' },
   { name: 'Hyderabad',     state: 'Telangana' },
-  { name: 'Vijayawada',    state: 'Andhra Pradesh' },
-  { name: 'Guntur',        state: 'Andhra Pradesh' },
-  { name: 'Visakhapatnam', state: 'Andhra Pradesh' },
   { name: 'Mysuru',        state: 'Karnataka' },
   { name: 'Hubli',         state: 'Karnataka' },
   { name: 'Mangaluru',     state: 'Karnataka' },
@@ -38,14 +39,60 @@ const POPULAR_TOWNS = [
 ];
 
 export default function TownSelectionScreen({ navigation }) {
-  const [search, setSearch]     = useState('');
-  const [selected, setSelected] = useState('');
-  const [loading, setLoading]   = useState(false);
-  const { user, setUser }       = useAuth();
+  const [search, setSearch]         = useState('');
+  const [selected, setSelected]     = useState('');
+  const [loading, setLoading]       = useState(false);
+  const [detecting, setDetecting]   = useState(false);
+  const [detectedTown, setDetectedTown] = useState('');
+  const { user, setUser }           = useAuth();
 
   const filtered = POPULAR_TOWNS.filter(t =>
     t.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  // Auto-detect location on screen open
+  useEffect(() => {
+    detectLocation();
+  }, []);
+
+  const detectLocation = async () => {
+    setDetecting(true);
+    try {
+      // Ask for permission
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('Location permission denied');
+        setDetecting(false);
+        return;
+      }
+
+      // Get GPS coordinates
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      // Reverse geocode to get city name
+      const geocode = await Location.reverseGeocodeAsync({
+        latitude:  location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+
+      if (geocode && geocode.length > 0) {
+        const place = geocode[0];
+        // Try city, then subregion, then region
+        const city = place.city || place.subregion || place.region || '';
+        if (city) {
+          setDetectedTown(city);
+          setSelected(city);
+          setSearch(city);
+        }
+      }
+    } catch (e) {
+      console.log('Location detection error:', e.message);
+    } finally {
+      setDetecting(false);
+    }
+  };
 
   const handleConfirm = async () => {
     const town = selected || search.trim();
@@ -62,7 +109,6 @@ export default function TownSelectionScreen({ navigation }) {
       navigation.replace('Home');
     } catch (e) {
       console.log('Town update error:', e.message);
-      // Still navigate even if API fails
       const updatedUser = { ...user, town };
       await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
@@ -84,6 +130,30 @@ export default function TownSelectionScreen({ navigation }) {
         </Text>
       </View>
 
+      {/* GPS Detection Banner */}
+      {detecting ? (
+        <View style={styles.detectingBanner}>
+          <ActivityIndicator size="small" color="#2563EB" />
+          <Text style={styles.detectingText}>Detecting your location...</Text>
+        </View>
+      ) : detectedTown ? (
+        <View style={styles.detectedBanner}>
+          <Text style={styles.detectedText}>
+            📍 Detected: {detectedTown}
+          </Text>
+          <TouchableOpacity
+            style={styles.useLocationBtn}
+            onPress={() => { setSelected(detectedTown); setSearch(detectedTown); }}
+          >
+            <Text style={styles.useLocationBtnText}>Use This</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity style={styles.detectBtn} onPress={detectLocation}>
+          <Text style={styles.detectBtnText}>📍 Detect My Location</Text>
+        </TouchableOpacity>
+      )}
+
       {/* Search */}
       <View style={styles.searchBox}>
         <Text style={styles.searchIcon}>🔍</Text>
@@ -93,7 +163,6 @@ export default function TownSelectionScreen({ navigation }) {
           placeholderTextColor="#9CA3AF"
           value={search}
           onChangeText={t => { setSearch(t); setSelected(''); }}
-          autoFocus
         />
         {search.length > 0 && (
           <TouchableOpacity onPress={() => { setSearch(''); setSelected(''); }}>
@@ -118,7 +187,7 @@ export default function TownSelectionScreen({ navigation }) {
         {filtered.length === 0 ? (
           <View style={styles.noResults}>
             <Text style={styles.noResultsText}>
-              No town found — you can still type your town name and confirm!
+              No town found — you can still type your town and confirm!
             </Text>
           </View>
         ) : (
@@ -182,6 +251,33 @@ const styles = StyleSheet.create({
   headerEmoji:    { fontSize: 48, marginBottom: 12 },
   headerTitle:    { fontSize: 22, fontWeight: 'bold', color: '#111', marginBottom: 8 },
   headerSubtitle: { fontSize: 14, color: '#555', textAlign: 'center', lineHeight: 20 },
+
+  detectingBanner: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 10, backgroundColor: '#EFF6FF',
+    marginHorizontal: 16, marginTop: 12,
+    borderRadius: 12, padding: 12,
+  },
+  detectingText: { fontSize: 14, color: '#2563EB', fontWeight: '500' },
+
+  detectedBanner: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: '#DCFCE7', marginHorizontal: 16, marginTop: 12,
+    borderRadius: 12, padding: 12,
+  },
+  detectedText: { fontSize: 14, color: '#16A34A', fontWeight: '600' },
+  useLocationBtn: {
+    backgroundColor: '#16A34A', borderRadius: 8,
+    paddingHorizontal: 12, paddingVertical: 6,
+  },
+  useLocationBtnText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
+
+  detectBtn: {
+    backgroundColor: '#EFF6FF', marginHorizontal: 16, marginTop: 12,
+    borderRadius: 12, padding: 12, alignItems: 'center',
+    borderWidth: 1.5, borderColor: '#BFDBFE',
+  },
+  detectBtnText: { fontSize: 14, color: '#2563EB', fontWeight: '600' },
 
   searchBox: {
     flexDirection: 'row', alignItems: 'center',
