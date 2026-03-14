@@ -3,11 +3,12 @@ import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, TextInput, Alert, ActivityIndicator,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
 import client from '../../api/client';
 
 export default function EditProfileScreen({ navigation }) {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
 
   const [fullName, setFullName] = useState(user?.full_name || '');
   const [email, setEmail]       = useState(user?.email || '');
@@ -28,6 +29,9 @@ export default function EditProfileScreen({ navigation }) {
     setLoading(true);
     try {
       await client.patch('/users/profile/', { full_name: fullName, email });
+      const updatedUser = { ...user, full_name: fullName, email };
+      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
       Alert.alert('Success', 'Profile updated successfully!', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
@@ -57,15 +61,14 @@ export default function EditProfileScreen({ navigation }) {
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{initials}</Text>
           </View>
-          <TouchableOpacity style={styles.changePhotoBtn}>
-            <Text style={styles.changePhotoText}>Change Photo</Text>
-          </TouchableOpacity>
+          <Text style={styles.avatarName}>{fullName || 'Your Name'}</Text>
+          <Text style={styles.avatarPhone}>+91 {user?.phone_number}</Text>
         </View>
 
         {/* Form */}
         <View style={styles.formCard}>
 
-          <Text style={styles.fieldLabel}>Full Name</Text>
+          <Text style={styles.fieldLabel}>Full Name *</Text>
           <TextInput
             style={styles.input}
             placeholder="Enter your full name"
@@ -84,13 +87,24 @@ export default function EditProfileScreen({ navigation }) {
           <Text style={styles.fieldLabel}>Email Address</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter your email"
+            placeholder="Enter your email (optional)"
             placeholderTextColor="#9CA3AF"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
           />
+
+          <Text style={styles.fieldLabel}>Town</Text>
+          <TouchableOpacity
+            style={styles.townBtn}
+            onPress={() => navigation.navigate('TownSelection')}
+          >
+            <Text style={styles.townBtnText}>
+              📍 {user?.town || 'Select your town'}
+            </Text>
+            <Text style={styles.townBtnArrow}>›</Text>
+          </TouchableOpacity>
 
           <Text style={styles.fieldLabel}>Gender</Text>
           <View style={styles.genderRow}>
@@ -100,7 +114,10 @@ export default function EditProfileScreen({ navigation }) {
                 style={[styles.genderBtn, gender === g && styles.genderBtnActive]}
                 onPress={() => setGender(g)}
               >
-                <Text style={[styles.genderBtnText, gender === g && styles.genderBtnTextActive]}>
+                <Text style={[
+                  styles.genderBtnText,
+                  gender === g && styles.genderBtnTextActive,
+                ]}>
                   {g}
                 </Text>
               </TouchableOpacity>
@@ -115,11 +132,10 @@ export default function EditProfileScreen({ navigation }) {
           onPress={handleSave}
           disabled={loading}
         >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.saveBtnText}>Save Changes</Text>
-          )}
+          {loading
+            ? <ActivityIndicator color="#fff" />
+            : <Text style={styles.saveBtnText}>Save Changes</Text>
+          }
         </TouchableOpacity>
 
         <View style={{ height: 40 }} />
@@ -140,24 +156,20 @@ const styles = StyleSheet.create({
   backText: { fontSize: 24, color: '#111' },
   headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
 
-  avatarSection: { alignItems: 'center', paddingVertical: 24 },
+  avatarSection: { alignItems: 'center', paddingVertical: 28, backgroundColor: '#fff', marginBottom: 16 },
   avatar: {
-    width: 80, height: 80, borderRadius: 40,
+    width: 84, height: 84, borderRadius: 42,
     backgroundColor: '#2563EB', justifyContent: 'center',
-    alignItems: 'center', marginBottom: 12,
+    alignItems: 'center', marginBottom: 10,
   },
-  avatarText: { color: '#fff', fontSize: 28, fontWeight: 'bold' },
-  changePhotoBtn: {
-    borderWidth: 1.5, borderColor: '#2563EB',
-    borderRadius: 20, paddingHorizontal: 20, paddingVertical: 6,
-  },
-  changePhotoText: { fontSize: 13, color: '#2563EB', fontWeight: '600' },
+  avatarText:  { color: '#fff', fontSize: 30, fontWeight: 'bold' },
+  avatarName:  { fontSize: 16, fontWeight: 'bold', color: '#111', marginBottom: 4 },
+  avatarPhone: { fontSize: 13, color: '#888' },
 
   formCard: {
     backgroundColor: '#fff', borderRadius: 16,
     marginHorizontal: 16, padding: 16, marginBottom: 16,
   },
-
   fieldLabel: {
     fontSize: 13, fontWeight: '600', color: '#555',
     marginBottom: 8, marginTop: 14,
@@ -172,8 +184,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
   inputDisabledText: { fontSize: 14, color: '#9CA3AF' },
-  lockedIcon: { fontSize: 14 },
-  fieldHint: { fontSize: 11, color: '#9CA3AF', marginTop: 4 },
+  lockedIcon:  { fontSize: 14 },
+  fieldHint:   { fontSize: 11, color: '#9CA3AF', marginTop: 4 },
+
+  townBtn: {
+    borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12,
+    padding: 12, backgroundColor: '#F9FAFB',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+  },
+  townBtnText:  { fontSize: 14, color: '#111' },
+  townBtnArrow: { fontSize: 18, color: '#888' },
 
   genderRow: { flexDirection: 'row', gap: 10 },
   genderBtn: {
@@ -181,8 +201,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: '#E5E7EB',
     alignItems: 'center', backgroundColor: '#F9FAFB',
   },
-  genderBtnActive: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
-  genderBtnText: { fontSize: 13, color: '#555', fontWeight: '500' },
+  genderBtnActive:     { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
+  genderBtnText:       { fontSize: 13, color: '#555', fontWeight: '500' },
   genderBtnTextActive: { color: '#2563EB', fontWeight: 'bold' },
 
   saveBtn: {

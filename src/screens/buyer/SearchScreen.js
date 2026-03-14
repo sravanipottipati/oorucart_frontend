@@ -4,13 +4,16 @@ import {
   ScrollView, TextInput, ActivityIndicator,
 } from 'react-native';
 import client from '../../api/client';
+import { useAuth } from '../../context/AuthContext';
 
 export default function SearchScreen({ navigation }) {
-  const [query, setQuery]       = useState('');
-  const [results, setResults]   = useState(null);
-  const [loading, setLoading]   = useState(false);
+  const [query, setQuery]         = useState('');
+  const [results, setResults]     = useState(null);
+  const [loading, setLoading]     = useState(false);
   const [activeTab, setActiveTab] = useState('products');
-  const debounceRef             = useRef(null);
+  const debounceRef               = useRef(null);
+  const { user }                  = useAuth();
+  const town                      = user?.town || '';
 
   const handleSearch = (text) => {
     setQuery(text);
@@ -22,7 +25,10 @@ export default function SearchScreen({ navigation }) {
   const doSearch = async (q) => {
     setLoading(true);
     try {
-      const res = await client.get(`/vendors/search/?q=${q}`);
+      const url = town
+        ? `/vendors/search/?q=${q}&town=${town}`
+        : `/vendors/search/?q=${q}`;
+      const res = await client.get(url);
       setResults(res.data);
     } catch (e) {
       console.log('Search error:', e.message);
@@ -45,7 +51,7 @@ export default function SearchScreen({ navigation }) {
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search products or shops..."
+            placeholder={town ? `Search in ${town}...` : 'Search products or shops...'}
             placeholderTextColor="#9CA3AF"
             value={query}
             onChangeText={handleSearch}
@@ -59,7 +65,14 @@ export default function SearchScreen({ navigation }) {
         </View>
       </View>
 
-      {/* Tabs — only show when results exist */}
+      {/* Town indicator */}
+      {town ? (
+        <View style={styles.townBar}>
+          <Text style={styles.townBarText}>📍 Showing results in <Text style={styles.townBarBold}>{town}</Text></Text>
+        </View>
+      ) : null}
+
+      {/* Tabs */}
       {results && (
         <View style={styles.tabsRow}>
           <TouchableOpacity
@@ -83,13 +96,14 @@ export default function SearchScreen({ navigation }) {
 
       {loading ? (
         <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 40 }} />
-      ) : !query ? (
 
-        /* Empty State */
+      ) : !query ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>🔍</Text>
           <Text style={styles.emptyTitle}>Search OoruCart</Text>
-          <Text style={styles.emptySubtitle}>Find products and shops near you</Text>
+          <Text style={styles.emptySubtitle}>
+            {town ? `Find products and shops in ${town}` : 'Find products and shops near you'}
+          </Text>
           <View style={styles.suggestionsBox}>
             <Text style={styles.suggestionsLabel}>Try searching for</Text>
             {['Tomatoes', 'Bread', 'Rice', 'Vegetables', 'Bakery'].map(s => (
@@ -105,16 +119,15 @@ export default function SearchScreen({ navigation }) {
         </View>
 
       ) : results && totalResults === 0 ? (
-
-        /* No Results */
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>😕</Text>
           <Text style={styles.emptyTitle}>No results for "{query}"</Text>
-          <Text style={styles.emptySubtitle}>Try a different search term</Text>
+          <Text style={styles.emptySubtitle}>
+            {town ? `No results in ${town}. Try a different search term.` : 'Try a different search term'}
+          </Text>
         </View>
 
       ) : results ? (
-
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16 }}>
 
           {/* Products Tab */}
@@ -174,8 +187,16 @@ export default function SearchScreen({ navigation }) {
                       <Text style={styles.shopTown}>📍 {shop.town}</Text>
                     </View>
                     <View style={styles.shopRight}>
-                      <View style={styles.openBadge}>
-                        <Text style={styles.openText}>● Open</Text>
+                      <View style={[
+                        styles.openBadge,
+                        { backgroundColor: shop.is_open ? '#DCFCE7' : '#F3F4F6' }
+                      ]}>
+                        <Text style={[
+                          styles.openText,
+                          { color: shop.is_open ? '#16A34A' : '#9CA3AF' }
+                        ]}>
+                          {shop.is_open ? '● Open' : '● Closed'}
+                        </Text>
                       </View>
                       <Text style={styles.shopArrow}>›</Text>
                     </View>
@@ -206,31 +227,36 @@ const styles = StyleSheet.create({
   backText: { fontSize: 24, color: '#111' },
   searchBar: {
     flex: 1, flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#F3F4F6', borderRadius: 12, paddingHorizontal: 12, height: 42, gap: 8,
+    backgroundColor: '#F3F4F6', borderRadius: 12,
+    paddingHorizontal: 12, height: 42, gap: 8,
   },
-  searchIcon: { fontSize: 16 },
+  searchIcon:  { fontSize: 16 },
   searchInput: { flex: 1, fontSize: 14, color: '#111' },
-  clearIcon: { fontSize: 16, color: '#9CA3AF' },
+  clearIcon:   { fontSize: 16, color: '#9CA3AF' },
+
+  townBar: {
+    backgroundColor: '#EFF6FF', paddingHorizontal: 16,
+    paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#DBEAFE',
+  },
+  townBarText: { fontSize: 12, color: '#2563EB' },
+  townBarBold: { fontWeight: 'bold' },
 
   tabsRow: {
     flexDirection: 'row', backgroundColor: '#fff',
     borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
     paddingHorizontal: 16, gap: 8, paddingVertical: 10,
   },
-  tab: {
-    paddingHorizontal: 16, paddingVertical: 7,
-    borderRadius: 20, backgroundColor: '#F3F4F6',
-  },
-  tabActive: { backgroundColor: '#2563EB' },
-  tabText: { fontSize: 13, color: '#555', fontWeight: '500' },
+  tab:           { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20, backgroundColor: '#F3F4F6' },
+  tabActive:     { backgroundColor: '#2563EB' },
+  tabText:       { fontSize: 13, color: '#555', fontWeight: '500' },
   tabTextActive: { color: '#fff', fontWeight: 'bold' },
 
-  emptyState: { alignItems: 'center', marginTop: 50, paddingHorizontal: 32 },
-  emptyEmoji: { fontSize: 52, marginBottom: 12 },
-  emptyTitle: { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 6 },
+  emptyState:    { alignItems: 'center', marginTop: 50, paddingHorizontal: 32 },
+  emptyEmoji:    { fontSize: 52, marginBottom: 12 },
+  emptyTitle:    { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 6 },
   emptySubtitle: { fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 24 },
 
-  suggestionsBox: { width: '100%' },
+  suggestionsBox:   { width: '100%' },
   suggestionsLabel: { fontSize: 13, color: '#888', marginBottom: 10 },
   suggestionChip: {
     backgroundColor: '#fff', borderRadius: 12, padding: 14,
@@ -238,7 +264,7 @@ const styles = StyleSheet.create({
   },
   suggestionText: { fontSize: 14, color: '#111' },
 
-  tabEmpty: { alignItems: 'center', marginTop: 40 },
+  tabEmpty:     { alignItems: 'center', marginTop: 40 },
   tabEmptyText: { fontSize: 14, color: '#888' },
 
   productCard: {
@@ -252,11 +278,11 @@ const styles = StyleSheet.create({
     width: 46, height: 46, borderRadius: 23,
     backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center',
   },
-  productIcon: { fontSize: 22 },
-  productInfo: { flex: 1 },
-  productName: { fontSize: 14, fontWeight: 'bold', color: '#111', marginBottom: 3 },
-  productShop: { fontSize: 12, color: '#555', marginBottom: 2 },
-  productTown: { fontSize: 11, color: '#888' },
+  productIcon:  { fontSize: 22 },
+  productInfo:  { flex: 1 },
+  productName:  { fontSize: 14, fontWeight: 'bold', color: '#111', marginBottom: 3 },
+  productShop:  { fontSize: 12, color: '#555', marginBottom: 2 },
+  productTown:  { fontSize: 11, color: '#888' },
   productRight: { alignItems: 'flex-end', gap: 4 },
   productPrice: { fontSize: 15, fontWeight: 'bold', color: '#2563EB' },
   productArrow: { fontSize: 20, color: '#9CA3AF' },
@@ -273,12 +299,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#2563EB', justifyContent: 'center', alignItems: 'center',
   },
   shopAvatarText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
-  shopInfo: { flex: 1 },
-  shopName: { fontSize: 14, fontWeight: 'bold', color: '#111', marginBottom: 3 },
-  shopCategory: { fontSize: 12, color: '#555', marginBottom: 2 },
-  shopTown: { fontSize: 11, color: '#888' },
-  shopRight: { alignItems: 'flex-end', gap: 6 },
-  openBadge: { backgroundColor: '#DCFCE7', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
-  openText: { fontSize: 11, color: '#16A34A', fontWeight: '600' },
-  shopArrow: { fontSize: 20, color: '#9CA3AF' },
+  shopInfo:       { flex: 1 },
+  shopName:       { fontSize: 14, fontWeight: 'bold', color: '#111', marginBottom: 3 },
+  shopCategory:   { fontSize: 12, color: '#555', marginBottom: 2 },
+  shopTown:       { fontSize: 11, color: '#888' },
+  shopRight:      { alignItems: 'flex-end', gap: 6 },
+  openBadge:      { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
+  openText:       { fontSize: 11, fontWeight: '600' },
+  shopArrow:      { fontSize: 20, color: '#9CA3AF' },
 });
