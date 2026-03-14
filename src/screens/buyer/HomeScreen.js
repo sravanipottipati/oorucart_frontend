@@ -1,12 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, RefreshControl,
+  Dimensions, FlatList,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import client from '../../api/client';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const CATEGORIES = [
   { id: 'all',         label: 'All',        emoji: '🛍' },
@@ -21,15 +24,64 @@ const CATEGORIES = [
 
 const SHOP_COLORS = ['#4CAF50', '#FF7043', '#FFA726', '#42A5F5', '#AB47BC', '#26A69A'];
 
+const OFFERS = [
+  {
+    id: '1',
+    title: '50% OFF',
+    subtitle: 'On your first order',
+    emoji: '🎉',
+    bg: '#2563EB',
+    tag: 'NEW USER',
+  },
+  {
+    id: '2',
+    title: 'Free Delivery',
+    subtitle: 'On all vegetable orders',
+    emoji: '🥦',
+    bg: '#16A34A',
+    tag: 'TODAY ONLY',
+  },
+  {
+    id: '3',
+    title: 'Order Fresh',
+    subtitle: 'From local shops near you',
+    emoji: '🏪',
+    bg: '#EA580C',
+    tag: 'LOCAL FIRST',
+  },
+  {
+    id: '4',
+    title: 'Cash on Delivery',
+    subtitle: 'Pay when you receive',
+    emoji: '💵',
+    bg: '#7C3AED',
+    tag: 'SAFE & EASY',
+  },
+];
+
 export default function HomeScreen({ navigation }) {
   const [shops, setShops]           = useState([]);
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [category, setCategory]     = useState('all');
+  const [bannerIndex, setBannerIndex] = useState(0);
+  const bannerRef = useRef(null);
 
-  const { user }                               = useAuth();
+  const { user }                                       = useAuth();
   const { cart, shop: cartShop, cartCount, cartTotal } = useCart();
-  const [town, setTown]                        = useState(user?.town || 'Nellore');
+  const [town, setTown]                                = useState(user?.town || 'Nellore');
+
+  // Auto-scroll banner
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setBannerIndex(prev => {
+        const next = (prev + 1) % OFFERS.length;
+        bannerRef.current?.scrollToIndex({ index: next, animated: true });
+        return next;
+      });
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Update town when user changes
   useEffect(() => {
@@ -58,10 +110,8 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  // Refetch when town changes
   useEffect(() => { fetchShops(town); }, [town]);
 
-  // Refetch when screen comes back into focus (after town change)
   useFocusEffect(
     useCallback(() => {
       const currentTown = user?.town || 'Nellore';
@@ -78,6 +128,14 @@ export default function HomeScreen({ navigation }) {
 
   const getShopColor = (index) => SHOP_COLORS[index % SHOP_COLORS.length];
 
+  const renderStars = (rating) => {
+    const r = parseFloat(rating) || 0;
+    const full  = Math.floor(r);
+    const half  = r % 1 >= 0.5 ? 1 : 0;
+    const empty = 5 - full - half;
+    return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(empty);
+  };
+
   const ShopCard = ({ shop, index }) => (
     <TouchableOpacity
       style={styles.shopCard}
@@ -86,29 +144,58 @@ export default function HomeScreen({ navigation }) {
         shopName: shop.shop_name,
       })}
     >
-      <View style={[styles.shopIcon, { backgroundColor: getShopColor(index) }]}>
-        <Text style={styles.shopIconText}>
+      {/* Shop Banner */}
+      <View style={[styles.shopBanner, { backgroundColor: getShopColor(index) }]}>
+        <Text style={styles.shopBannerEmoji}>
           {CATEGORIES.find(c => c.id === shop.category)?.emoji || '🏪'}
         </Text>
+        <View style={[
+          styles.shopStatusDot,
+          { backgroundColor: shop.is_open ? '#16A34A' : '#9CA3AF' }
+        ]} />
       </View>
-      <View style={styles.shopInfo}>
-        <Text style={styles.shopName}>{shop.shop_name}</Text>
+
+      {/* Shop Info */}
+      <View style={styles.shopCardBody}>
+        <View style={styles.shopCardTop}>
+          <Text style={styles.shopName} numberOfLines={1}>{shop.shop_name}</Text>
+          <View style={[
+            styles.openBadge,
+            { backgroundColor: shop.is_open ? '#DCFCE7' : '#F3F4F6' }
+          ]}>
+            <Text style={[
+              styles.openBadgeText,
+              { color: shop.is_open ? '#16A34A' : '#9CA3AF' }
+            ]}>
+              {shop.is_open ? 'Open' : 'Closed'}
+            </Text>
+          </View>
+        </View>
+
         <Text style={styles.shopCategory}>
           {CATEGORIES.find(c => c.id === shop.category)?.label || shop.category}
         </Text>
+
         <View style={styles.shopMeta}>
-          <Text style={styles.shopMetaText}>📍 {shop.town}</Text>
-          <Text style={styles.shopMetaText}>  ⏱ {shop.estimated_delivery_time || 30} mins</Text>
+          {shop.rating > 0 ? (
+            <View style={styles.ratingBox}>
+              <Text style={styles.ratingStars}>★</Text>
+              <Text style={styles.ratingText}>{parseFloat(shop.rating).toFixed(1)}</Text>
+              {shop.total_reviews > 0 && (
+                <Text style={styles.reviewCount}>({shop.total_reviews})</Text>
+              )}
+            </View>
+          ) : (
+            <View style={styles.ratingBox}>
+              <Text style={styles.ratingStars}>★</Text>
+              <Text style={styles.ratingNew}>New</Text>
+            </View>
+          )}
+          <Text style={styles.dot}>•</Text>
+          <Text style={styles.shopMetaText}>⏱ {shop.estimated_delivery_time || 30} mins</Text>
+          <Text style={styles.dot}>•</Text>
+          <Text style={styles.deliveryFree}>Free Delivery</Text>
         </View>
-      </View>
-      <View style={[styles.statusBadge, {
-        backgroundColor: shop.is_open ? '#E8F5E9' : '#F5F5F5',
-      }]}>
-        <Text style={[styles.statusText, {
-          color: shop.is_open ? '#2E7D32' : '#999',
-        }]}>
-          {shop.is_open ? '● Open' : 'Closed'}
-        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -158,6 +245,47 @@ export default function HomeScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
+
+        {/* Offers Banner */}
+        <FlatList
+          ref={bannerRef}
+          data={OFFERS}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={item => item.id}
+          onMomentumScrollEnd={e => {
+            const index = Math.round(e.nativeEvent.contentOffset.x / (SCREEN_WIDTH - 32));
+            setBannerIndex(index);
+          }}
+          renderItem={({ item }) => (
+            <View style={[styles.bannerCard, { backgroundColor: item.bg }]}>
+              <View style={styles.bannerLeft}>
+                <View style={styles.bannerTag}>
+                  <Text style={styles.bannerTagText}>{item.tag}</Text>
+                </View>
+                <Text style={styles.bannerTitle}>{item.title}</Text>
+                <Text style={styles.bannerSubtitle}>{item.subtitle}</Text>
+              </View>
+              <Text style={styles.bannerEmoji}>{item.emoji}</Text>
+            </View>
+          )}
+          style={styles.bannerList}
+          contentContainerStyle={{ paddingHorizontal: 16 }}
+          snapToInterval={SCREEN_WIDTH - 32 + 12}
+          decelerationRate="fast"
+        />
+
+        {/* Banner Dots */}
+        <View style={styles.dotsRow}>
+          {OFFERS.map((_, i) => (
+            <View
+              key={i}
+              style={[styles.dot2, i === bannerIndex && styles.dotActive]}
+            />
+          ))}
+        </View>
+
         {/* Categories */}
         <Text style={styles.sectionTitle}>Categories</Text>
         <ScrollView
@@ -292,7 +420,7 @@ export default function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: '#F8F9FA' },
 
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
@@ -313,16 +441,42 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#F3F4F6', borderRadius: 12,
-    marginHorizontal: 16, marginBottom: 16, padding: 12,
+    marginHorizontal: 16, marginVertical: 12, padding: 12,
   },
   searchIcon: { fontSize: 16, marginRight: 8 },
   searchPlaceholder: { fontSize: 14, color: '#9CA3AF' },
+
+  // Banner
+  bannerList: { marginBottom: 8 },
+  bannerCard: {
+    width: SCREEN_WIDTH - 44,
+    borderRadius: 16, padding: 20,
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between',
+    marginRight: 12, height: 110,
+  },
+  bannerLeft: { flex: 1 },
+  bannerTag: {
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    alignSelf: 'flex-start', borderRadius: 6,
+    paddingHorizontal: 8, paddingVertical: 3, marginBottom: 8,
+  },
+  bannerTagText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
+  bannerTitle:   { color: '#fff', fontSize: 22, fontWeight: 'bold', marginBottom: 4 },
+  bannerSubtitle:{ color: 'rgba(255,255,255,0.85)', fontSize: 13 },
+  bannerEmoji:   { fontSize: 52 },
+
+  dotsRow: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginBottom: 16 },
+  dot2:    { width: 6, height: 6, borderRadius: 3, backgroundColor: '#D1D5DB' },
+  dotActive: { backgroundColor: '#2563EB', width: 18 },
 
   categoriesRow: { paddingLeft: 16, marginBottom: 8 },
   categoryItem: { alignItems: 'center', marginRight: 16, marginBottom: 8 },
   categoryCircle: {
     width: 60, height: 60, borderRadius: 30,
-    backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center', marginBottom: 6,
+    backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center',
+    marginBottom: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08, shadowRadius: 4, elevation: 2,
   },
   categoryCircleActive: { backgroundColor: '#DBEAFE' },
   categoryEmoji: { fontSize: 26 },
@@ -339,25 +493,45 @@ const styles = StyleSheet.create({
   },
   seeAll: { fontSize: 13, color: '#2563EB', fontWeight: '600' },
 
+  // New Shop Card style
   shopCard: {
-    flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#fff', marginHorizontal: 16,
-    marginBottom: 12, borderRadius: 16, padding: 14,
+    marginBottom: 16, borderRadius: 16,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.07, shadowRadius: 8, elevation: 3,
+    overflow: 'hidden',
   },
-  shopIcon: {
-    width: 60, height: 60, borderRadius: 14,
-    justifyContent: 'center', alignItems: 'center', marginRight: 12,
+  shopBanner: {
+    height: 100, justifyContent: 'center', alignItems: 'center',
+    position: 'relative',
   },
-  shopIconText: { fontSize: 28 },
-  shopInfo: { flex: 1 },
-  shopName: { fontSize: 15, fontWeight: 'bold', color: '#111', marginBottom: 2 },
-  shopCategory: { fontSize: 12, color: '#888', marginBottom: 4 },
-  shopMeta: { flexDirection: 'row' },
-  shopMetaText: { fontSize: 11, color: '#888' },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  statusText: { fontSize: 12, fontWeight: '600' },
+  shopBannerEmoji: { fontSize: 48 },
+  shopStatusDot: {
+    position: 'absolute', top: 10, right: 10,
+    width: 10, height: 10, borderRadius: 5,
+    borderWidth: 2, borderColor: '#fff',
+  },
+  shopCardBody: { padding: 14 },
+  shopCardTop: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 4,
+  },
+  shopName: { fontSize: 15, fontWeight: 'bold', color: '#111', flex: 1 },
+  openBadge: {
+    paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: 20, marginLeft: 8,
+  },
+  openBadgeText: { fontSize: 11, fontWeight: '600' },
+  shopCategory: { fontSize: 12, color: '#888', marginBottom: 8 },
+  shopMeta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  ratingBox: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  ratingStars: { fontSize: 13, color: '#F59E0B' },
+  ratingText: { fontSize: 12, fontWeight: 'bold', color: '#111' },
+  ratingNew: { fontSize: 12, color: '#888' },
+  reviewCount: { fontSize: 11, color: '#888' },
+  dot: { fontSize: 10, color: '#D1D5DB' },
+  shopMetaText: { fontSize: 12, color: '#555' },
+  deliveryFree: { fontSize: 12, color: '#16A34A', fontWeight: '600' },
 
   emptyState: { alignItems: 'center', marginTop: 60, paddingHorizontal: 32 },
   emptyEmoji: { fontSize: 50, marginBottom: 12 },
