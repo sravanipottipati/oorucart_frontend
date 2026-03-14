@@ -20,7 +20,11 @@ export default function LoginScreen({ navigation }) {
       if (user.user_type === 'vendor') {
         navigation.replace('VendorHome');
       } else if (user.user_type === 'buyer') {
-        navigation.replace('Home');
+        if (!user.town) {
+          navigation.replace('TownSelection');
+        } else {
+          navigation.replace('Home');
+        }
       } else {
         Alert.alert('Error', 'Unknown account type');
       }
@@ -39,35 +43,25 @@ export default function LoginScreen({ navigation }) {
       <ScrollView contentContainerStyle={styles.inner} showsVerticalScrollIndicator={false}>
 
         {/* ── LOGO SECTION ── */}
-        <View style={styles.logoSection}>
-          {/* Blue background pill */}
-          <View style={styles.logoCard}>
-            {/* Decorative circles */}
-            <View style={styles.decCircle1} />
-            <View style={styles.decCircle2} />
-
-            {/* Icon box */}
-            <View style={styles.iconBox}>
-              <Text style={styles.iconText}>S</Text>
-            </View>
-
-            {/* App name */}
-            <Text style={styles.logoText}>Shop2me</Text>
-            <Text style={styles.logoTagline}>Your local shops, delivered</Text>
-
-            {/* Pills */}
-            <View style={styles.pillsRow}>
-              <View style={styles.pill}><Text style={styles.pillText}>Order</Text></View>
-              <View style={styles.pill}><Text style={styles.pillText}>Track</Text></View>
-              <View style={styles.pill}><Text style={styles.pillText}>Receive</Text></View>
-            </View>
+        <View style={styles.logoCard}>
+          <View style={styles.decCircle1} />
+          <View style={styles.decCircle2} />
+          <View style={styles.iconBox}>
+            <Text style={styles.iconText}>S</Text>
+          </View>
+          <Text style={styles.logoText}>Shop2me</Text>
+          <Text style={styles.logoTagline}>Your local shops, delivered</Text>
+          <View style={styles.pillsRow}>
+            <View style={styles.pill}><Text style={styles.pillText}>Order</Text></View>
+            <View style={styles.pill}><Text style={styles.pillText}>Track</Text></View>
+            <View style={styles.pill}><Text style={styles.pillText}>Receive</Text></View>
           </View>
         </View>
 
         {/* ── LOGIN CARD ── */}
         <View style={styles.card}>
           <Text style={styles.title}>Welcome Back 👋</Text>
-          <Text style={styles.subtitle}>Sign in to continue</Text>
+          <Text style={styles.subtitle}>Login to continue</Text>
 
           <Text style={styles.label}>Phone Number</Text>
           <View style={styles.inputWrapper}>
@@ -100,7 +94,7 @@ export default function LoginScreen({ navigation }) {
           >
             {loading
               ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.buttonText}>Sign In →</Text>
+              : <Text style={styles.buttonText}>Login →</Text>
             }
           </TouchableOpacity>
 
@@ -110,18 +104,6 @@ export default function LoginScreen({ navigation }) {
             </Text>
           </TouchableOpacity>
 
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          <TouchableOpacity
-            style={styles.sellerBtn}
-            onPress={() => navigation.navigate('VendorRegister')}
-          >
-            <Text style={styles.sellerBtnText}>🏪 Register as a Seller</Text>
-          </TouchableOpacity>
         </View>
 
         <Text style={styles.footer}>Shop2me — Your local shops, delivered 🛒</Text>
@@ -135,12 +117,11 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9FA' },
   inner: { flexGrow: 1, alignItems: 'center', padding: 24, paddingTop: 60 },
 
-  // Logo Section
-  logoSection: { width: '100%', marginBottom: 28 },
+  // Logo
   logoCard: {
     backgroundColor: '#2563EB', borderRadius: 28,
-    padding: 28, alignItems: 'center',
-    overflow: 'hidden', position: 'relative',
+    padding: 28, alignItems: 'center', width: '100%',
+    marginBottom: 28, overflow: 'hidden', position: 'relative',
   },
   decCircle1: {
     position: 'absolute', width: 120, height: 120,
@@ -155,21 +136,12 @@ const styles = StyleSheet.create({
   iconBox: {
     width: 72, height: 72, borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.9)',
-    justifyContent: 'center', alignItems: 'center',
-    marginBottom: 14,
+    justifyContent: 'center', alignItems: 'center', marginBottom: 14,
   },
-  iconText: {
-    fontSize: 36, fontWeight: '900', color: '#2563EB',
-  },
-  logoText: {
-    fontSize: 36, fontWeight: '700', color: 'white',
-    letterSpacing: -1, marginBottom: 6,
-  },
-  logoTagline: {
-    fontSize: 13, color: '#BFDBFE',
-    marginBottom: 16, letterSpacing: 0.3,
-  },
-  pillsRow: { flexDirection: 'row', gap: 8 },
+  iconText:    { fontSize: 36, fontWeight: '900', color: '#2563EB' },
+  logoText:    { fontSize: 36, fontWeight: '700', color: 'white', letterSpacing: -1, marginBottom: 6 },
+  logoTagline: { fontSize: 13, color: '#BFDBFE', marginBottom: 16, letterSpacing: 0.3 },
+  pillsRow:    { flexDirection: 'row', gap: 8 },
   pill: {
     backgroundColor: 'rgba(255,255,255,0.15)',
     paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20,
@@ -194,9 +166,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB', marginBottom: 16, overflow: 'hidden',
   },
   inputPrefix: {
-    paddingHorizontal: 12, fontSize: 14,
-    color: '#555', borderRightWidth: 1,
-    borderRightColor: '#E5E7EB', paddingVertical: 14,
+    paddingHorizontal: 12, fontSize: 14, color: '#555',
+    borderRightWidth: 1, borderRightColor: '#E5E7EB', paddingVertical: 14,
   },
   input: { flex: 1, padding: 14, fontSize: 15, color: '#111' },
 
@@ -212,22 +183,8 @@ const styles = StyleSheet.create({
   },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 
-  link:     { textAlign: 'center', color: '#555', fontSize: 14, marginBottom: 16 },
+  link:     { textAlign: 'center', color: '#555', fontSize: 14 },
   linkBold: { color: '#2563EB', fontWeight: '700' },
-
-  divider: {
-    flexDirection: 'row', alignItems: 'center',
-    marginBottom: 16, gap: 10,
-  },
-  dividerLine: { flex: 1, height: 1, backgroundColor: '#F0F0F0' },
-  dividerText: { fontSize: 12, color: '#9CA3AF' },
-
-  sellerBtn: {
-    borderWidth: 1.5, borderColor: '#E5E7EB',
-    borderRadius: 14, padding: 14, alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-  },
-  sellerBtnText: { color: '#111', fontWeight: '600', fontSize: 14 },
 
   footer: {
     fontSize: 11, color: '#9CA3AF',
