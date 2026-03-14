@@ -31,7 +31,7 @@ const FAQS = [
   },
   {
     q: 'What is the platform fee?',
-    a: 'OoruCart charges a small platform fee per order: ₹5 for vegetables, ₹7 for bakery/supermarket, ₹10 for restaurants.',
+    a: 'Shop2me charges a small platform fee per order: ₹5 for vegetables, ₹7 for bakery/supermarket, ₹10 for restaurants.',
   },
 ];
 
@@ -131,7 +131,7 @@ export default function VendorHelpScreen({ navigation }) {
             </View>
             <View style={styles.contactInfo}>
               <Text style={styles.contactTitle}>Email Support</Text>
-              <Text style={styles.contactSub}>seller@oorucart.com</Text>
+              <Text style={styles.contactSub}>seller@shop2me.in</Text>
             </View>
             <Text style={styles.contactArrow}>›</Text>
           </TouchableOpacity>

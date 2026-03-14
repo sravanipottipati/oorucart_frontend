@@ -388,7 +388,7 @@ export default function VendorRegisterScreen({ navigation }) {
         </TouchableOpacity>
         <View style={styles.logoRow}>
           <Text style={styles.logoIcon}>🛒</Text>
-          <Text style={styles.logoText}>oorucart.</Text>
+          <Text style={styles.logoText}>Shop2me</Text>
         </View>
         <View style={{ width: 60 }} />
       </View>

@@ -57,7 +57,7 @@ export default function OrderDetailScreen({ navigation, route }) {
     });
     const statusInfo = STATUS_INFO[order.status];
     const message =
-`🛒 *OoruCart Order Receipt*
+`🛒 *Shop2me Order Receipt*
 📦 Order ID: #${order.id?.slice(0, 8).toUpperCase()}
 📅 Date: ${date}
 ${statusInfo?.icon} Status: ${statusInfo?.label}
@@ -69,7 +69,7 @@ ${itemsList}
 
 💰 Total: ₹${order.total_amount}
 💵 Payment: Cash on Delivery
-Powered by OoruCart 🛍`;
+Powered by Shop2me 🛍`;
     try {
       await Share.share({ message });
     } catch (e) {

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "oorucart_frontend",
-    "slug": "oorucart_frontend",
+    "name": "Shop2me",
+    "slug": "shop2me",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -9,17 +9,17 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#2563EB"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.shop2me.app"
     },
     "android": {
+      "package": "com.shop2me.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#2563EB",
+        "foregroundImage": "./assets/android-icon-foreground.png"
       }
     },
     "web": {

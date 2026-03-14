@@ -126,7 +126,7 @@ export default function HelpSupportScreen({ navigation }) {
             </View>
             <View style={styles.contactInfo}>
               <Text style={styles.contactTitle}>Email us</Text>
-              <Text style={styles.contactSub}>support@oorucart.com</Text>
+              <Text style={styles.contactSub}>support@shop2me.in</Text>
             </View>
             <Text style={styles.contactArrow}>›</Text>
           </TouchableOpacity>

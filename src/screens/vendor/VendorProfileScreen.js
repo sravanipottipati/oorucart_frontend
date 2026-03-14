@@ -168,7 +168,7 @@ export default function VendorProfileScreen({ navigation }) {
           <Text style={styles.logoutText}>🚪  Logout</Text>
         </TouchableOpacity>
 
-        <Text style={styles.version}>OoruCart Seller v1.0.0</Text>
+        <Text style={styles.version}>Shop2me Seller v1.0.0</Text>
 
         <View style={{ height: 100 }} />
       </ScrollView>

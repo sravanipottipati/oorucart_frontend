@@ -100,7 +100,7 @@ export default function SearchScreen({ navigation }) {
       ) : !query ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>🔍</Text>
-          <Text style={styles.emptyTitle}>Search OoruCart</Text>
+          <Text style={styles.emptyTitle}>Search Shop2me</Text>
           <Text style={styles.emptySubtitle}>
             {town ? `Find products and shops in ${town}` : 'Find products and shops near you'}
           </Text>

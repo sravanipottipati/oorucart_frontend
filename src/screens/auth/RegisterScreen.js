@@ -44,7 +44,7 @@ export default function RegisterScreen({ navigation }) {
         {/* Logo */}
         <View style={styles.logoContainer}>
           <Text style={styles.logoIcon}>🛒</Text>
-          <Text style={styles.logoText}>oorucart.</Text>
+          <Text style={styles.logoText}>Shop2me</Text>
           <Text style={styles.logoSub}>Your neighbourhood store, online</Text>
         </View>
 

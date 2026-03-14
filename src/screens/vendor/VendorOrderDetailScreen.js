@@ -83,7 +83,7 @@ export default function VendorOrderDetailScreen({ navigation, route }) {
     });
 
     const message =
-`🛒 *OoruCart Order Details*
+`🛒 *Shop2me Order Details*
 
 📦 Order ID: #${order.id?.slice(0, 8).toUpperCase()}
 📅 Date: ${date}
