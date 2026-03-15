@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, RefreshControl,
+  ScrollView, ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
 import client from '../../api/client';
+import { useCart } from '../../context/CartContext';
 
 const STATUS_COLORS = {
   placed:     { bg: '#EFF6FF', text: '#2563EB' },
@@ -25,11 +26,23 @@ const STATUS_LABELS = {
   rejected:   'Rejected',
 };
 
+const STATUS_EMOJI = {
+  placed:     '📋',
+  accepted:   '✅',
+  preparing:  '👨‍🍳',
+  dispatched: '🛵',
+  delivered:  '🎉',
+  cancelled:  '❌',
+  rejected:   '❌',
+};
+
 export default function MyOrdersScreen({ navigation }) {
-  const [orders, setOrders]     = useState([]);
-  const [loading, setLoading]   = useState(true);
+  const [orders, setOrders]         = useState([]);
+  const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [tab, setTab]           = useState('active');
+  const [tab, setTab]               = useState('active');
+
+  const { addToCart, clearCart, cart, shop: cartShop } = useCart();
 
   const fetchOrders = async () => {
     try {
@@ -53,17 +66,75 @@ export default function MyOrdersScreen({ navigation }) {
   useEffect(() => { fetchOrders(); }, []);
   const onRefresh = () => { setRefreshing(true); fetchOrders(); };
 
-  const activeStatuses  = ['placed', 'accepted', 'preparing', 'dispatched'];
-  const pastStatuses    = ['delivered', 'cancelled', 'rejected'];
+  const activeStatuses = ['placed', 'accepted', 'preparing', 'dispatched'];
+  const pastStatuses   = ['delivered', 'cancelled', 'rejected'];
+  const activeOrders   = orders.filter(o => activeStatuses.includes(o.status));
+  const pastOrders     = orders.filter(o => pastStatuses.includes(o.status));
+  const displayOrders  = tab === 'active' ? activeOrders : pastOrders;
 
-  const activeOrders = orders.filter(o => activeStatuses.includes(o.status));
-  const pastOrders   = orders.filter(o => pastStatuses.includes(o.status));
-  const displayOrders = tab === 'active' ? activeOrders : pastOrders;
+  const handleReorder = async (order) => {
+    try {
+      // Check if cart has items from different shop
+      if (cartShop && cartShop.id !== order.vendor_id && Object.keys(cart).length > 0) {
+        Alert.alert(
+          'Clear Cart?',
+          `Your cart has items from "${cartShop.shop_name}". Reordering will clear it.`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Reorder',
+              style: 'destructive',
+              onPress: () => doReorder(order),
+            },
+          ]
+        );
+        return;
+      }
+      doReorder(order);
+    } catch (e) {
+      Alert.alert('Error', 'Could not reorder. Please try again.');
+    }
+  };
+
+  const doReorder = (order) => {
+    clearCart();
+    // Fetch shop details and add items to cart
+    const shopData = {
+      id:        order.vendor_id,
+      shop_name: order.vendor_name || 'Shop',
+      town:      order.vendor_town || '',
+      platform_fee: order.platform_fee || 5,
+    };
+    order.items?.forEach(item => {
+      const product = {
+        id:    item.product_id || item.id,
+        name:  item.product_name || item.name,
+        price: item.price,
+      };
+      addToCart(product, shopData);
+    });
+    Alert.alert(
+      'Cart Ready! 🛒',
+      `${order.items?.length} items added from ${order.vendor_name}`,
+      [
+        {
+          text: 'View Cart',
+          onPress: () => navigation.navigate('ShopDetail', {
+            vendorId: order.vendor_id,
+            shopName: order.vendor_name,
+          }),
+        },
+        { text: 'OK', style: 'cancel' },
+      ]
+    );
+  };
 
   const OrderCard = ({ order }) => {
     const statusColor = STATUS_COLORS[order.status] || STATUS_COLORS.placed;
     const statusLabel = STATUS_LABELS[order.status] || order.status;
-    const date = new Date(order.created_at).toLocaleDateString('en-IN', {
+    const statusEmoji = STATUS_EMOJI[order.status] || '📋';
+    const isPast      = pastStatuses.includes(order.status);
+    const date        = new Date(order.created_at).toLocaleDateString('en-IN', {
       day: 'numeric', month: 'short', year: 'numeric',
     });
 
@@ -71,6 +142,7 @@ export default function MyOrdersScreen({ navigation }) {
       <TouchableOpacity
         style={styles.orderCard}
         onPress={() => navigation.navigate('OrderDetail', { orderId: order.id })}
+        activeOpacity={0.9}
       >
         {/* Shop row */}
         <View style={styles.orderTop}>
@@ -83,7 +155,7 @@ export default function MyOrdersScreen({ navigation }) {
           </View>
           <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }]}>
             <Text style={[styles.statusText, { color: statusColor.text }]}>
-              {statusLabel}
+              {statusEmoji} {statusLabel}
             </Text>
           </View>
         </View>
@@ -91,16 +163,46 @@ export default function MyOrdersScreen({ navigation }) {
         <View style={styles.divider} />
 
         {/* Items */}
-        {order.items && order.items.map((item, i) => (
-          <Text key={i} style={styles.itemText}>
-            {item.quantity}x {item.product_name || item.name}
-          </Text>
+        {order.items?.slice(0, 3).map((item, i) => (
+          <View key={i} style={styles.itemRow}>
+            <View style={styles.itemDot} />
+            <Text style={styles.itemText}>
+              {item.quantity}x {item.product_name || item.name}
+            </Text>
+            <Text style={styles.itemPrice}>
+              ₹{(item.quantity * parseFloat(item.price)).toFixed(0)}
+            </Text>
+          </View>
         ))}
+        {order.items?.length > 3 && (
+          <Text style={styles.moreItems}>+{order.items.length - 3} more items</Text>
+        )}
 
         {/* Bottom row */}
         <View style={styles.orderBottom}>
-          <Text style={styles.totalText}>Total: ₹{order.total_amount}</Text>
-          <Text style={styles.viewDetails}>View Details ›</Text>
+          <View>
+            <Text style={styles.totalText}>₹{order.total_amount}</Text>
+            <Text style={styles.itemCount}>{order.items?.length} item{order.items?.length !== 1 ? 's' : ''}</Text>
+          </View>
+          <View style={styles.actionBtns}>
+            {isPast && (
+              <TouchableOpacity
+                style={styles.reorderBtn}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  handleReorder(order);
+                }}
+              >
+                <Text style={styles.reorderBtnText}>🔄 Reorder</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={styles.detailBtn}
+              onPress={() => navigation.navigate('OrderDetail', { orderId: order.id })}
+            >
+              <Text style={styles.detailBtnText}>Details ›</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -125,10 +227,7 @@ export default function MyOrdersScreen({ navigation }) {
           onPress={() => setTab('active')}
         >
           <Text style={[styles.tabText, tab === 'active' && styles.tabTextActive]}>
-            Active Orders
-            {activeOrders.length > 0 && (
-              <Text style={styles.tabBadge}> {activeOrders.length}</Text>
-            )}
+            Active {activeOrders.length > 0 && `(${activeOrders.length})`}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -136,7 +235,7 @@ export default function MyOrdersScreen({ navigation }) {
           onPress={() => setTab('past')}
         >
           <Text style={[styles.tabText, tab === 'past' && styles.tabTextActive]}>
-            Past Orders
+            Past Orders {pastOrders.length > 0 && `(${pastOrders.length})`}
           </Text>
         </TouchableOpacity>
       </View>
@@ -151,19 +250,24 @@ export default function MyOrdersScreen({ navigation }) {
         >
           {displayOrders.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyEmoji}>📦</Text>
+              <Text style={styles.emptyEmoji}>
+                {tab === 'active' ? '🛵' : '📦'}
+              </Text>
               <Text style={styles.emptyTitle}>
                 {tab === 'active' ? 'No active orders' : 'No past orders'}
               </Text>
               <Text style={styles.emptySubtitle}>
-                {tab === 'active' ? 'Your active orders will appear here' : 'Your past orders will appear here'}
+                {tab === 'active'
+                  ? 'Place an order from any local shop!'
+                  : 'Your completed orders will appear here'
+                }
               </Text>
               {tab === 'active' && (
                 <TouchableOpacity
                   style={styles.shopNowBtn}
                   onPress={() => navigation.navigate('Home')}
                 >
-                  <Text style={styles.shopNowText}>Shop Now</Text>
+                  <Text style={styles.shopNowText}>Browse Shops</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -178,10 +282,7 @@ export default function MyOrdersScreen({ navigation }) {
 
       {/* Bottom Tab */}
       <View style={styles.bottomTab}>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate('Home')}
-        >
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Home')}>
           <Text style={styles.tabIcon}>🏠</Text>
           <Text style={styles.tabLabel}>Home</Text>
         </TouchableOpacity>
@@ -193,10 +294,7 @@ export default function MyOrdersScreen({ navigation }) {
           <Text style={styles.tabIcon}>🛒</Text>
           <Text style={styles.tabLabel}>Cart</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate('Profile')}
-        >
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Profile')}>
           <Text style={styles.tabIcon}>👤</Text>
           <Text style={styles.tabLabel}>Profile</Text>
         </TouchableOpacity>
@@ -214,8 +312,8 @@ const styles = StyleSheet.create({
     paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12,
     backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
-  backBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
-  backText: { fontSize: 24, color: '#111' },
+  backBtn:     { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
+  backText:    { fontSize: 24, color: '#111' },
   headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
 
   tabs: {
@@ -226,10 +324,9 @@ const styles = StyleSheet.create({
     flex: 1, paddingVertical: 14, alignItems: 'center',
     borderBottomWidth: 2, borderBottomColor: 'transparent',
   },
-  tabActive: { borderBottomColor: '#2563EB' },
-  tabText: { fontSize: 14, color: '#888', fontWeight: '500' },
+  tabActive:     { borderBottomColor: '#2563EB' },
+  tabText:       { fontSize: 14, color: '#888', fontWeight: '500' },
   tabTextActive: { color: '#2563EB', fontWeight: 'bold' },
-  tabBadge: { color: '#2563EB', fontWeight: 'bold' },
 
   orderCard: {
     backgroundColor: '#fff', borderRadius: 16,
@@ -237,33 +334,56 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06, shadowRadius: 6, elevation: 2,
   },
-  orderTop: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  orderTop:    { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   shopIconBox: {
     width: 44, height: 44, borderRadius: 22,
-    backgroundColor: '#F3F4F6', justifyContent: 'center',
+    backgroundColor: '#EFF6FF', justifyContent: 'center',
     alignItems: 'center', marginRight: 12,
   },
   shopIconText: { fontSize: 22 },
-  orderInfo: { flex: 1 },
-  shopName: { fontSize: 15, fontWeight: 'bold', color: '#111' },
-  orderDate: { fontSize: 12, color: '#888', marginTop: 2 },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  statusText: { fontSize: 12, fontWeight: '600' },
+  orderInfo:    { flex: 1 },
+  shopName:     { fontSize: 15, fontWeight: 'bold', color: '#111' },
+  orderDate:    { fontSize: 12, color: '#888', marginTop: 2 },
+  statusBadge:  { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  statusText:   { fontSize: 11, fontWeight: '600' },
 
   divider: { height: 1, backgroundColor: '#F5F5F5', marginBottom: 10 },
-  itemText: { fontSize: 13, color: '#555', marginBottom: 4 },
+
+  itemRow: {
+    flexDirection: 'row', alignItems: 'center',
+    marginBottom: 6, gap: 8,
+  },
+  itemDot:  { width: 6, height: 6, borderRadius: 3, backgroundColor: '#D1D5DB' },
+  itemText: { flex: 1, fontSize: 13, color: '#555' },
+  itemPrice:{ fontSize: 13, color: '#111', fontWeight: '500' },
+  moreItems:{ fontSize: 12, color: '#9CA3AF', marginBottom: 6 },
 
   orderBottom: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', marginTop: 10,
+    paddingTop: 10, borderTopWidth: 1, borderTopColor: '#F5F5F5',
   },
-  totalText: { fontSize: 14, fontWeight: 'bold', color: '#111' },
-  viewDetails: { fontSize: 13, color: '#2563EB', fontWeight: '600' },
+  totalText: { fontSize: 16, fontWeight: 'bold', color: '#111' },
+  itemCount: { fontSize: 11, color: '#888', marginTop: 2 },
 
-  emptyState: { alignItems: 'center', marginTop: 60 },
-  emptyEmoji: { fontSize: 60, marginBottom: 16 },
-  emptyTitle: { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 8 },
-  emptySubtitle: { fontSize: 13, color: '#888', marginBottom: 24, textAlign: 'center' },
+  actionBtns:  { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  reorderBtn: {
+    backgroundColor: '#EFF6FF', borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 8,
+    borderWidth: 1.5, borderColor: '#2563EB',
+  },
+  reorderBtnText: { fontSize: 13, color: '#2563EB', fontWeight: '700' },
+  detailBtn: {
+    backgroundColor: '#F9FAFB', borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 8,
+    borderWidth: 1.5, borderColor: '#E5E7EB',
+  },
+  detailBtnText: { fontSize: 13, color: '#555', fontWeight: '600' },
+
+  emptyState:   { alignItems: 'center', marginTop: 60, paddingHorizontal: 32 },
+  emptyEmoji:   { fontSize: 60, marginBottom: 16 },
+  emptyTitle:   { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 8 },
+  emptySubtitle:{ fontSize: 13, color: '#888', marginBottom: 24, textAlign: 'center' },
   shopNowBtn: {
     backgroundColor: '#2563EB', borderRadius: 12,
     paddingHorizontal: 32, paddingVertical: 12,
@@ -276,8 +396,8 @@ const styles = StyleSheet.create({
     paddingBottom: 24, paddingTop: 10,
     position: 'absolute', bottom: 0, left: 0, right: 0,
   },
-  tabItem: { flex: 1, alignItems: 'center' },
-  tabIcon: { fontSize: 22, marginBottom: 2, color: '#9CA3AF' },
-  tabLabel: { fontSize: 11, color: '#9CA3AF' },
-  tabLabelActive: { fontSize: 11, color: '#2563EB', fontWeight: 'bold' },
+  tabItem:       { flex: 1, alignItems: 'center' },
+  tabIcon:       { fontSize: 22, marginBottom: 2, color: '#9CA3AF' },
+  tabLabel:      { fontSize: 11, color: '#9CA3AF' },
+  tabLabelActive:{ fontSize: 11, color: '#2563EB', fontWeight: 'bold' },
 });
