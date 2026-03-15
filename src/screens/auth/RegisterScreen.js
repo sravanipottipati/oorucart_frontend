@@ -58,39 +58,50 @@ export default function RegisterScreen({ navigation }) {
           <Text style={styles.title}>Create Account 🎉</Text>
           <Text style={styles.subtitle}>Join Shop2me today</Text>
 
-          {/* ── USER TYPE SELECTOR ── */}
+          {/* ── BUYER / SELLER CHOICE ── */}
           <View style={styles.userTypeRow}>
+
+            {/* Buyer */}
             <TouchableOpacity
               style={[styles.userTypeBtn, userType === 'buyer' && styles.userTypeBtnActive]}
               onPress={() => setUserType('buyer')}
             >
               <Text style={styles.userTypeEmoji}>🛒</Text>
-              <Text style={[styles.userTypeText, userType === 'buyer' && styles.userTypeTextActive]}>
+              <Text style={[
+                styles.userTypeTitle,
+                userType === 'buyer' && styles.userTypeTitleActive,
+              ]}>
                 Buyer
               </Text>
-              <Text style={[styles.userTypeDesc, userType === 'buyer' && { color: '#2563EB' }]}>
-                Order from shops
-              </Text>
+              <Text style={styles.userTypeDesc}>Order from shops</Text>
+              {userType === 'buyer' && (
+                <View style={styles.selectedDot} />
+              )}
             </TouchableOpacity>
 
+            {/* Seller */}
             <TouchableOpacity
-              style={[styles.userTypeBtn, styles.userTypeBtnVendor]}
+              style={[styles.userTypeBtn, styles.userTypeBtnSeller]}
               onPress={() => navigation.navigate('VendorRegister')}
             >
               <Text style={styles.userTypeEmoji}>🏪</Text>
-              <Text style={styles.userTypeTextVendor}>Seller</Text>
-              <Text style={styles.userTypeDescVendor}>Sell your products</Text>
-              <View style={styles.vendorArrow}>
-                <Text style={styles.vendorArrowText}>5-step setup →</Text>
+              <Text style={styles.userTypeTitleSeller}>Seller</Text>
+              <Text style={styles.userTypeDesc}>Sell your products</Text>
+              <View style={styles.sellerTag}>
+                <Text style={styles.sellerTagText}>5-step →</Text>
               </View>
             </TouchableOpacity>
+
           </View>
 
-          {/* ── BUYER FORM ── */}
-          <Text style={styles.formNote}>
-            Fill details below to create your Buyer account
-          </Text>
+          {/* ── BUYER FORM NOTE ── */}
+          <View style={styles.formNote}>
+            <Text style={styles.formNoteText}>
+              🛒 Fill details below to create your Buyer account
+            </Text>
+          </View>
 
+          {/* ── FORM ── */}
           <Text style={styles.label}>Full Name</Text>
           <TextInput
             style={styles.inputFull}
@@ -202,33 +213,41 @@ const styles = StyleSheet.create({
   title:    { fontSize: 22, fontWeight: '700', color: '#111', marginBottom: 4 },
   subtitle: { fontSize: 14, color: '#888', marginBottom: 20 },
 
-  // User Type Selector
-  userTypeRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
+  // User Type
+  userTypeRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
+
   userTypeBtn: {
     flex: 1, borderWidth: 1.5, borderColor: '#E5E7EB',
-    borderRadius: 14, padding: 14, alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    borderRadius: 16, padding: 14, alignItems: 'center',
+    backgroundColor: '#F9FAFB', position: 'relative',
   },
-  userTypeBtnActive:   { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
-  userTypeBtnVendor:   { borderColor: '#16A34A', backgroundColor: '#F0FDF4' },
-  userTypeEmoji:       { fontSize: 26, marginBottom: 6 },
-  userTypeText:        { fontSize: 15, fontWeight: '700', color: '#111', marginBottom: 2 },
-  userTypeTextActive:  { color: '#2563EB' },
-  userTypeTextVendor:  { fontSize: 15, fontWeight: '700', color: '#16A34A', marginBottom: 2 },
-  userTypeDesc:        { fontSize: 11, color: '#888', textAlign: 'center' },
-  userTypeDescVendor:  { fontSize: 11, color: '#16A34A', textAlign: 'center', marginBottom: 6 },
-  vendorArrow: {
-    backgroundColor: '#16A34A', borderRadius: 10,
-    paddingHorizontal: 8, paddingVertical: 3, marginTop: 4,
+  userTypeBtnActive: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
+  userTypeBtnSeller: { borderColor: '#16A34A', backgroundColor: '#F0FDF4' },
+
+  userTypeEmoji: { fontSize: 28, marginBottom: 6 },
+
+  userTypeTitle:       { fontSize: 15, fontWeight: '700', color: '#111', marginBottom: 2 },
+  userTypeTitleActive: { color: '#2563EB' },
+  userTypeTitleSeller: { fontSize: 15, fontWeight: '700', color: '#16A34A', marginBottom: 2 },
+
+  userTypeDesc: { fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 6 },
+
+  selectedDot: {
+    width: 8, height: 8, borderRadius: 4,
+    backgroundColor: '#2563EB', marginTop: 4,
   },
-  vendorArrowText: { fontSize: 10, color: 'white', fontWeight: '600' },
+  sellerTag: {
+    backgroundColor: '#16A34A', borderRadius: 8,
+    paddingHorizontal: 8, paddingVertical: 3,
+  },
+  sellerTagText: { fontSize: 10, color: 'white', fontWeight: '700' },
 
   // Form note
   formNote: {
-    fontSize: 12, color: '#2563EB', backgroundColor: '#EFF6FF',
-    padding: 10, borderRadius: 10, marginBottom: 16,
-    textAlign: 'center', fontWeight: '500',
+    backgroundColor: '#EFF6FF', borderRadius: 12,
+    padding: 12, marginBottom: 16,
   },
+  formNoteText: { fontSize: 12, color: '#2563EB', fontWeight: '500', textAlign: 'center' },
 
   // Form
   label: { fontSize: 13, fontWeight: '600', color: '#444', marginBottom: 8 },
