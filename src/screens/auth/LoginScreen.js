@@ -42,7 +42,7 @@ export default function LoginScreen({ navigation }) {
     >
       <ScrollView contentContainerStyle={styles.inner} showsVerticalScrollIndicator={false}>
 
-        {/* ── LOGO SECTION ── */}
+        {/* ── LOGO ── */}
         <View style={styles.logoCard}>
           <View style={styles.decCircle1} />
           <View style={styles.decCircle2} />
@@ -98,7 +98,9 @@ export default function LoginScreen({ navigation }) {
             }
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('AccountType')}
+          >
             <Text style={styles.link}>
               New to Shop2me? <Text style={styles.linkBold}>Create Account</Text>
             </Text>
@@ -117,7 +119,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9FA' },
   inner: { flexGrow: 1, alignItems: 'center', padding: 24, paddingTop: 60 },
 
-  // Logo
   logoCard: {
     backgroundColor: '#2563EB', borderRadius: 28,
     padding: 28, alignItems: 'center', width: '100%',
@@ -148,7 +149,6 @@ const styles = StyleSheet.create({
   },
   pillText: { color: 'white', fontSize: 11, fontWeight: '500' },
 
-  // Card
   card: {
     backgroundColor: '#fff', borderRadius: 24,
     padding: 24, width: '100%',

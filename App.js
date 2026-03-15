@@ -7,6 +7,7 @@ import { ActivityIndicator, View } from 'react-native';
 
 import LoginScreen from './src/screens/auth/LoginScreen';
 import RegisterScreen from './src/screens/auth/RegisterScreen';
+import AccountTypeScreen from './src/screens/auth/AccountTypeScreen';
 import HomeScreen from './src/screens/buyer/HomeScreen';
 import ShopDetailScreen from './src/screens/buyer/ShopDetailScreen';
 import CheckoutScreen from './src/screens/buyer/CheckoutScreen';
@@ -60,8 +61,9 @@ function AppNavigator() {
         screenOptions={{ headerShown: false }}
       >
         {/* Auth */}
-        <Stack.Screen name="Login"    component={LoginScreen} />
-        <Stack.Screen name="Register" component={RegisterScreen} />
+        <Stack.Screen name="Login"       component={LoginScreen} />
+        <Stack.Screen name="AccountType" component={AccountTypeScreen} />
+        <Stack.Screen name="Register"    component={RegisterScreen} />
 
         {/* Buyer */}
         <Stack.Screen name="Home"          component={HomeScreen} />
