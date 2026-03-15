@@ -17,27 +17,27 @@ const WEEKLY_OFF = ['None','Monday','Tuesday','Wednesday','Thursday','Friday','S
 
 export default function VendorRegisterScreen({ navigation }) {
   const { login } = useAuth();
-  const [step, setStep] = useState(1);
+  const [step, setStep]       = useState(1);
   const [loading, setLoading] = useState(false);
 
-  const [shopName, setShopName]   = useState('');
+  const [shopName,  setShopName]  = useState('');
   const [ownerName, setOwnerName] = useState('');
-  const [phone, setPhone]         = useState('');
-  const [town, setTown]           = useState('');
-  const [password, setPassword]   = useState('');
+  const [phone,     setPhone]     = useState('');
+  const [town,      setTown]      = useState('');
+  const [password,  setPassword]  = useState('');
   const [confirmPw, setConfirmPw] = useState('');
 
-  const [category, setCategory]         = useState('vegetables');
+  const [category,     setCategory]     = useState('vegetables');
   const [deliveryType, setDeliveryType] = useState('delivery');
-  const [minOrder, setMinOrder]         = useState('100');
+  const [minOrder,     setMinOrder]     = useState('100');
   const [deliveryTime, setDeliveryTime] = useState('30');
 
   const [accountName, setAccountName] = useState('');
-  const [bankName, setBankName]       = useState('');
-  const [accountNo, setAccountNo]     = useState('');
-  const [ifsc, setIfsc]               = useState('');
+  const [bankName,    setBankName]    = useState('');
+  const [accountNo,   setAccountNo]   = useState('');
+  const [ifsc,        setIfsc]        = useState('');
 
-  const [openTime, setOpenTime]   = useState('9:00 AM');
+  const [openTime,  setOpenTime]  = useState('9:00 AM');
   const [closeTime, setCloseTime] = useState('9:00 PM');
   const [weeklyOff, setWeeklyOff] = useState('None');
 
@@ -47,38 +47,32 @@ export default function VendorRegisterScreen({ navigation }) {
     return 'Rs.7 per order';
   };
 
-  const goNext = () => {
-    setStep(prev => prev + 1);
-  };
-
+  const goNext = () => setStep(prev => prev + 1);
   const goBack = () => {
-    if (step === 1) {
-      navigation.goBack();
-    } else {
-      setStep(prev => prev - 1);
-    }
+    if (step === 1) navigation.goBack();
+    else setStep(prev => prev - 1);
   };
 
   const handleSubmit = async () => {
     setLoading(true);
     try {
       await client.post('/users/register/', {
-        full_name: ownerName,
+        full_name:   ownerName,
         phone_number: phone,
-        password: password,
-        user_type: 'vendor',
+        password:    password,
+        user_type:   'vendor',
       });
       await login(phone, password);
       await client.post('/vendors/register/', {
-        shop_name: shopName,
-        category: category,
-        town: town,
-        delivery_type: deliveryType,
+        shop_name:               shopName,
+        category:                category,
+        town:                    town,
+        delivery_type:           deliveryType,
         estimated_delivery_time: parseInt(deliveryTime),
       });
       Alert.alert(
-        'Registration Successful!',
-        'Your shop has been submitted for admin approval. Usually takes 24 hours.',
+        'Registration Successful! 🎉',
+        'Your shop is now live on Shop2me!',
         [{ text: 'OK', onPress: () => navigation.replace('VendorHome') }]
       );
     } catch (e) {
@@ -98,7 +92,7 @@ export default function VendorRegisterScreen({ navigation }) {
           key={i}
           style={[
             styles.progressDot,
-            { backgroundColor: i <= step ? '#2E7D32' : '#E0E0E0', flex: 1 },
+            { backgroundColor: i <= step ? '#2563EB' : '#E0E0E0', flex: 1 },
           ]}
         />
       ))}
@@ -108,72 +102,49 @@ export default function VendorRegisterScreen({ navigation }) {
   const renderStep1 = () => (
     <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>Basic Information</Text>
-      <Text style={styles.stepSubtitle}>Step 1 of 5</Text>
+      <Text style={styles.stepSubtitle}>Step 1 of 5 — Shop & Owner Details</Text>
       <Progress />
 
       <Text style={styles.label}>Shop Name *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Business Name"
-        value={shopName}
-        onChangeText={setShopName}
-      />
+      <TextInput style={styles.input} placeholder="Business Name"
+        placeholderTextColor="#9CA3AF" value={shopName} onChangeText={setShopName} />
 
       <Text style={styles.label}>Owner Name *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Your full name"
-        value={ownerName}
-        onChangeText={setOwnerName}
-      />
+      <TextInput style={styles.input} placeholder="Your full name"
+        placeholderTextColor="#9CA3AF" value={ownerName} onChangeText={setOwnerName} />
 
       <View style={styles.row}>
         <View style={styles.halfField}>
           <Text style={styles.label}>Mobile *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="10-digit number"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            maxLength={10}
-          />
+          <TextInput style={styles.input} placeholder="10-digit"
+            placeholderTextColor="#9CA3AF" value={phone} onChangeText={setPhone}
+            keyboardType="phone-pad" maxLength={10} />
         </View>
         <View style={styles.halfField}>
           <Text style={styles.label}>Town/City *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Your town"
-            value={town}
-            onChangeText={setTown}
-          />
+          <TextInput style={styles.input} placeholder="Your town"
+            placeholderTextColor="#9CA3AF" value={town} onChangeText={setTown} />
         </View>
       </View>
 
       <Text style={styles.label}>Password *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Min 6 characters"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+      <TextInput style={styles.input} placeholder="Min 6 characters"
+        placeholderTextColor="#9CA3AF" value={password}
+        onChangeText={setPassword} secureTextEntry />
 
       <Text style={styles.label}>Confirm Password *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Re-enter password"
-        value={confirmPw}
-        onChangeText={setConfirmPw}
-        secureTextEntry
-      />
+      <TextInput style={styles.input} placeholder="Re-enter password"
+        placeholderTextColor="#9CA3AF" value={confirmPw}
+        onChangeText={setConfirmPw} secureTextEntry />
+
+      <View style={{ height: 20 }} />
     </ScrollView>
   );
 
   const renderStep2 = () => (
     <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>Shop Details</Text>
-      <Text style={styles.stepSubtitle}>Step 2 of 5</Text>
+      <Text style={styles.stepSubtitle}>Step 2 of 5 — Category & Delivery</Text>
       <Progress />
 
       <Text style={styles.label}>Category *</Text>
@@ -220,100 +191,71 @@ export default function VendorRegisterScreen({ navigation }) {
       <View style={styles.row}>
         <View style={styles.halfField}>
           <Text style={styles.label}>Delivery Time (mins)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="30"
-            value={deliveryTime}
-            onChangeText={setDeliveryTime}
-            keyboardType="numeric"
-          />
+          <TextInput style={styles.input} placeholder="30"
+            placeholderTextColor="#9CA3AF" value={deliveryTime}
+            onChangeText={setDeliveryTime} keyboardType="numeric" />
         </View>
         <View style={styles.halfField}>
           <Text style={styles.label}>Min Order (Rs.)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="100"
-            value={minOrder}
-            onChangeText={setMinOrder}
-            keyboardType="numeric"
-          />
+          <TextInput style={styles.input} placeholder="100"
+            placeholderTextColor="#9CA3AF" value={minOrder}
+            onChangeText={setMinOrder} keyboardType="numeric" />
         </View>
       </View>
+      <View style={{ height: 20 }} />
     </ScrollView>
   );
 
   const renderStep3 = () => (
     <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>Bank Details</Text>
-      <Text style={styles.stepSubtitle}>Step 3 of 5</Text>
+      <Text style={styles.stepSubtitle}>Step 3 of 5 — For weekly settlement</Text>
       <Progress />
 
       <View style={styles.feeInfo}>
         <Text style={styles.feeInfoText}>
-          Bank details are used by admin to settle platform fees weekly
+          Bank details are used by admin to settle earnings weekly
         </Text>
       </View>
 
       <Text style={styles.label}>Account Holder Name *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Name as per bank"
-        value={accountName}
-        onChangeText={setAccountName}
-      />
+      <TextInput style={styles.input} placeholder="Name as per bank"
+        placeholderTextColor="#9CA3AF" value={accountName} onChangeText={setAccountName} />
 
       <Text style={styles.label}>Bank Name *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="e.g. SBI, HDFC"
-        value={bankName}
-        onChangeText={setBankName}
-      />
+      <TextInput style={styles.input} placeholder="e.g. SBI, HDFC"
+        placeholderTextColor="#9CA3AF" value={bankName} onChangeText={setBankName} />
 
       <Text style={styles.label}>Account Number *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Account number"
-        value={accountNo}
-        onChangeText={setAccountNo}
-        keyboardType="numeric"
-      />
+      <TextInput style={styles.input} placeholder="Account number"
+        placeholderTextColor="#9CA3AF" value={accountNo}
+        onChangeText={setAccountNo} keyboardType="numeric" />
 
       <Text style={styles.label}>IFSC Code *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="e.g. SBIN0001234"
-        value={ifsc}
-        onChangeText={setIfsc}
-        autoCapitalize="characters"
-      />
+      <TextInput style={styles.input} placeholder="e.g. SBIN0001234"
+        placeholderTextColor="#9CA3AF" value={ifsc}
+        onChangeText={setIfsc} autoCapitalize="characters" />
+
+      <View style={{ height: 20 }} />
     </ScrollView>
   );
 
   const renderStep4 = () => (
     <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>Shop Timings</Text>
-      <Text style={styles.stepSubtitle}>Step 4 of 5</Text>
+      <Text style={styles.stepSubtitle}>Step 4 of 5 — When are you open?</Text>
       <Progress />
 
       <View style={styles.row}>
         <View style={styles.halfField}>
           <Text style={styles.label}>Opening Time</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. 9:00 AM"
-            value={openTime}
-            onChangeText={setOpenTime}
-          />
+          <TextInput style={styles.input} placeholder="e.g. 9:00 AM"
+            placeholderTextColor="#9CA3AF" value={openTime} onChangeText={setOpenTime} />
         </View>
         <View style={styles.halfField}>
           <Text style={styles.label}>Closing Time</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. 9:00 PM"
-            value={closeTime}
-            onChangeText={setCloseTime}
-          />
+          <TextInput style={styles.input} placeholder="e.g. 9:00 PM"
+            placeholderTextColor="#9CA3AF" value={closeTime} onChangeText={setCloseTime} />
         </View>
       </View>
 
@@ -331,13 +273,14 @@ export default function VendorRegisterScreen({ navigation }) {
           </TouchableOpacity>
         ))}
       </View>
+      <View style={{ height: 20 }} />
     </ScrollView>
   );
 
   const renderStep5 = () => (
     <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>Review & Submit</Text>
-      <Text style={styles.stepSubtitle}>Step 5 of 5</Text>
+      <Text style={styles.stepSubtitle}>Step 5 of 5 — Check your details</Text>
       <Progress />
 
       <View style={styles.reviewCard}>
@@ -371,9 +314,10 @@ export default function VendorRegisterScreen({ navigation }) {
 
       <View style={styles.approvalNote}>
         <Text style={styles.approvalText}>
-          Your shop will be reviewed by admin before going live. Usually takes 24 hours.
+          ✅ Your shop will go live immediately on Shop2me!
         </Text>
       </View>
+      <View style={{ height: 20 }} />
     </ScrollView>
   );
 
@@ -382,26 +326,30 @@ export default function VendorRegisterScreen({ navigation }) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={goBack} style={styles.backBtn}>
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
         <View style={styles.logoRow}>
-          <Text style={styles.logoIcon}>🛒</Text>
+          <View style={styles.logoIconBox}>
+            <Text style={styles.logoIconText}>S</Text>
+          </View>
           <Text style={styles.logoText}>Shop2me</Text>
         </View>
         <View style={{ width: 60 }} />
       </View>
 
+      {/* Buyer / Seller Tab */}
       <View style={styles.tabRow}>
         <TouchableOpacity
           style={styles.tabInactive}
           onPress={() => navigation.navigate('Register')}
         >
-          <Text style={styles.tabInactiveText}>Buyer</Text>
+          <Text style={styles.tabInactiveText}>🛒 Buyer</Text>
         </TouchableOpacity>
         <View style={styles.tabActive}>
-          <Text style={styles.tabActiveText}>Seller</Text>
+          <Text style={styles.tabActiveText}>🏪 Seller</Text>
         </View>
       </View>
 
@@ -411,6 +359,7 @@ export default function VendorRegisterScreen({ navigation }) {
       {step === 4 && renderStep4()}
       {step === 5 && renderStep5()}
 
+      {/* Footer Buttons */}
       <View style={styles.footer}>
         {step < 5 ? (
           <TouchableOpacity style={styles.nextBtn} onPress={goNext}>
@@ -418,13 +367,14 @@ export default function VendorRegisterScreen({ navigation }) {
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            style={[styles.nextBtn, { backgroundColor: '#2E7D32' }]}
+            style={styles.submitBtn}
             onPress={handleSubmit}
             disabled={loading}
           >
             {loading
               ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.nextBtnText}>Join as Seller</Text>}
+              : <Text style={styles.nextBtnText}>Join as Seller 🎉</Text>
+            }
           </TouchableOpacity>
         )}
       </View>
@@ -434,19 +384,27 @@ export default function VendorRegisterScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
+
+  // Header
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingTop: 50, paddingHorizontal: 16, paddingBottom: 10,
-    borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
+    paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12,
+    borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
-  backBtn: { padding: 4, width: 60 },
-  backText: { color: '#2E7D32', fontSize: 15, fontWeight: '600' },
-  logoRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  logoIcon: { fontSize: 22 },
-  logoText: { fontSize: 20, fontWeight: 'bold', color: '#111' },
+  backBtn:  { padding: 4, width: 60 },
+  backText: { color: '#2563EB', fontSize: 15, fontWeight: '600' },
+  logoRow:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  logoIconBox: {
+    width: 32, height: 32, borderRadius: 8,
+    backgroundColor: '#2563EB', justifyContent: 'center', alignItems: 'center',
+  },
+  logoIconText: { fontSize: 16, fontWeight: '900', color: 'white' },
+  logoText:     { fontSize: 20, fontWeight: '700', color: '#111' },
+
+  // Tabs
   tabRow: {
     flexDirection: 'row', margin: 16, borderRadius: 14,
-    backgroundColor: '#f0f0f0', padding: 4,
+    backgroundColor: '#F3F4F6', padding: 4,
   },
   tabActive: {
     flex: 1, backgroundColor: '#fff', borderRadius: 10,
@@ -454,71 +412,87 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1, shadowRadius: 4, elevation: 2,
   },
-  tabActiveText: { fontWeight: 'bold', color: '#2E7D32', fontSize: 15 },
-  tabInactive: { flex: 1, padding: 10, alignItems: 'center' },
-  tabInactiveText: { color: '#888', fontSize: 15 },
-  stepContent: { flex: 1, paddingHorizontal: 16 },
-  stepTitle: { fontSize: 22, fontWeight: 'bold', color: '#111', marginTop: 16, marginBottom: 4 },
+  tabActiveText:   { fontWeight: '700', color: '#2563EB', fontSize: 14 },
+  tabInactive:     { flex: 1, padding: 10, alignItems: 'center' },
+  tabInactiveText: { color: '#888', fontSize: 14, fontWeight: '500' },
+
+  // Step content
+  stepContent:  { flex: 1, paddingHorizontal: 16 },
+  stepTitle:    { fontSize: 22, fontWeight: '700', color: '#111', marginTop: 16, marginBottom: 4 },
   stepSubtitle: { fontSize: 13, color: '#888', marginBottom: 12 },
+
+  // Progress
   progressRow: { flexDirection: 'row', gap: 6, marginBottom: 20, height: 5 },
-  progressDot: { height: 5, borderRadius: 3 },
+  progressDot:  { height: 5, borderRadius: 3 },
+
+  // Form
   label: { fontSize: 13, color: '#444', fontWeight: '600', marginBottom: 6, marginTop: 4 },
   input: {
-    borderWidth: 1.5, borderColor: '#ececec', borderRadius: 12,
+    borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12,
     padding: 13, fontSize: 15, marginBottom: 12,
-    backgroundColor: '#fafafa', color: '#111',
+    backgroundColor: '#F9FAFB', color: '#111',
   },
-  row: { flexDirection: 'row', gap: 12 },
+  row:       { flexDirection: 'row', gap: 12 },
   halfField: { flex: 1 },
+
+  // Category
   categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 12 },
   categoryCard: {
-    width: '47%', borderWidth: 1.5, borderColor: '#e0e0e0',
-    borderRadius: 14, padding: 14, alignItems: 'center', backgroundColor: '#fafafa',
+    width: '47%', borderWidth: 1.5, borderColor: '#E5E7EB',
+    borderRadius: 14, padding: 14, alignItems: 'center', backgroundColor: '#F9FAFB',
   },
-  categoryCardActive: { borderColor: '#2E7D32', backgroundColor: '#E8F5E9' },
-  categoryEmoji: { fontSize: 28, marginBottom: 6 },
-  categoryLabel: { fontSize: 13, color: '#555', fontWeight: '600' },
-  categoryLabelActive: { color: '#2E7D32' },
-  feeInfo: {
-    backgroundColor: '#E8F5E9', borderRadius: 10,
-    padding: 10, marginBottom: 12,
-  },
-  feeInfoText: { fontSize: 13, color: '#2E7D32' },
+  categoryCardActive:  { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
+  categoryEmoji:       { fontSize: 28, marginBottom: 6 },
+  categoryLabel:       { fontSize: 13, color: '#555', fontWeight: '600' },
+  categoryLabelActive: { color: '#2563EB' },
+
+  // Fee info
+  feeInfo:     { backgroundColor: '#EFF6FF', borderRadius: 10, padding: 10, marginBottom: 12 },
+  feeInfoText: { fontSize: 13, color: '#2563EB' },
+
+  // Delivery toggle
   toggleRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
   toggleBtn: {
-    flex: 1, borderWidth: 1.5, borderColor: '#e0e0e0',
-    borderRadius: 10, padding: 10, alignItems: 'center',
+    flex: 1, borderWidth: 1.5, borderColor: '#E5E7EB',
+    borderRadius: 10, padding: 10, alignItems: 'center', backgroundColor: '#F9FAFB',
   },
-  toggleBtnActive: { borderColor: '#111', backgroundColor: '#111' },
-  toggleBtnText: { fontSize: 12, color: '#555', fontWeight: '600', textAlign: 'center' },
+  toggleBtnActive:     { borderColor: '#2563EB', backgroundColor: '#2563EB' },
+  toggleBtnText:       { fontSize: 12, color: '#555', fontWeight: '600' },
   toggleBtnTextActive: { color: '#fff' },
+
+  // Weekly off
   weeklyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   dayBtn: {
-    borderWidth: 1, borderColor: '#ddd', borderRadius: 20,
-    paddingHorizontal: 14, paddingVertical: 7,
+    borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 20,
+    paddingHorizontal: 14, paddingVertical: 7, backgroundColor: '#F9FAFB',
   },
-  dayBtnActive: { backgroundColor: '#111', borderColor: '#111' },
-  dayBtnText: { fontSize: 13, color: '#555' },
-  dayBtnTextActive: { color: '#fff', fontWeight: 'bold' },
-  reviewCard: {
-    backgroundColor: '#f9f9f9', borderRadius: 14, padding: 14,
-    marginBottom: 12, borderWidth: 1, borderColor: '#f0f0f0',
+  dayBtnActive:     { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  dayBtnText:       { fontSize: 13, color: '#555' },
+  dayBtnTextActive: { color: '#fff', fontWeight: '600' },
+
+  // Review
+  reviewCard:    {
+    backgroundColor: '#F9FAFB', borderRadius: 14, padding: 14,
+    marginBottom: 12, borderWidth: 1, borderColor: '#F0F0F0',
   },
-  reviewSection: { fontSize: 14, fontWeight: 'bold', color: '#111', marginBottom: 8 },
-  reviewRow: { fontSize: 13, color: '#555', marginBottom: 4 },
-  reviewKey: { fontWeight: '600', color: '#333' },
-  approvalNote: {
-    backgroundColor: '#FFF3E0', borderRadius: 12,
-    padding: 14, marginBottom: 20,
-  },
-  approvalText: { fontSize: 13, color: '#E65100', lineHeight: 18 },
+  reviewSection: { fontSize: 14, fontWeight: '700', color: '#111', marginBottom: 8 },
+  reviewRow:     { fontSize: 13, color: '#555', marginBottom: 4 },
+  reviewKey:     { fontWeight: '600', color: '#333' },
+  approvalNote:  { backgroundColor: '#DCFCE7', borderRadius: 12, padding: 14, marginBottom: 20 },
+  approvalText:  { fontSize: 13, color: '#16A34A', lineHeight: 18, fontWeight: '500' },
+
+  // Footer
   footer: {
     padding: 16, paddingBottom: 30,
-    borderTopWidth: 1, borderTopColor: '#f0f0f0', backgroundColor: '#fff',
+    borderTopWidth: 1, borderTopColor: '#F0F0F0', backgroundColor: '#fff',
   },
   nextBtn: {
-    backgroundColor: '#111', padding: 16,
+    backgroundColor: '#2563EB', padding: 16,
     borderRadius: 14, alignItems: 'center',
   },
-  nextBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  submitBtn: {
+    backgroundColor: '#16A34A', padding: 16,
+    borderRadius: 14, alignItems: 'center',
+  },
+  nextBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });
