@@ -99,7 +99,7 @@ export default function LoginScreen({ navigation }) {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate('AccountType')}
+            onPress={() => navigation.navigate('Register')}
           >
             <Text style={styles.link}>
               New to Shop2me? <Text style={styles.linkBold}>Create Account</Text>
