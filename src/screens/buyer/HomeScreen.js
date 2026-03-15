@@ -33,6 +33,22 @@ const OFFERS = [
   { id: '4', title: 'Cash on Delivery', subtitle: 'Pay when you receive',      emoji: '💵', bg: '#7C3AED', tag: 'SAFE & EASY' },
 ];
 
+// Town center fallback coordinates
+const TOWN_COORDS = {
+  'nellore':   { lat: 14.4426, lng: 79.9865 },
+  'warangal':  { lat: 17.9784, lng: 79.5941 },
+  'hyderabad': { lat: 17.3850, lng: 78.4867 },
+  'vizag':     { lat: 17.6868, lng: 83.2185 },
+  'tirupati':  { lat: 13.6288, lng: 79.4192 },
+  'guntur':    { lat: 16.3067, lng: 80.4365 },
+  'default':   { lat: 14.4426, lng: 79.9865 },
+};
+
+const getTownCoords = (townName) => {
+  const key = (townName || '').toLowerCase();
+  return TOWN_COORDS[key] || TOWN_COORDS['default'];
+};
+
 export default function HomeScreen({ navigation }) {
   const [shops, setShops]             = useState([]);
   const [loading, setLoading]         = useState(true);
@@ -44,7 +60,7 @@ export default function HomeScreen({ navigation }) {
   const bannerRef = useRef(null);
 
   const { user }                                       = useAuth();
-  const { cart, shop: cartShop, cartCount, cartTotal } = useCart();
+  const { shop: cartShop, cartCount, cartTotal }       = useCart();
   const [town, setTown]                                = useState(user?.town || 'Nellore');
 
   // Auto-scroll banner every 3 seconds
@@ -64,44 +80,55 @@ export default function HomeScreen({ navigation }) {
     if (user?.town) setTown(user.town);
   }, [user?.town]);
 
-  // Get buyer GPS
-  const getBuyerGPS = async () => {
+  // Get buyer GPS with fallback
+  const getBuyerGPS = async (currentTown) => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
+      console.log('📍 GPS permission:', status);
       if (status === 'granted') {
         const loc = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         });
-        setBuyerLat(loc.coords.latitude);
-        setBuyerLng(loc.coords.longitude);
-        return { lat: loc.coords.latitude, lng: loc.coords.longitude };
+        const lat = loc.coords.latitude;
+        const lng = loc.coords.longitude;
+        console.log('📍 Real GPS:', lat, lng);
+        setBuyerLat(lat);
+        setBuyerLng(lng);
+        return { lat, lng };
       }
     } catch (e) {
-      console.log('GPS error:', e.message);
+      console.log('📍 GPS error:', e.message);
     }
-    return null;
+    // Fallback to town center coordinates
+    const fallback = getTownCoords(currentTown || town);
+    console.log('📍 Using town fallback:', fallback);
+    setBuyerLat(fallback.lat);
+    setBuyerLng(fallback.lng);
+    return fallback;
   };
 
   const fetchShops = async (currentTown, gps) => {
     const t = currentTown || town;
     try {
-      let url = `/vendors/nearby/?town=${t}`;
-      const gpsData = gps || (buyerLat ? { lat: buyerLat, lng: buyerLng } : null);
+      let url       = `/vendors/nearby/?town=${t}`;
+      const gpsData = gps || (buyerLat ? { lat: buyerLat, lng: buyerLng } : getTownCoords(t));
       if (gpsData) {
         url += `&lat=${gpsData.lat}&lng=${gpsData.lng}`;
       }
+      console.log('🌐 Fetching:', url);
       const res = await client.get(url);
       if (Array.isArray(res.data)) {
         setShops(res.data);
       } else if (res.data.shops) {
         setShops(res.data.shops);
+        console.log('✅ Shops loaded:', res.data.shops.length, '| First distance:', res.data.shops[0]?.distance);
       } else if (res.data.results) {
         setShops(res.data.results);
       } else {
         setShops([]);
       }
     } catch (e) {
-      console.log('Error fetching shops:', e.message);
+      console.log('❌ Error fetching shops:', e.message);
       setShops([]);
     } finally {
       setLoading(false);
@@ -111,7 +138,7 @@ export default function HomeScreen({ navigation }) {
 
   useEffect(() => {
     const init = async () => {
-      const gps = await getBuyerGPS();
+      const gps = await getBuyerGPS(town);
       fetchShops(town, gps);
     };
     init();
@@ -121,13 +148,14 @@ export default function HomeScreen({ navigation }) {
     useCallback(() => {
       const currentTown = user?.town || 'Nellore';
       setTown(currentTown);
-      fetchShops(currentTown);
+      const gps = getTownCoords(currentTown);
+      fetchShops(currentTown, gps);
     }, [user?.town])
   );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    const gps = await getBuyerGPS();
+    const gps = await getBuyerGPS(town);
     fetchShops(town, gps);
   };
 
@@ -190,15 +218,13 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.metaDot}>•</Text>
           <Text style={styles.shopMetaText}>⏱ {shop.estimated_delivery_time || 30} mins</Text>
           <Text style={styles.metaDot}>•</Text>
-          {shop.distance ? (
+          {(shop.distance !== null && shop.distance !== undefined) ? (
             <Text style={styles.shopDistance}>📍 {shop.distance} km</Text>
           ) : (
             <Text style={styles.deliveryFree}>Free Delivery</Text>
           )}
         </View>
-        {shop.distance && (
-          <Text style={styles.deliveryFreeSmall}>🚚 Free Delivery</Text>
-        )}
+        <Text style={styles.deliveryFreeSmall}>🚚 Free Delivery</Text>
       </View>
     </TouchableOpacity>
   );
@@ -505,7 +531,7 @@ const styles = StyleSheet.create({
     position: 'absolute', top: 10, right: 10,
     width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: '#fff',
   },
-  shopCardBody: { padding: 14 },
+  shopCardBody:  { padding: 14 },
   shopCardTop: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', marginBottom: 4,
