@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, RefreshControl,
+  ScrollView, RefreshControl,
   Dimensions, FlatList,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import * as Location from 'expo-location';
 import client from '../../api/client';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import { ShopCardSkeleton } from '../../components/Skeleton';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -25,10 +27,10 @@ const CATEGORIES = [
 const SHOP_COLORS = ['#4CAF50', '#FF7043', '#FFA726', '#42A5F5', '#AB47BC', '#26A69A'];
 
 const OFFERS = [
-  { id: '1', title: '50% OFF',       subtitle: 'On your first order',        emoji: '🎉', bg: '#2563EB', tag: 'NEW USER'   },
-  { id: '2', title: 'Free Delivery', subtitle: 'On all vegetable orders',    emoji: '🥦', bg: '#16A34A', tag: 'TODAY ONLY' },
-  { id: '3', title: 'Order Fresh',   subtitle: 'From local shops near you',  emoji: '🏪', bg: '#EA580C', tag: 'LOCAL FIRST'},
-  { id: '4', title: 'Cash on Delivery', subtitle: 'Pay when you receive',    emoji: '💵', bg: '#7C3AED', tag: 'SAFE & EASY'},
+  { id: '1', title: '50% OFF',          subtitle: 'On your first order',       emoji: '🎉', bg: '#2563EB', tag: 'NEW USER'    },
+  { id: '2', title: 'Free Delivery',    subtitle: 'On all vegetable orders',   emoji: '🥦', bg: '#16A34A', tag: 'TODAY ONLY'  },
+  { id: '3', title: 'Order Fresh',      subtitle: 'From local shops near you', emoji: '🏪', bg: '#EA580C', tag: 'LOCAL FIRST' },
+  { id: '4', title: 'Cash on Delivery', subtitle: 'Pay when you receive',      emoji: '💵', bg: '#7C3AED', tag: 'SAFE & EASY' },
 ];
 
 export default function HomeScreen({ navigation }) {
@@ -37,6 +39,8 @@ export default function HomeScreen({ navigation }) {
   const [refreshing, setRefreshing]   = useState(false);
   const [category, setCategory]       = useState('all');
   const [bannerIndex, setBannerIndex] = useState(0);
+  const [buyerLat, setBuyerLat]       = useState(null);
+  const [buyerLng, setBuyerLng]       = useState(null);
   const bannerRef = useRef(null);
 
   const { user }                                       = useAuth();
@@ -60,10 +64,33 @@ export default function HomeScreen({ navigation }) {
     if (user?.town) setTown(user.town);
   }, [user?.town]);
 
-  const fetchShops = async (currentTown) => {
+  // Get buyer GPS
+  const getBuyerGPS = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        setBuyerLat(loc.coords.latitude);
+        setBuyerLng(loc.coords.longitude);
+        return { lat: loc.coords.latitude, lng: loc.coords.longitude };
+      }
+    } catch (e) {
+      console.log('GPS error:', e.message);
+    }
+    return null;
+  };
+
+  const fetchShops = async (currentTown, gps) => {
     const t = currentTown || town;
     try {
-      const res = await client.get(`/vendors/nearby/?town=${t}`);
+      let url = `/vendors/nearby/?town=${t}`;
+      const gpsData = gps || (buyerLat ? { lat: buyerLat, lng: buyerLng } : null);
+      if (gpsData) {
+        url += `&lat=${gpsData.lat}&lng=${gpsData.lng}`;
+      }
+      const res = await client.get(url);
       if (Array.isArray(res.data)) {
         setShops(res.data);
       } else if (res.data.shops) {
@@ -82,7 +109,13 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  useEffect(() => { fetchShops(town); }, [town]);
+  useEffect(() => {
+    const init = async () => {
+      const gps = await getBuyerGPS();
+      fetchShops(town, gps);
+    };
+    init();
+  }, [town]);
 
   useFocusEffect(
     useCallback(() => {
@@ -92,7 +125,11 @@ export default function HomeScreen({ navigation }) {
     }, [user?.town])
   );
 
-  const onRefresh = () => { setRefreshing(true); fetchShops(town); };
+  const onRefresh = async () => {
+    setRefreshing(true);
+    const gps = await getBuyerGPS();
+    fetchShops(town, gps);
+  };
 
   const filteredShops = shops.filter(shop =>
     category === 'all' || shop.category === category
@@ -153,8 +190,15 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.metaDot}>•</Text>
           <Text style={styles.shopMetaText}>⏱ {shop.estimated_delivery_time || 30} mins</Text>
           <Text style={styles.metaDot}>•</Text>
-          <Text style={styles.deliveryFree}>Free Delivery</Text>
+          {shop.distance ? (
+            <Text style={styles.shopDistance}>📍 {shop.distance} km</Text>
+          ) : (
+            <Text style={styles.deliveryFree}>Free Delivery</Text>
+          )}
         </View>
+        {shop.distance && (
+          <Text style={styles.deliveryFreeSmall}>🚚 Free Delivery</Text>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -271,14 +315,16 @@ export default function HomeScreen({ navigation }) {
           ))}
         </ScrollView>
 
-        {/* Shops Section — clean like Swiggy */}
+        {/* Shops Section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Shops Near You</Text>
           <Text style={styles.shopCount}>{filteredShops.length} shops</Text>
         </View>
 
         {loading ? (
-          <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 40 }} />
+          <>
+            {[1,2,3,4].map(i => <ShopCardSkeleton key={i} />)}
+          </>
         ) : filteredShops.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>🏪</Text>
@@ -382,12 +428,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: '#fff',
   },
-  headerLeft: {},
-  deliverTo: { fontSize: 12, color: '#888' },
-  locationRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
-  locationText: { fontSize: 16, fontWeight: 'bold', color: '#111' },
+  headerLeft:    {},
+  deliverTo:     { fontSize: 12, color: '#888' },
+  locationRow:   { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
+  locationText:  { fontSize: 16, fontWeight: 'bold', color: '#111' },
   locationArrow: { fontSize: 14, color: '#111' },
-  headerRight: { flexDirection: 'row', gap: 8 },
+  headerRight:   { flexDirection: 'row', gap: 8 },
   iconBtn: {
     width: 38, height: 38, borderRadius: 19,
     backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center',
@@ -399,7 +445,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6', borderRadius: 12,
     marginHorizontal: 16, marginVertical: 12, padding: 12,
   },
-  searchIcon: { fontSize: 16, marginRight: 8 },
+  searchIcon:        { fontSize: 16, marginRight: 8 },
   searchPlaceholder: { fontSize: 14, color: '#9CA3AF' },
 
   bannerList: { marginBottom: 8 },
@@ -431,9 +477,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08, shadowRadius: 4, elevation: 2,
   },
   categoryCircleActive: { backgroundColor: '#DBEAFE' },
-  categoryEmoji:      { fontSize: 26 },
-  categoryLabel:      { fontSize: 11, color: '#555', textAlign: 'center' },
-  categoryLabelActive:{ color: '#2563EB', fontWeight: 'bold' },
+  categoryEmoji:        { fontSize: 26 },
+  categoryLabel:        { fontSize: 11, color: '#555', textAlign: 'center' },
+  categoryLabelActive:  { color: '#2563EB', fontWeight: 'bold' },
 
   sectionTitle: {
     fontSize: 17, fontWeight: 'bold', color: '#111',
@@ -449,8 +495,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', marginHorizontal: 16,
     marginBottom: 16, borderRadius: 16,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07, shadowRadius: 8, elevation: 3,
-    overflow: 'hidden',
+    shadowOpacity: 0.07, shadowRadius: 8, elevation: 3, overflow: 'hidden',
   },
   shopBanner: {
     height: 100, justifyContent: 'center', alignItems: 'center', position: 'relative',
@@ -465,25 +510,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', marginBottom: 4,
   },
-  shopName:     { fontSize: 15, fontWeight: 'bold', color: '#111', flex: 1 },
-  openBadge:    { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, marginLeft: 8 },
-  openBadgeText:{ fontSize: 11, fontWeight: '600' },
-  shopCategory: { fontSize: 12, color: '#888', marginBottom: 8 },
-  shopMeta:     { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  ratingBox:    { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  ratingStars:  { fontSize: 13, color: '#F59E0B' },
-  ratingText:   { fontSize: 12, fontWeight: 'bold', color: '#111' },
-  ratingNew:    { fontSize: 12, color: '#888' },
-  reviewCount:  { fontSize: 11, color: '#888' },
-  metaDot:      { fontSize: 10, color: '#D1D5DB' },
-  shopMetaText: { fontSize: 12, color: '#555' },
-  deliveryFree: { fontSize: 12, color: '#16A34A', fontWeight: '600' },
+  shopName:      { fontSize: 15, fontWeight: 'bold', color: '#111', flex: 1 },
+  openBadge:     { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, marginLeft: 8 },
+  openBadgeText: { fontSize: 11, fontWeight: '600' },
+  shopCategory:  { fontSize: 12, color: '#888', marginBottom: 8 },
+  shopMeta:      { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  ratingBox:     { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  ratingStars:   { fontSize: 13, color: '#F59E0B' },
+  ratingText:    { fontSize: 12, fontWeight: 'bold', color: '#111' },
+  ratingNew:     { fontSize: 12, color: '#888' },
+  reviewCount:   { fontSize: 11, color: '#888' },
+  metaDot:       { fontSize: 10, color: '#D1D5DB' },
+  shopMetaText:  { fontSize: 12, color: '#555' },
+  deliveryFree:  { fontSize: 12, color: '#16A34A', fontWeight: '600' },
+  shopDistance:  { fontSize: 12, color: '#2563EB', fontWeight: '600' },
+  deliveryFreeSmall: { fontSize: 11, color: '#16A34A', marginTop: 4 },
 
-  emptyState:      { alignItems: 'center', marginTop: 60, paddingHorizontal: 32 },
-  emptyEmoji:      { fontSize: 50, marginBottom: 12 },
-  emptyTitle:      { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 6 },
-  emptySubtitle:   { fontSize: 13, color: '#888', marginBottom: 20, textAlign: 'center' },
-  changeTownBtn:   { backgroundColor: '#2563EB', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 },
+  emptyState:        { alignItems: 'center', marginTop: 60, paddingHorizontal: 32 },
+  emptyEmoji:        { fontSize: 50, marginBottom: 12 },
+  emptyTitle:        { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 6 },
+  emptySubtitle:     { fontSize: 13, color: '#888', marginBottom: 20, textAlign: 'center' },
+  changeTownBtn:     { backgroundColor: '#2563EB', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 },
   changeTownBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
 
   cartBar: {
@@ -517,8 +564,8 @@ const styles = StyleSheet.create({
     paddingBottom: 24, paddingTop: 10,
     position: 'absolute', bottom: 0, left: 0, right: 0,
   },
-  tabItem:       { flex: 1, alignItems: 'center' },
-  tabIcon:       { fontSize: 22, marginBottom: 2, color: '#9CA3AF' },
-  tabLabel:      { fontSize: 11, color: '#9CA3AF' },
-  tabLabelActive:{ fontSize: 11, color: '#2563EB', fontWeight: 'bold' },
+  tabItem:        { flex: 1, alignItems: 'center' },
+  tabIcon:        { fontSize: 22, marginBottom: 2, color: '#9CA3AF' },
+  tabLabel:       { fontSize: 11, color: '#9CA3AF' },
+  tabLabelActive: { fontSize: 11, color: '#2563EB', fontWeight: 'bold' },
 });
