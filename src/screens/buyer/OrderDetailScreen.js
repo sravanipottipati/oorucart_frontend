@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, Linking, Share, Alert,
+  ScrollView, ActivityIndicator, Linking, Share, Alert, Modal, TextInput,
 } from 'react-native';
 import client from '../../api/client';
 
@@ -17,19 +17,64 @@ const STATUS_INFO = {
 };
 
 export default function OrderDetailScreen({ navigation, route }) {
-  const { orderId }           = route.params;
-  const [order, setOrder]     = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { orderId }               = route.params;
+  const [order, setOrder]         = useState(null);
+  const [loading, setLoading]     = useState(true);
   const [cancelling, setCancelling] = useState(false);
+
+  // Rating states
+  const [showRating, setShowRating]     = useState(false);
+  const [rating, setRating]             = useState(0);
+  const [comment, setComment]           = useState('');
+  const [submitting, setSubmitting]     = useState(false);
+  const [hasReview, setHasReview]       = useState(false);
+  const [existingRating, setExistingRating] = useState(null);
 
   const fetchOrder = async () => {
     try {
       const res = await client.get(`/orders/${orderId}/`);
       setOrder(res.data);
+      // Check if already reviewed
+      if (res.data.status === 'delivered') {
+        checkReview(orderId);
+      }
     } catch (e) {
       console.log('Error:', e.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkReview = async (id) => {
+    try {
+      const res = await client.get(`/orders/${id}/review/`);
+      if (res.data.has_review) {
+        setHasReview(true);
+        setExistingRating(res.data.rating);
+        setRating(res.data.rating);
+        setComment(res.data.comment || '');
+      }
+    } catch (e) {
+      console.log('Review check error:', e.message);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (rating === 0) {
+      Alert.alert('Rate First', 'Please select a star rating');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await client.post(`/orders/${order.id}/review/`, { rating, comment });
+      setHasReview(true);
+      setExistingRating(rating);
+      setShowRating(false);
+      Alert.alert('Thank you! 🌟', 'Your review has been submitted!');
+    } catch (e) {
+      Alert.alert('Error', 'Could not submit review. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -187,6 +232,41 @@ Powered by Shop2me 🛍`;
           </View>
         )}
 
+        {/* Rating Card — show for delivered orders */}
+        {isDelivered && (
+          <View style={styles.ratingCard}>
+            {hasReview ? (
+              <View style={styles.ratingDone}>
+                <Text style={styles.ratingDoneEmoji}>🌟</Text>
+                <View>
+                  <Text style={styles.ratingDoneTitle}>You rated this order</Text>
+                  <View style={styles.starsRow}>
+                    {[1,2,3,4,5].map(s => (
+                      <Text key={s} style={[styles.starIcon, { color: s <= existingRating ? '#F59E0B' : '#E5E7EB' }]}>
+                        ★
+                      </Text>
+                    ))}
+                  </View>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.ratingPrompt}>
+                <Text style={styles.ratingPromptEmoji}>🎉</Text>
+                <View style={styles.ratingPromptInfo}>
+                  <Text style={styles.ratingPromptTitle}>How was your order?</Text>
+                  <Text style={styles.ratingPromptDesc}>Rate your experience</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.rateBtn}
+                  onPress={() => setShowRating(true)}
+                >
+                  <Text style={styles.rateBtnText}>Rate Now</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Order Info */}
         <View style={styles.card}>
           <View style={styles.infoRow}>
@@ -264,7 +344,7 @@ Powered by Shop2me 🛍`;
           <Text style={styles.shareReceiptText}>📤  Share Order Receipt</Text>
         </TouchableOpacity>
 
-        {/* Cancel Order — only shown for placed/accepted */}
+        {/* Cancel Order */}
         {canCancel && (
           <TouchableOpacity
             style={styles.cancelBtn}
@@ -279,24 +359,101 @@ Powered by Shop2me 🛍`;
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* ── RATING MODAL ── */}
+      <Modal
+        visible={showRating}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowRating(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowRating(false)}
+        >
+          <TouchableOpacity activeOpacity={1} style={styles.modalCard}>
+
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Rate Your Order 🌟</Text>
+            <Text style={styles.modalShop}>{order.vendor_name || 'Shop'}</Text>
+
+            {/* Stars */}
+            <View style={styles.starsRowLarge}>
+              {[1,2,3,4,5].map(s => (
+                <TouchableOpacity key={s} onPress={() => setRating(s)}>
+                  <Text style={[
+                    styles.starLarge,
+                    { color: s <= rating ? '#F59E0B' : '#E5E7EB' }
+                  ]}>
+                    ★
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Rating label */}
+            <Text style={styles.ratingLabel}>
+              {rating === 0 ? 'Tap to rate' :
+               rating === 1 ? '😞 Poor' :
+               rating === 2 ? '😕 Fair' :
+               rating === 3 ? '😊 Good' :
+               rating === 4 ? '😃 Very Good' :
+               '🤩 Excellent!'}
+            </Text>
+
+            {/* Comment */}
+            <TextInput
+              style={styles.commentInput}
+              placeholder="Share your experience (optional)..."
+              placeholderTextColor="#9CA3AF"
+              value={comment}
+              onChangeText={setComment}
+              multiline
+              numberOfLines={3}
+            />
+
+            {/* Submit */}
+            <TouchableOpacity
+              style={[styles.submitRatingBtn, rating === 0 && styles.submitRatingBtnDisabled]}
+              onPress={handleSubmitReview}
+              disabled={submitting || rating === 0}
+            >
+              {submitting
+                ? <ActivityIndicator color="#fff" />
+                : <Text style={styles.submitRatingBtnText}>Submit Review</Text>
+              }
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.skipBtn}
+              onPress={() => setShowRating(false)}
+            >
+              <Text style={styles.skipBtnText}>Skip for now</Text>
+            </TouchableOpacity>
+
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9FA' },
+  container:        { flex: 1, backgroundColor: '#F8F9FA' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  errorText: { fontSize: 16, color: '#888' },
+  errorText:        { fontSize: 16, color: '#888' },
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12,
     backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
-  backBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
-  backText: { fontSize: 24, color: '#111' },
-  headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
-  shareBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
+  backBtn:      { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
+  backText:     { fontSize: 24, color: '#111' },
+  headerTitle:  { fontSize: 17, fontWeight: 'bold', color: '#111' },
+  shareBtn:     { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   shareBtnIcon: { fontSize: 22 },
 
   statusBanner: {
@@ -316,20 +473,43 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 15, fontWeight: 'bold', color: '#111', marginBottom: 14 },
   divider:   { height: 1, backgroundColor: '#F5F5F5', marginVertical: 4 },
 
-  stepRow:      { flexDirection: 'row', marginBottom: 0 },
-  stepLeft:     { alignItems: 'center', width: 28, marginRight: 12 },
+  stepRow:     { flexDirection: 'row', marginBottom: 0 },
+  stepLeft:    { alignItems: 'center', width: 28, marginRight: 12 },
   stepDot: {
     width: 22, height: 22, borderRadius: 11,
     backgroundColor: '#E5E7EB', justifyContent: 'center', alignItems: 'center',
   },
-  stepDotDone:    { backgroundColor: '#2563EB' },
-  stepDotText:    { fontSize: 11, color: '#fff', fontWeight: 'bold' },
-  stepLine:       { width: 2, flex: 1, minHeight: 24, backgroundColor: '#E5E7EB', marginVertical: 2 },
-  stepLineDone:   { backgroundColor: '#2563EB' },
-  stepInfo:       { flex: 1, paddingBottom: 16 },
-  stepLabel:      { fontSize: 13, color: '#9CA3AF', fontWeight: '500', marginTop: 2 },
-  stepLabelDone:  { color: '#111', fontWeight: '600' },
-  stepDesc:       { fontSize: 11, color: '#888', marginTop: 2 },
+  stepDotDone:   { backgroundColor: '#2563EB' },
+  stepDotText:   { fontSize: 11, color: '#fff', fontWeight: 'bold' },
+  stepLine:      { width: 2, flex: 1, minHeight: 24, backgroundColor: '#E5E7EB', marginVertical: 2 },
+  stepLineDone:  { backgroundColor: '#2563EB' },
+  stepInfo:      { flex: 1, paddingBottom: 16 },
+  stepLabel:     { fontSize: 13, color: '#9CA3AF', fontWeight: '500', marginTop: 2 },
+  stepLabelDone: { color: '#111', fontWeight: '600' },
+  stepDesc:      { fontSize: 11, color: '#888', marginTop: 2 },
+
+  // Rating Card
+  ratingCard: {
+    backgroundColor: '#fff', borderRadius: 16,
+    margin: 16, marginBottom: 0, padding: 16,
+    borderWidth: 1.5, borderColor: '#FEF3C7',
+  },
+  ratingPrompt: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  ratingPromptEmoji: { fontSize: 32 },
+  ratingPromptInfo: { flex: 1 },
+  ratingPromptTitle: { fontSize: 15, fontWeight: '700', color: '#111' },
+  ratingPromptDesc:  { fontSize: 12, color: '#888', marginTop: 2 },
+  rateBtn: {
+    backgroundColor: '#F59E0B', borderRadius: 10,
+    paddingHorizontal: 14, paddingVertical: 8,
+  },
+  rateBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+
+  ratingDone:      { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  ratingDoneEmoji: { fontSize: 28 },
+  ratingDoneTitle: { fontSize: 14, fontWeight: '600', color: '#111', marginBottom: 4 },
+  starsRow:        { flexDirection: 'row', gap: 2 },
+  starIcon:        { fontSize: 18 },
 
   infoRow: {
     flexDirection: 'row', justifyContent: 'space-between',
@@ -368,7 +548,7 @@ const styles = StyleSheet.create({
   itemUnit:    { fontSize: 12, color: '#888' },
   itemPrice:   { fontSize: 14, fontWeight: 'bold', color: '#111' },
 
-  billRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
+  billRow:        { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
   billLabel:      { fontSize: 13, color: '#888' },
   billValue:      { fontSize: 13, color: '#111' },
   billTotal:      { borderTopWidth: 1, borderTopColor: '#F5F5F5', marginTop: 4, paddingTop: 10 },
@@ -388,4 +568,41 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: '#EF4444',
   },
   cancelBtnText: { fontSize: 15, color: '#EF4444', fontWeight: 'bold' },
+
+  // Rating Modal
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalCard: {
+    backgroundColor: '#fff', borderTopLeftRadius: 28,
+    borderTopRightRadius: 28, padding: 24, paddingBottom: 40,
+  },
+  modalHandle: {
+    width: 40, height: 4, borderRadius: 2,
+    backgroundColor: '#E5E7EB', alignSelf: 'center', marginBottom: 20,
+  },
+  modalTitle: { fontSize: 20, fontWeight: '700', color: '#111', textAlign: 'center', marginBottom: 4 },
+  modalShop:  { fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 20 },
+
+  starsRowLarge: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 12 },
+  starLarge:     { fontSize: 44 },
+  ratingLabel:   { fontSize: 16, color: '#555', textAlign: 'center', marginBottom: 20, fontWeight: '500' },
+
+  commentInput: {
+    borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 14,
+    padding: 14, fontSize: 14, color: '#111',
+    backgroundColor: '#F9FAFB', minHeight: 80,
+    textAlignVertical: 'top', marginBottom: 16,
+  },
+
+  submitRatingBtn: {
+    backgroundColor: '#F59E0B', padding: 16, borderRadius: 14,
+    alignItems: 'center', marginBottom: 10,
+  },
+  submitRatingBtnDisabled: { backgroundColor: '#FDE68A' },
+  submitRatingBtnText:     { color: '#fff', fontSize: 16, fontWeight: '700' },
+
+  skipBtn:     { alignItems: 'center', padding: 12 },
+  skipBtnText: { fontSize: 14, color: '#888' },
 });
