@@ -94,7 +94,7 @@ export default function LoginScreen({ navigation }) {
           >
             {loading
               ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.buttonText}>Login →</Text>
+              : <Text style={styles.buttonText}>Login</Text>
             }
           </TouchableOpacity>
 
