@@ -132,7 +132,7 @@ export default function RegisterScreen({ navigation }) {
           >
             {loading
               ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.buttonText}>Create Buyer Account →</Text>
+              : <Text style={styles.buttonText}>Create Buyer Account</Text>
             }
           </TouchableOpacity>
 
