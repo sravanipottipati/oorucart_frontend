@@ -3,6 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform,
 } from 'react-native';
+import * as Location from 'expo-location';
 import client from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 
@@ -17,13 +18,16 @@ const WEEKLY_OFF = ['None','Monday','Tuesday','Wednesday','Thursday','Friday','S
 
 export default function VendorRegisterScreen({ navigation }) {
   const { login } = useAuth();
-  const [step, setStep]       = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [step, setStep]             = useState(1);
+  const [loading, setLoading]       = useState(false);
+  const [gpsLoading, setGpsLoading] = useState(false);
 
   const [shopName,  setShopName]  = useState('');
   const [ownerName, setOwnerName] = useState('');
   const [phone,     setPhone]     = useState('');
   const [town,      setTown]      = useState('');
+  const [vendorLat, setVendorLat] = useState(null);
+  const [vendorLng, setVendorLng] = useState(null);
   const [password,  setPassword]  = useState('');
   const [confirmPw, setConfirmPw] = useState('');
 
@@ -47,6 +51,40 @@ export default function VendorRegisterScreen({ navigation }) {
     return 'Rs.7 per order';
   };
 
+  const handleDetectLocation = async () => {
+    setGpsLoading(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Please allow location access to auto-detect your town.');
+        return;
+      }
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const geocode = await Location.reverseGeocodeAsync({
+        latitude:  location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+      if (geocode.length > 0) {
+        const place = geocode[0];
+        const detectedTown = place.city || place.subregion || place.region || '';
+        if (detectedTown) {
+          setTown(detectedTown);
+          setVendorLat(location.coords.latitude);
+          setVendorLng(location.coords.longitude);
+          Alert.alert('📍 Location Detected!', `Town set to: ${detectedTown}`);
+        } else {
+          Alert.alert('Could not detect town', 'Please enter your town manually.');
+        }
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Could not detect location. Please enter town manually.');
+    } finally {
+      setGpsLoading(false);
+    }
+  };
+
   const goNext = () => setStep(prev => prev + 1);
   const goBack = () => {
     if (step === 1) navigation.goBack();
@@ -57,16 +95,18 @@ export default function VendorRegisterScreen({ navigation }) {
     setLoading(true);
     try {
       await client.post('/users/register/', {
-        full_name:   ownerName,
+        full_name:    ownerName,
         phone_number: phone,
-        password:    password,
-        user_type:   'vendor',
+        password:     password,
+        user_type:    'vendor',
       });
       await login(phone, password);
       await client.post('/vendors/register/', {
         shop_name:               shopName,
         category:                category,
         town:                    town,
+        latitude:                vendorLat || null,
+        longitude:               vendorLng || null,
         delivery_type:           deliveryType,
         estimated_delivery_time: parseInt(deliveryTime),
       });
@@ -122,10 +162,49 @@ export default function VendorRegisterScreen({ navigation }) {
         </View>
         <View style={styles.halfField}>
           <Text style={styles.label}>Town/City *</Text>
-          <TextInput style={styles.input} placeholder="Your town"
-            placeholderTextColor="#9CA3AF" value={town} onChangeText={setTown} />
+          <TextInput
+            style={[styles.input, town ? styles.inputFilled : null]}
+            placeholder="Your town"
+            placeholderTextColor="#9CA3AF"
+            value={town}
+            onChangeText={text => {
+              setTown(text);
+              if (!text) { setVendorLat(null); setVendorLng(null); }
+            }}
+          />
         </View>
       </View>
+
+      {/* GPS Button */}
+      <TouchableOpacity
+        style={styles.gpsBtn}
+        onPress={handleDetectLocation}
+        disabled={gpsLoading}
+      >
+        {gpsLoading
+          ? <ActivityIndicator color="#2563EB" size="small" />
+          : <Text style={styles.gpsBtnText}>📍 Auto-detect my location</Text>
+        }
+      </TouchableOpacity>
+
+      {/* Town detected confirmation */}
+      {town && vendorLat ? (
+        <View style={styles.townDetected}>
+          <View>
+            <Text style={styles.townDetectedText}>📍 {town}</Text>
+            <Text style={styles.townDetectedSub}>
+              GPS: {vendorLat?.toFixed(4)}, {vendorLng?.toFixed(4)}
+            </Text>
+          </View>
+          <TouchableOpacity onPress={() => { setTown(''); setVendorLat(null); setVendorLng(null); }}>
+            <Text style={styles.townClear}>✕</Text>
+          </TouchableOpacity>
+        </View>
+      ) : town ? (
+        <View style={styles.townManual}>
+          <Text style={styles.townManualText}>📍 {town} (entered manually)</Text>
+        </View>
+      ) : null}
 
       <Text style={styles.label}>Password *</Text>
       <TextInput style={styles.input} placeholder="Min 6 characters"
@@ -289,6 +368,12 @@ export default function VendorRegisterScreen({ navigation }) {
         <Text style={styles.reviewRow}><Text style={styles.reviewKey}>Owner: </Text>{ownerName}</Text>
         <Text style={styles.reviewRow}><Text style={styles.reviewKey}>Phone: </Text>{phone}</Text>
         <Text style={styles.reviewRow}><Text style={styles.reviewKey}>Town: </Text>{town}</Text>
+        {vendorLat && (
+          <Text style={styles.reviewRow}>
+            <Text style={styles.reviewKey}>GPS: </Text>
+            {vendorLat?.toFixed(4)}, {vendorLng?.toFixed(4)} ✅
+          </Text>
+        )}
       </View>
 
       <View style={styles.reviewCard}>
@@ -359,7 +444,7 @@ export default function VendorRegisterScreen({ navigation }) {
       {step === 4 && renderStep4()}
       {step === 5 && renderStep5()}
 
-      {/* Footer Buttons */}
+      {/* Footer */}
       <View style={styles.footer}>
         {step < 5 ? (
           <TouchableOpacity style={styles.nextBtn} onPress={goNext}>
@@ -385,7 +470,6 @@ export default function VendorRegisterScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
 
-  // Header
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12,
@@ -401,7 +485,6 @@ const styles = StyleSheet.create({
   logoIconText: { fontSize: 16, fontWeight: '900', color: 'white' },
   logoText:     { fontSize: 20, fontWeight: '700', color: '#111' },
 
-  // Tabs
   tabRow: {
     flexDirection: 'row', margin: 16, borderRadius: 14,
     backgroundColor: '#F3F4F6', padding: 4,
@@ -416,26 +499,47 @@ const styles = StyleSheet.create({
   tabInactive:     { flex: 1, padding: 10, alignItems: 'center' },
   tabInactiveText: { color: '#888', fontSize: 14, fontWeight: '500' },
 
-  // Step content
   stepContent:  { flex: 1, paddingHorizontal: 16 },
   stepTitle:    { fontSize: 22, fontWeight: '700', color: '#111', marginTop: 16, marginBottom: 4 },
   stepSubtitle: { fontSize: 13, color: '#888', marginBottom: 12 },
 
-  // Progress
   progressRow: { flexDirection: 'row', gap: 6, marginBottom: 20, height: 5 },
   progressDot:  { height: 5, borderRadius: 3 },
 
-  // Form
   label: { fontSize: 13, color: '#444', fontWeight: '600', marginBottom: 6, marginTop: 4 },
   input: {
     borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12,
     padding: 13, fontSize: 15, marginBottom: 12,
     backgroundColor: '#F9FAFB', color: '#111',
   },
-  row:       { flexDirection: 'row', gap: 12 },
-  halfField: { flex: 1 },
+  inputFilled: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
+  row:         { flexDirection: 'row', gap: 12 },
+  halfField:   { flex: 1 },
 
-  // Category
+  // GPS
+  gpsBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#EFF6FF', borderRadius: 12,
+    borderWidth: 1.5, borderColor: '#2563EB',
+    padding: 12, marginBottom: 10,
+  },
+  gpsBtnText: { fontSize: 14, color: '#2563EB', fontWeight: '600' },
+
+  townDetected: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    backgroundColor: '#DCFCE7', borderRadius: 10, padding: 10, marginBottom: 12,
+  },
+  townDetectedText: { fontSize: 13, color: '#16A34A', fontWeight: '600' },
+  townDetectedSub:  { fontSize: 11, color: '#16A34A', marginTop: 2 },
+  townClear:        { fontSize: 18, color: '#EF4444', fontWeight: '700', paddingHorizontal: 8 },
+
+  townManual: {
+    backgroundColor: '#FFF7ED', borderRadius: 10,
+    padding: 10, marginBottom: 12,
+    borderWidth: 1, borderColor: '#FED7AA',
+  },
+  townManualText: { fontSize: 13, color: '#EA580C', fontWeight: '500' },
+
   categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 12 },
   categoryCard: {
     width: '47%', borderWidth: 1.5, borderColor: '#E5E7EB',
@@ -446,11 +550,9 @@ const styles = StyleSheet.create({
   categoryLabel:       { fontSize: 13, color: '#555', fontWeight: '600' },
   categoryLabelActive: { color: '#2563EB' },
 
-  // Fee info
   feeInfo:     { backgroundColor: '#EFF6FF', borderRadius: 10, padding: 10, marginBottom: 12 },
   feeInfoText: { fontSize: 13, color: '#2563EB' },
 
-  // Delivery toggle
   toggleRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
   toggleBtn: {
     flex: 1, borderWidth: 1.5, borderColor: '#E5E7EB',
@@ -460,7 +562,6 @@ const styles = StyleSheet.create({
   toggleBtnText:       { fontSize: 12, color: '#555', fontWeight: '600' },
   toggleBtnTextActive: { color: '#fff' },
 
-  // Weekly off
   weeklyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   dayBtn: {
     borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 20,
@@ -470,8 +571,7 @@ const styles = StyleSheet.create({
   dayBtnText:       { fontSize: 13, color: '#555' },
   dayBtnTextActive: { color: '#fff', fontWeight: '600' },
 
-  // Review
-  reviewCard:    {
+  reviewCard: {
     backgroundColor: '#F9FAFB', borderRadius: 14, padding: 14,
     marginBottom: 12, borderWidth: 1, borderColor: '#F0F0F0',
   },
@@ -481,7 +581,6 @@ const styles = StyleSheet.create({
   approvalNote:  { backgroundColor: '#DCFCE7', borderRadius: 12, padding: 14, marginBottom: 20 },
   approvalText:  { fontSize: 13, color: '#16A34A', lineHeight: 18, fontWeight: '500' },
 
-  // Footer
   footer: {
     padding: 16, paddingBottom: 30,
     borderTopWidth: 1, borderTopColor: '#F0F0F0', backgroundColor: '#fff',
