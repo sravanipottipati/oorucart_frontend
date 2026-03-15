@@ -219,7 +219,7 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.shopMetaText}>⏱ {shop.estimated_delivery_time || 30} mins</Text>
           <Text style={styles.metaDot}>•</Text>
           {(shop.distance !== null && shop.distance !== undefined) ? (
-            <Text style={styles.shopDistance}>📍 {shop.distance} km</Text>
+            <Text style={styles.shopDistance}>📍 {shop.distance === 0 ? '0.1' : shop.distance} km</Text>
           ) : (
             <Text style={styles.deliveryFree}>Free Delivery</Text>
           )}
