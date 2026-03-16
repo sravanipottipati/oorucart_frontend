@@ -49,19 +49,23 @@ const getTownCoords = (townName) => {
   return TOWN_COORDS[key] || TOWN_COORDS['default'];
 };
 
+// ── KEY FIX: Check if GPS coords match the town (India check) ──────────────────
+const isCoordInIndia = (lat, lng) => {
+  return lat >= 6.0 && lat <= 37.0 && lng >= 68.0 && lng <= 97.0;
+};
+
 export default function HomeScreen({ navigation }) {
   const [shops, setShops]             = useState([]);
   const [loading, setLoading]         = useState(true);
   const [refreshing, setRefreshing]   = useState(false);
   const [category, setCategory]       = useState('all');
   const [bannerIndex, setBannerIndex] = useState(0);
-  const [buyerLat, setBuyerLat]       = useState(null);
-  const [buyerLng, setBuyerLng]       = useState(null);
-  const bannerRef = useRef(null);
+  const bannerRef                     = useRef(null);
+  const isFetchingRef                 = useRef(false); // ← prevent double fetch
 
-  const { user }                                       = useAuth();
-  const { shop: cartShop, cartCount, cartTotal }       = useCart();
-  const [town, setTown]                                = useState(user?.town || 'Nellore');
+  const { user }                                 = useAuth();
+  const { shop: cartShop, cartCount, cartTotal } = useCart();
+  const [town, setTown]                          = useState(user?.town || 'Nellore');
 
   // Auto-scroll banner every 3 seconds
   useEffect(() => {
@@ -75,57 +79,61 @@ export default function HomeScreen({ navigation }) {
     return () => clearInterval(timer);
   }, []);
 
-  // Update town when user changes
-  useEffect(() => {
-    if (user?.town) setTown(user.town);
-  }, [user?.town]);
+  // ── FIXED fetchShops — always uses town coords, ignores foreign GPS ──────────
+  const fetchShops = useCallback(async (currentTown) => {
+    if (isFetchingRef.current) return; // prevent double fetch
+    isFetchingRef.current = true;
 
-  // Get buyer GPS with fallback
-  const getBuyerGPS = async (currentTown) => {
+    const t = currentTown || town;
+
+    // Always start with town center coords (safe fallback)
+    const townCoords = getTownCoords(t);
+    let   gpsCoords  = townCoords;
+
+    // Try real GPS — but ONLY use it if coords are in India
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      console.log('📍 GPS permission:', status);
       if (status === 'granted') {
         const loc = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
+          timeInterval: 5000,
         });
         const lat = loc.coords.latitude;
         const lng = loc.coords.longitude;
         console.log('📍 Real GPS:', lat, lng);
-        setBuyerLat(lat);
-        setBuyerLng(lng);
-        return { lat, lng };
+
+        if (isCoordInIndia(lat, lng)) {
+          // ✅ User is in India — use real GPS
+          gpsCoords = { lat, lng };
+          console.log('✅ Using real GPS (India)');
+        } else {
+          // ❌ User is outside India (testing from US/etc) — use town coords
+          gpsCoords = townCoords;
+          console.log('⚠️ GPS outside India, using town coords:', townCoords);
+        }
       }
     } catch (e) {
-      console.log('📍 GPS error:', e.message);
+      console.log('📍 GPS error, using town coords:', e.message);
+      gpsCoords = townCoords;
     }
-    // Fallback to town center coordinates
-    const fallback = getTownCoords(currentTown || town);
-    console.log('📍 Using town fallback:', fallback);
-    setBuyerLat(fallback.lat);
-    setBuyerLng(fallback.lng);
-    return fallback;
-  };
 
-  const fetchShops = async (currentTown, gps) => {
-    const t = currentTown || town;
     try {
-      let url       = `/vendors/nearby/?town=${t}`;
-      const gpsData = gps || (buyerLat ? { lat: buyerLat, lng: buyerLng } : getTownCoords(t));
-      if (gpsData) {
-        url += `&lat=${gpsData.lat}&lng=${gpsData.lng}`;
-      }
+      const url = `/vendors/nearby/?town=${t}&lat=${gpsCoords.lat}&lng=${gpsCoords.lng}`;
       console.log('🌐 Fetching:', url);
       const res = await client.get(url);
+
       if (Array.isArray(res.data)) {
         setShops(res.data);
+        console.log('✅ Shops loaded:', res.data.length);
       } else if (res.data.shops) {
         setShops(res.data.shops);
         console.log('✅ Shops loaded:', res.data.shops.length, '| First distance:', res.data.shops[0]?.distance);
       } else if (res.data.results) {
         setShops(res.data.results);
+        console.log('✅ Shops loaded:', res.data.results.length);
       } else {
         setShops([]);
+        console.log('⚠️ No shops found');
       }
     } catch (e) {
       console.log('❌ Error fetching shops:', e.message);
@@ -133,30 +141,26 @@ export default function HomeScreen({ navigation }) {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      isFetchingRef.current = false; // release lock
     }
-  };
-
-  useEffect(() => {
-    const init = async () => {
-      const gps = await getBuyerGPS(town);
-      fetchShops(town, gps);
-    };
-    init();
   }, [town]);
 
+  // ── FIXED: Only useFocusEffect handles fetching — removed duplicate useEffect ─
   useFocusEffect(
     useCallback(() => {
       const currentTown = user?.town || 'Nellore';
-      setTown(currentTown);
-      const gps = getTownCoords(currentTown);
-      fetchShops(currentTown, gps);
+      if (currentTown !== town) {
+        setTown(currentTown);
+      }
+      setLoading(true);
+      fetchShops(currentTown);
     }, [user?.town])
   );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    const gps = await getBuyerGPS(town);
-    fetchShops(town, gps);
+    isFetchingRef.current = false; // allow refresh to bypass lock
+    fetchShops(town);
   };
 
   const filteredShops = shops.filter(shop =>
@@ -380,7 +384,7 @@ export default function HomeScreen({ navigation }) {
           style={styles.cartBar}
           onPress={() => navigation.navigate('ShopDetail', {
             vendorId: cartShop?.id,
-            shopName: cartShop?.shop_name,
+            shopName: cartShop?.shop_name || cartShop?.name,
           })}
         >
           <View style={styles.cartBarLeft}>
@@ -392,7 +396,7 @@ export default function HomeScreen({ navigation }) {
             </Text>
           </View>
           <View style={styles.cartBarRight}>
-            <Text style={styles.cartBarShop}>{cartShop?.shop_name}</Text>
+            <Text style={styles.cartBarShop}>{cartShop?.shop_name || cartShop?.name}</Text>
             <Text style={styles.cartBarTotal}>₹{cartTotal.toFixed(0)} →</Text>
           </View>
         </TouchableOpacity>
@@ -417,7 +421,7 @@ export default function HomeScreen({ navigation }) {
             if (cartCount > 0 && cartShop) {
               navigation.navigate('ShopDetail', {
                 vendorId: cartShop.id,
-                shopName: cartShop.shop_name,
+                shopName: cartShop.shop_name || cartShop.name,
               });
             } else {
               navigation.navigate('MyOrders');
