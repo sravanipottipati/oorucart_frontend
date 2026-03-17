@@ -6,10 +6,10 @@ import {
 import client from '../../api/client';
 
 const STATUS_FLOW = {
-  placed:     { next: 'accepted',   nextLabel: 'Accept Order',   },
-  accepted:   { next: 'preparing',  nextLabel: 'Start Preparing',},
-  preparing:  { next: 'dispatched', nextLabel: 'Mark Ready',     },
-  dispatched: { next: 'delivered',  nextLabel: 'Mark Delivered', },
+  placed:     { next: 'accepted',   nextLabel: 'Accept Order'    },
+  accepted:   { next: 'preparing',  nextLabel: 'Start Preparing' },
+  preparing:  { next: 'dispatched', nextLabel: 'Mark Ready'      },
+  dispatched: { next: 'delivered',  nextLabel: 'Mark Delivered'  },
 };
 
 const STATUS_COLORS = {
@@ -63,18 +63,69 @@ export default function VendorOrderDetailScreen({ navigation, route }) {
     ]);
   };
 
+  // ── Open Google Maps ───────────────────────────────────────────────────────
   const handleViewLocation = () => {
-    const address = encodeURIComponent(order.delivery_address);
-    const url = `https://www.google.com/maps/search/?api=1&query=${address}`;
-    Linking.openURL(url).catch(() =>
-      Alert.alert('Error', 'Could not open maps')
+    const address    = encodeURIComponent(order.delivery_address);
+    const mapsUrl    = `https://www.google.com/maps/search/?api=1&query=${address}`;
+    Linking.openURL(mapsUrl).catch(() =>
+      Alert.alert('Error', 'Could not open Google Maps')
     );
   };
 
-  const handleShare = async () => {
+  // ── Build Google Maps link ─────────────────────────────────────────────────
+  const getMapsLink = () => {
+    const address = encodeURIComponent(order.delivery_address);
+    return `https://maps.google.com/?q=${address}`;
+  };
+
+  // ── Share via WhatsApp ─────────────────────────────────────────────────────
+  const handleShareWhatsApp = async () => {
+    const mapsLink  = getMapsLink();
     const itemsList = order.items?.map(
-      item =>
-        `  • ${item.product_name || item.name} x${item.quantity} = ₹${(item.quantity * parseFloat(item.price)).toFixed(0)}`
+      item => `  • ${item.product_name || item.name} x${item.quantity} = ₹${(item.quantity * parseFloat(item.price)).toFixed(0)}`
+    ).join('\n');
+
+    const message =
+`🛵 *Shop2me Delivery Order*
+
+📦 Order: #${order.id?.slice(0, 8).toUpperCase()}
+👤 Customer: ${order.buyer_name || 'Customer'}
+📱 Phone: +91 ${order.buyer_phone || '—'}
+
+📍 *Delivery Address:*
+${order.delivery_address}
+
+🗺️ *Google Maps:*
+${mapsLink}
+
+🛒 *Items:*
+${itemsList}
+
+💰 Total: ₹${order.total_amount}
+💵 Payment: Cash on Delivery
+
+_Shop2me Hyperlocal Marketplace_`;
+
+    try {
+      // Try WhatsApp first
+      const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(message)}`;
+      const canOpen     = await Linking.canOpenURL(whatsappUrl);
+      if (canOpen) {
+        await Linking.openURL(whatsappUrl);
+      } else {
+        // Fallback to general share
+        await Share.share({ message });
+      }
+    } catch (e) {
+      await Share.share({ message });
+    }
+  };
+
+  // ── General Share ──────────────────────────────────────────────────────────
+  const handleShare = async () => {
+    const mapsLink  = getMapsLink();
+    const itemsList = order.items?.map(
+      item => `• ${item.product_name || item.name} x${item.quantity} = ₹${(item.quantity * parseFloat(item.price)).toFixed(0)}`
     ).join('\n');
 
     const date = new Date(order.created_at).toLocaleString('en-IN', {
@@ -83,25 +134,44 @@ export default function VendorOrderDetailScreen({ navigation, route }) {
     });
 
     const message =
-`🛒 *Shop2me Order Details*
+`🛒 Shop2me Order Details
 
-📦 Order ID: #${order.id?.slice(0, 8).toUpperCase()}
-📅 Date: ${date}
-💰 Total: ₹${order.total_amount}
-📍 Deliver to: ${order.delivery_address}
-👤 Customer: ${order.buyer_name || 'Customer'}
+Order ID: #${order.id?.slice(0, 8).toUpperCase()}
+Date: ${date}
+Customer: ${order.buyer_name || 'Customer'}
+Phone: +91 ${order.buyer_phone || '—'}
 
-*Items:*
+Delivery Address:
+${order.delivery_address}
+
+Google Maps: ${mapsLink}
+
+Items:
 ${itemsList}
 
-🏪 Platform Fee: ₹${order.platform_fee || 5}
-💵 Payment: Cash on Delivery`;
+Total: ₹${order.total_amount}
+Payment: Cash on Delivery`;
 
     try {
       await Share.share({ message });
     } catch (e) {
       console.log('Share error:', e.message);
     }
+  };
+
+  // ── Copy Maps Link ─────────────────────────────────────────────────────────
+  const handleCopyMapsLink = () => {
+    const mapsLink = getMapsLink();
+    // Show the link in an alert so vendor can copy it
+    Alert.alert(
+      '📍 Google Maps Link',
+      mapsLink,
+      [
+        { text: 'Open Maps', onPress: () => Linking.openURL(mapsLink) },
+        { text: 'Share', onPress: () => Share.share({ message: mapsLink }) },
+        { text: 'Close', style: 'cancel' },
+      ]
+    );
   };
 
   if (loading) {
@@ -120,10 +190,10 @@ ${itemsList}
     );
   }
 
-  const flow         = STATUS_FLOW[order.status];
-  const statusColor  = STATUS_COLORS[order.status] || STATUS_COLORS.placed;
-  const isClosed     = ['cancelled', 'rejected', 'delivered'].includes(order.status);
-  const date         = new Date(order.created_at).toLocaleString('en-IN', {
+  const flow        = STATUS_FLOW[order.status];
+  const statusColor = STATUS_COLORS[order.status] || STATUS_COLORS.placed;
+  const isClosed    = ['cancelled', 'rejected', 'delivered'].includes(order.status);
+  const date        = new Date(order.created_at).toLocaleString('en-IN', {
     day: 'numeric', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
@@ -137,10 +207,7 @@ ${itemsList}
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Order Details</Text>
-        <TouchableOpacity
-          style={styles.shareHeaderBtn}
-          onPress={handleShare}
-        >
+        <TouchableOpacity style={styles.shareHeaderBtn} onPress={handleShare}>
           <Text style={styles.shareHeaderIcon}>📤</Text>
         </TouchableOpacity>
       </View>
@@ -183,7 +250,7 @@ ${itemsList}
           </View>
         </View>
 
-        {/* Customer Details */}
+        {/* Customer & Delivery Details */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Customer Details</Text>
           <View style={styles.customerRow}>
@@ -198,18 +265,48 @@ ${itemsList}
             </View>
           </View>
           <View style={styles.divider} />
+
           <Text style={styles.fieldLabel}>Delivery Address</Text>
           <Text style={styles.fieldValue}>{order.delivery_address}</Text>
 
-          {/* View Location Button */}
-          <TouchableOpacity style={styles.viewLocationBtn} onPress={handleViewLocation}>
-            <Text style={styles.viewLocationText}>📍  View Location on Maps</Text>
+          {/* Maps Link Box */}
+          <TouchableOpacity style={styles.mapsLinkBox} onPress={handleCopyMapsLink}>
+            <Text style={styles.mapsLinkIcon}>🗺️</Text>
+            <View style={styles.mapsLinkContent}>
+              <Text style={styles.mapsLinkTitle}>Google Maps Link</Text>
+              <Text style={styles.mapsLinkUrl} numberOfLines={1}>
+                {getMapsLink()}
+              </Text>
+            </View>
+            <Text style={styles.mapsLinkArrow}>›</Text>
           </TouchableOpacity>
 
-          {/* Share Order Button */}
-          <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
-            <Text style={styles.shareBtnText}>📤  Share Order Details</Text>
-          </TouchableOpacity>
+          {/* Action Buttons Row */}
+          <View style={styles.actionBtnsRow}>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={handleViewLocation}
+            >
+              <Text style={styles.actionBtnIcon}>📍</Text>
+              <Text style={styles.actionBtnText}>Open Maps</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.actionBtnWhatsApp]}
+              onPress={handleShareWhatsApp}
+            >
+              <Text style={styles.actionBtnIcon}>💬</Text>
+              <Text style={[styles.actionBtnText, { color: '#16A34A' }]}>WhatsApp</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.actionBtnShare]}
+              onPress={handleShare}
+            >
+              <Text style={styles.actionBtnIcon}>📤</Text>
+              <Text style={[styles.actionBtnText, { color: '#7C3AED' }]}>Share</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Order Items */}
@@ -283,19 +380,19 @@ ${itemsList}
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9FA' },
+  container:        { flex: 1, backgroundColor: '#F8F9FA' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  errorText: { fontSize: 16, color: '#888' },
+  errorText:        { fontSize: 16, color: '#888' },
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12,
     backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
-  backBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
-  backText: { fontSize: 24, color: '#111' },
-  headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
-  shareHeaderBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
+  backBtn:         { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
+  backText:        { fontSize: 24, color: '#111' },
+  headerTitle:     { fontSize: 17, fontWeight: 'bold', color: '#111' },
+  shareHeaderBtn:  { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   shareHeaderIcon: { fontSize: 22 },
 
   card: {
@@ -303,16 +400,16 @@ const styles = StyleSheet.create({
     margin: 16, marginBottom: 0, padding: 16,
   },
   cardTitle: { fontSize: 15, fontWeight: 'bold', color: '#111', marginBottom: 14 },
-  divider: { height: 1, backgroundColor: '#F5F5F5', marginVertical: 4 },
+  divider:   { height: 1, backgroundColor: '#F5F5F5', marginVertical: 4 },
 
   infoRow: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', paddingVertical: 8,
   },
-  infoLabel: { fontSize: 13, color: '#888' },
-  infoValue: { fontSize: 13, color: '#111', fontWeight: '500' },
-  statusBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 },
-  statusText: { fontSize: 12, fontWeight: '600' },
+  infoLabel:    { fontSize: 13, color: '#888' },
+  infoValue:    { fontSize: 13, color: '#111', fontWeight: '500' },
+  statusBadge:  { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 },
+  statusText:   { fontSize: 12, fontWeight: '600' },
 
   customerRow: {
     flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12,
@@ -322,21 +419,38 @@ const styles = StyleSheet.create({
     backgroundColor: '#2563EB', justifyContent: 'center', alignItems: 'center',
   },
   customerAvatarText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  customerName: { fontSize: 15, fontWeight: 'bold', color: '#111', marginBottom: 2 },
-  customerPhone: { fontSize: 13, color: '#888' },
-  fieldLabel: { fontSize: 12, color: '#888', marginTop: 8, marginBottom: 4 },
-  fieldValue: { fontSize: 14, color: '#111', fontWeight: '500', lineHeight: 20 },
+  customerName:       { fontSize: 15, fontWeight: 'bold', color: '#111', marginBottom: 2 },
+  customerPhone:      { fontSize: 13, color: '#888' },
+  fieldLabel:         { fontSize: 12, color: '#888', marginTop: 8, marginBottom: 4 },
+  fieldValue:         { fontSize: 14, color: '#111', fontWeight: '500', lineHeight: 20 },
 
-  viewLocationBtn: {
-    marginTop: 12, backgroundColor: '#EFF6FF',
-    borderRadius: 10, padding: 12, alignItems: 'center',
+  // ── Maps Link Box ────────────────────────────────────────────────────────
+  mapsLinkBox: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#F0F9FF', borderRadius: 10,
+    padding: 12, marginTop: 12, gap: 10,
+    borderWidth: 1, borderColor: '#BAE6FD',
   },
-  viewLocationText: { fontSize: 14, color: '#2563EB', fontWeight: '600' },
-  shareBtn: {
-    marginTop: 8, backgroundColor: '#F0FDF4',
-    borderRadius: 10, padding: 12, alignItems: 'center',
+  mapsLinkIcon:    { fontSize: 20 },
+  mapsLinkContent: { flex: 1 },
+  mapsLinkTitle:   { fontSize: 12, fontWeight: '600', color: '#0369A1', marginBottom: 2 },
+  mapsLinkUrl:     { fontSize: 11, color: '#0369A1', opacity: 0.8 },
+  mapsLinkArrow:   { fontSize: 18, color: '#0369A1' },
+
+  // ── Action Buttons Row ───────────────────────────────────────────────────
+  actionBtnsRow: {
+    flexDirection: 'row', gap: 8, marginTop: 12,
   },
-  shareBtnText: { fontSize: 14, color: '#16A34A', fontWeight: '600' },
+  actionBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', gap: 5,
+    backgroundColor: '#EFF6FF', borderRadius: 10,
+    paddingVertical: 10, borderWidth: 1, borderColor: '#BFDBFE',
+  },
+  actionBtnWhatsApp: { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' },
+  actionBtnShare:    { backgroundColor: '#F5F3FF', borderColor: '#DDD6FE' },
+  actionBtnIcon:     { fontSize: 16 },
+  actionBtnText:     { fontSize: 12, fontWeight: '600', color: '#2563EB' },
 
   itemRow: {
     flexDirection: 'row', alignItems: 'center',
@@ -347,22 +461,16 @@ const styles = StyleSheet.create({
     width: 30, height: 30, borderRadius: 8,
     backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center',
   },
-  itemQtyText: { fontSize: 13, fontWeight: 'bold', color: '#2563EB' },
-  itemInfo: { flex: 1 },
-  itemName: { fontSize: 14, fontWeight: '600', color: '#111', marginBottom: 2 },
-  itemUnit: { fontSize: 12, color: '#888' },
-  itemPrice: { fontSize: 14, fontWeight: 'bold', color: '#111' },
+  itemQtyText:  { fontSize: 13, fontWeight: 'bold', color: '#2563EB' },
+  itemInfo:     { flex: 1 },
+  itemName:     { fontSize: 14, fontWeight: '600', color: '#111', marginBottom: 2 },
+  itemUnit:     { fontSize: 12, color: '#888' },
+  itemPrice:    { fontSize: 14, fontWeight: 'bold', color: '#111' },
 
-  billRow: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    paddingVertical: 6,
-  },
-  billLabel: { fontSize: 13, color: '#888' },
-  billValue: { fontSize: 13, color: '#111' },
-  billTotal: {
-    borderTopWidth: 1, borderTopColor: '#F5F5F5',
-    marginTop: 4, paddingTop: 10,
-  },
+  billRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
+  billLabel:      { fontSize: 13, color: '#888' },
+  billValue:      { fontSize: 13, color: '#111' },
+  billTotal:      { borderTopWidth: 1, borderTopColor: '#F5F5F5', marginTop: 4, paddingTop: 10 },
   billTotalLabel: { fontSize: 14, fontWeight: 'bold', color: '#111' },
   billTotalValue: { fontSize: 15, fontWeight: 'bold', color: '#111' },
 
@@ -376,9 +484,6 @@ const styles = StyleSheet.create({
     borderRadius: 12, padding: 14, alignItems: 'center',
   },
   rejectBtnText: { color: '#EF4444', fontWeight: 'bold', fontSize: 14 },
-  acceptBtn: {
-    backgroundColor: '#2563EB', borderRadius: 12,
-    padding: 14, alignItems: 'center',
-  },
+  acceptBtn:     { backgroundColor: '#2563EB', borderRadius: 12, padding: 14, alignItems: 'center' },
   acceptBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
 });
