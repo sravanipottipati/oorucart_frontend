@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, Alert, Modal,
+  ScrollView, ActivityIndicator, Alert, Modal, Image,
 } from 'react-native';
 import client from '../../api/client';
 import { useCart } from '../../context/CartContext';
@@ -111,9 +111,17 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor }) => {
 
       <View style={styles.productRight}>
         <View style={[styles.productImageBox, { backgroundColor: shopColor + '20' }]}>
-          <Text style={styles.productEmoji}>
-            {CATEGORY_EMOJIS[product.category] || '🛍'}
-          </Text>
+          {product.image ? (
+            <Image
+              source={{ uri: product.image }}
+              style={styles.productImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <Text style={styles.productEmoji}>
+              {CATEGORY_EMOJIS[product.category] || '🛍'}
+            </Text>
+          )}
         </View>
 
         {qty === 0 ? (
@@ -567,7 +575,9 @@ const styles = StyleSheet.create({
   productImageBox: {
     width: 90, height: 90, borderRadius: 12,
     justifyContent: 'center', alignItems: 'center',
+    overflow: 'hidden',
   },
+  productImage: { width: 90, height: 90, borderRadius: 12 },
   productEmoji: { fontSize: 40 },
 
   addBtn: {
