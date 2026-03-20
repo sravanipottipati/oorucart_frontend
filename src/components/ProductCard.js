@@ -1,23 +1,39 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
 export default function ProductCard({ product, quantity, onAdd, onRemove }) {
+  const [imgError, setImgError] = useState(false);
+
+  const imageUrl = product.image_url || null;
+
   return (
     <View style={styles.card}>
       {/* Left — Info */}
       <View style={styles.info}>
         <Text style={styles.name}>{product.name}</Text>
         {product.description ? (
-          <Text style={styles.desc}>{product.description}</Text>
+          <Text style={styles.desc} numberOfLines={2}>{product.description}</Text>
         ) : null}
         <Text style={styles.price}>₹{product.price}</Text>
       </View>
 
-      {/* Right — Image placeholder + Add button */}
+      {/* Right — Image + Add button */}
       <View style={styles.right}>
-        <View style={styles.imagePlaceholder}>
-          <Text style={styles.imagePlaceholderText}>🛒</Text>
+        <View style={styles.imageContainer}>
+          {imageUrl && !imgError ? (
+            <Image
+              source={{ uri: imageUrl }}
+              style={styles.image}
+              onError={() => setImgError(true)}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={styles.imagePlaceholder}>
+              <Text style={styles.imagePlaceholderText}>🛒</Text>
+            </View>
+          )}
         </View>
+
         <View style={styles.qtyControl}>
           {quantity === 0 ? (
             <TouchableOpacity style={styles.addBtn} onPress={onAdd}>
@@ -54,8 +70,15 @@ const styles = StyleSheet.create({
   desc: { fontSize: 12, color: '#888', marginBottom: 6, lineHeight: 18 },
   price: { fontSize: 16, fontWeight: 'bold', color: '#111' },
   right: { alignItems: 'center', gap: 10 },
+  imageContainer: {
+    width: 80, height: 80, borderRadius: 12,
+    overflow: 'hidden', marginBottom: 8,
+  },
+  image: {
+    width: '100%', height: '100%',
+  },
   imagePlaceholder: {
-    width: 70, height: 70, borderRadius: 12,
+    width: 80, height: 80, borderRadius: 12,
     backgroundColor: '#f5f5f5', justifyContent: 'center', alignItems: 'center',
     marginBottom: 8,
   },

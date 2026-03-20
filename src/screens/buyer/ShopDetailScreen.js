@@ -111,9 +111,9 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor }) => {
 
       <View style={styles.productRight}>
         <View style={[styles.productImageBox, { backgroundColor: shopColor + '20' }]}>
-          {product.image ? (
+          {product.image_url ? (
             <Image
-              source={{ uri: product.image }}
+              source={{ uri: product.image_url }}
               style={styles.productImage}
               resizeMode="cover"
             />
