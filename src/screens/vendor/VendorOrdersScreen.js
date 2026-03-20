@@ -85,9 +85,7 @@ export default function VendorOrdersScreen({ navigation }) {
           onPress={() => navigation.navigate('VendorNotifications')}
         >
           <Text style={styles.bellIcon}>🔔</Text>
-          <View style={styles.bellBadge}>
-            <Text style={styles.bellBadgeText}>2</Text>
-          </View>
+
         </TouchableOpacity>
       </View>
 
