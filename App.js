@@ -7,6 +7,8 @@ import { ActivityIndicator, View } from 'react-native';
 
 import LoginScreen from './src/screens/auth/LoginScreen';
 import RegisterScreen from './src/screens/auth/RegisterScreen';
+import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
+
 import HomeScreen from './src/screens/buyer/HomeScreen';
 import ShopDetailScreen from './src/screens/buyer/ShopDetailScreen';
 import CheckoutScreen from './src/screens/buyer/CheckoutScreen';
@@ -21,6 +23,7 @@ import HelpSupportScreen from './src/screens/buyer/HelpSupportScreen';
 import SearchScreen from './src/screens/buyer/SearchScreen';
 import OrderDetailScreen from './src/screens/buyer/OrderDetailScreen';
 import TownSelectionScreen from './src/screens/buyer/TownSelectionScreen';
+
 import VendorHomeScreen from './src/screens/vendor/VendorHomeScreen';
 import VendorOrdersScreen from './src/screens/vendor/VendorOrdersScreen';
 import VendorOrderDetailScreen from './src/screens/vendor/VendorOrderDetailScreen';
@@ -59,11 +62,12 @@ function AppNavigator() {
         initialRouteName={getInitialRoute()}
         screenOptions={{ headerShown: false }}
       >
-        {/* Auth */}
-        <Stack.Screen name="Login"       component={LoginScreen} />
-        <Stack.Screen name="Register"    component={RegisterScreen} />
+        {/* ── Auth ── */}
+        <Stack.Screen name="Login"          component={LoginScreen} />
+        <Stack.Screen name="Register"       component={RegisterScreen} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
 
-        {/* Buyer */}
+        {/* ── Buyer ── */}
         <Stack.Screen name="Home"          component={HomeScreen} />
         <Stack.Screen name="ShopDetail"    component={ShopDetailScreen} />
         <Stack.Screen name="Checkout"      component={CheckoutScreen} />
@@ -79,7 +83,7 @@ function AppNavigator() {
         <Stack.Screen name="OrderDetail"   component={OrderDetailScreen} />
         <Stack.Screen name="TownSelection" component={TownSelectionScreen} />
 
-        {/* Vendor */}
+        {/* ── Vendor ── */}
         <Stack.Screen name="VendorHome"          component={VendorHomeScreen} />
         <Stack.Screen name="VendorOrders"        component={VendorOrdersScreen} />
         <Stack.Screen name="VendorOrderDetail"   component={VendorOrderDetailScreen} />
@@ -91,6 +95,7 @@ function AppNavigator() {
         <Stack.Screen name="VendorRegister"      component={VendorRegisterScreen} />
         <Stack.Screen name="VendorNotifications" component={VendorNotificationsScreen} />
         <Stack.Screen name="VendorHelp"          component={VendorHelpScreen} />
+
       </Stack.Navigator>
     </NavigationContainer>
   );
