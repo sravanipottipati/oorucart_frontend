@@ -102,7 +102,7 @@ export default function OrderDetailScreen({ navigation, route }) {
     });
     const statusInfo = STATUS_INFO[order.status];
     const message =
-`🛒 *Shop2me Order Receipt*
+`🛒 *Univerin Order Receipt*
 📦 Order ID: #${order.id?.slice(0, 8).toUpperCase()}
 📅 Date: ${date}
 ${statusInfo?.icon} Status: ${statusInfo?.label}
@@ -114,7 +114,7 @@ ${itemsList}
 
 💰 Total: ₹${order.total_amount}
 💵 Payment: Cash on Delivery
-Powered by Shop2me 🛍`;
+Powered by Univerin 🛍`;
     try {
       await Share.share({ message });
     } catch (e) {
@@ -150,7 +150,7 @@ Powered by Shop2me 🛍`;
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563EB" />
+        <ActivityIndicator size="large" color="#0d9488" />
       </View>
     );
   }
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
 
   statusBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: '#2563EB', margin: 16, borderRadius: 16, padding: 16,
+    backgroundColor: '#0d9488', margin: 16, borderRadius: 16, padding: 16,
   },
   statusBannerRed:   { backgroundColor: '#EF4444' },
   statusBannerGreen: { backgroundColor: '#16A34A' },
@@ -479,10 +479,10 @@ const styles = StyleSheet.create({
     width: 22, height: 22, borderRadius: 11,
     backgroundColor: '#E5E7EB', justifyContent: 'center', alignItems: 'center',
   },
-  stepDotDone:   { backgroundColor: '#2563EB' },
+  stepDotDone:   { backgroundColor: '#0d9488' },
   stepDotText:   { fontSize: 11, color: '#fff', fontWeight: 'bold' },
   stepLine:      { width: 2, flex: 1, minHeight: 24, backgroundColor: '#E5E7EB', marginVertical: 2 },
-  stepLineDone:  { backgroundColor: '#2563EB' },
+  stepLineDone:  { backgroundColor: '#0d9488' },
   stepInfo:      { flex: 1, paddingBottom: 16 },
   stepLabel:     { fontSize: 13, color: '#9CA3AF', fontWeight: '500', marginTop: 2 },
   stepLabelDone: { color: '#111', fontWeight: '600' },
@@ -523,10 +523,10 @@ const styles = StyleSheet.create({
 
   actionBtns: { flexDirection: 'row', gap: 10, marginTop: 4 },
   mapsBtn: {
-    flex: 1, backgroundColor: '#EFF6FF',
+    flex: 1, backgroundColor: '#f0fdfa',
     borderRadius: 10, padding: 12, alignItems: 'center',
   },
-  mapsBtnText: { fontSize: 13, color: '#2563EB', fontWeight: '600' },
+  mapsBtnText: { fontSize: 13, color: '#0d9488', fontWeight: '600' },
   callBtn: {
     flex: 1, backgroundColor: '#F0FDF4',
     borderRadius: 10, padding: 12, alignItems: 'center',
@@ -540,9 +540,9 @@ const styles = StyleSheet.create({
   itemRowBorder: { borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
   itemQtyBox: {
     width: 30, height: 30, borderRadius: 8,
-    backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#f0fdfa', justifyContent: 'center', alignItems: 'center',
   },
-  itemQtyText: { fontSize: 13, fontWeight: 'bold', color: '#2563EB' },
+  itemQtyText: { fontSize: 13, fontWeight: 'bold', color: '#0d9488' },
   itemInfo:    { flex: 1 },
   itemName:    { fontSize: 14, fontWeight: '600', color: '#111', marginBottom: 2 },
   itemUnit:    { fontSize: 12, color: '#888' },
@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
   billValue:      { fontSize: 13, color: '#111' },
   billTotal:      { borderTopWidth: 1, borderTopColor: '#F5F5F5', marginTop: 4, paddingTop: 10 },
   billTotalLabel: { fontSize: 14, fontWeight: 'bold', color: '#111' },
-  billTotalValue: { fontSize: 15, fontWeight: 'bold', color: '#2563EB' },
+  billTotalValue: { fontSize: 15, fontWeight: 'bold', color: '#0d9488' },
 
   shareReceiptBtn: {
     backgroundColor: '#fff', marginHorizontal: 16, marginTop: 16,

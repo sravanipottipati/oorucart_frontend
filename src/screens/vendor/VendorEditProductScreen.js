@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
     width: 48, height: 28, borderRadius: 14,
     backgroundColor: '#E5E7EB', padding: 3, justifyContent: 'center',
   },
-  toggleBtnActive:  { backgroundColor: '#2563EB' },
+  toggleBtnActive:  { backgroundColor: '#0d9488' },
   toggleThumb: {
     width: 22, height: 22, borderRadius: 11, backgroundColor: '#fff',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: '#F0F0F0',
   },
   saveBtn: {
-    backgroundColor: '#2563EB', borderRadius: 14, padding: 16, alignItems: 'center',
+    backgroundColor: '#0d9488', borderRadius: 14, padding: 16, alignItems: 'center',
   },
   saveBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });

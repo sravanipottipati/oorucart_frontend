@@ -133,7 +133,7 @@ export default function TownSelectionScreen({ navigation }) {
       {/* GPS Detection Banner */}
       {detecting ? (
         <View style={styles.detectingBanner}>
-          <ActivityIndicator size="small" color="#2563EB" />
+          <ActivityIndicator size="small" color="#0d9488" />
           <Text style={styles.detectingText}>Detecting your location...</Text>
         </View>
       ) : detectedTown ? (
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center', paddingTop: 60,
     paddingBottom: 24, paddingHorizontal: 24,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#f0fdfa',
   },
   headerEmoji:    { fontSize: 48, marginBottom: 12 },
   headerTitle:    { fontSize: 22, fontWeight: 'bold', color: '#111', marginBottom: 8 },
@@ -254,11 +254,11 @@ const styles = StyleSheet.create({
 
   detectingBanner: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 10, backgroundColor: '#EFF6FF',
+    gap: 10, backgroundColor: '#f0fdfa',
     marginHorizontal: 16, marginTop: 12,
     borderRadius: 12, padding: 12,
   },
-  detectingText: { fontSize: 14, color: '#2563EB', fontWeight: '500' },
+  detectingText: { fontSize: 14, color: '#0d9488', fontWeight: '500' },
 
   detectedBanner: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -273,11 +273,11 @@ const styles = StyleSheet.create({
   useLocationBtnText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
 
   detectBtn: {
-    backgroundColor: '#EFF6FF', marginHorizontal: 16, marginTop: 12,
+    backgroundColor: '#f0fdfa', marginHorizontal: 16, marginTop: 12,
     borderRadius: 12, padding: 12, alignItems: 'center',
-    borderWidth: 1.5, borderColor: '#BFDBFE',
+    borderWidth: 1.5, borderColor: '#99f6e4',
   },
-  detectBtnText: { fontSize: 14, color: '#2563EB', fontWeight: '600' },
+  detectBtnText: { fontSize: 14, color: '#0d9488', fontWeight: '600' },
 
   searchBox: {
     flexDirection: 'row', alignItems: 'center',
@@ -307,13 +307,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
     borderWidth: 1.5, borderColor: '#F3F4F6',
   },
-  townItemActive: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
+  townItemActive: { borderColor: '#0d9488', backgroundColor: '#f0fdfa' },
   townLeft:       { flexDirection: 'row', alignItems: 'center', gap: 12 },
   townIcon:       { fontSize: 20 },
   townName:       { fontSize: 15, fontWeight: '600', color: '#111' },
-  townNameActive: { color: '#2563EB' },
+  townNameActive: { color: '#0d9488' },
   townState:      { fontSize: 12, color: '#888', marginTop: 2 },
-  checkmark:      { fontSize: 18, color: '#2563EB', fontWeight: 'bold' },
+  checkmark:      { fontSize: 18, color: '#0d9488', fontWeight: 'bold' },
 
   footer: {
     padding: 16, paddingBottom: 36,
@@ -321,9 +321,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: '#F0F0F0',
   },
   confirmBtn: {
-    backgroundColor: '#2563EB', borderRadius: 14,
+    backgroundColor: '#0d9488', borderRadius: 14,
     padding: 16, alignItems: 'center',
   },
-  confirmBtnDisabled: { backgroundColor: '#93C5FD' },
+  confirmBtnDisabled: { backgroundColor: '#5eead4' },
   confirmBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });

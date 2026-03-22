@@ -40,7 +40,7 @@ export default function OrderSuccessScreen({ navigation, route }) {
           <View style={styles.divider} />
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Order Amount</Text>
-            <Text style={[styles.detailValue, { color: '#2563EB', fontWeight: 'bold' }]}>
+            <Text style={[styles.detailValue, { color: '#0d9488', fontWeight: 'bold' }]}>
               ₹{order?.total_amount || '0'}
             </Text>
           </View>
@@ -153,22 +153,22 @@ const styles = StyleSheet.create({
   shopRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   shopAvatar: {
     width: 44, height: 44, borderRadius: 22,
-    backgroundColor: '#2563EB', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#0d9488', justifyContent: 'center', alignItems: 'center',
   },
   shopAvatarText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   shopInfo: { flex: 1 },
   shopName: { fontSize: 15, fontWeight: 'bold', color: '#111', marginBottom: 2 },
   shopLocation: { fontSize: 12, color: '#888' },
   statusBadge: {
-    backgroundColor: '#EFF6FF', borderRadius: 20,
+    backgroundColor: '#f0fdfa', borderRadius: 20,
     paddingHorizontal: 12, paddingVertical: 6,
   },
-  statusText: { fontSize: 12, color: '#2563EB', fontWeight: '600' },
+  statusText: { fontSize: 12, color: '#0d9488', fontWeight: '600' },
 
   addressText: { fontSize: 14, color: '#555', lineHeight: 20 },
 
   trackBtn: {
-    backgroundColor: '#2563EB', borderRadius: 14,
+    backgroundColor: '#0d9488', borderRadius: 14,
     marginHorizontal: 16, marginBottom: 12,
     padding: 16, alignItems: 'center',
   },

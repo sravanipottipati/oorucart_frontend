@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', marginBottom: 12,
   },
   cardTitle:  { fontSize: 15, fontWeight: 'bold', color: '#111', marginBottom: 12 },
-  changeBtn:  { fontSize: 13, color: '#2563EB', fontWeight: '600' },
+  changeBtn:  { fontSize: 13, color: '#0d9488', fontWeight: '600' },
 
   addrRow: { marginBottom: 12 },
   addrChip: {
@@ -390,10 +390,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 8, marginRight: 8,
     backgroundColor: '#F9FAFB',
   },
-  addrChipActive:     { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
+  addrChipActive:     { borderColor: '#0d9488', backgroundColor: '#f0fdfa' },
   addrChipIcon:       { fontSize: 14 },
   addrChipText:       { fontSize: 13, color: '#555', fontWeight: '500' },
-  addrChipTextActive: { color: '#2563EB', fontWeight: 'bold' },
+  addrChipTextActive: { color: '#0d9488', fontWeight: 'bold' },
   addressInput: {
     borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12,
     padding: 12, fontSize: 14, color: '#111', minHeight: 80,
@@ -405,8 +405,8 @@ const styles = StyleSheet.create({
 
   orderItem:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   orderItemLeft:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  qtyBadge:       { width: 24, height: 24, borderRadius: 6, backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center' },
-  qtyBadgeText:   { fontSize: 12, fontWeight: 'bold', color: '#2563EB' },
+  qtyBadge:       { width: 24, height: 24, borderRadius: 6, backgroundColor: '#f0fdfa', justifyContent: 'center', alignItems: 'center' },
+  qtyBadgeText:   { fontSize: 12, fontWeight: 'bold', color: '#0d9488' },
   orderItemName:  { fontSize: 14, color: '#555' },
   orderItemPrice: { fontSize: 14, fontWeight: '600', color: '#111' },
 
@@ -419,11 +419,11 @@ const styles = StyleSheet.create({
     fontWeight: '600', letterSpacing: 1,
   },
   couponApplyBtn: {
-    backgroundColor: '#2563EB', borderRadius: 12,
+    backgroundColor: '#0d9488', borderRadius: 12,
     paddingHorizontal: 20, justifyContent: 'center', alignItems: 'center',
     minWidth: 80,
   },
-  couponApplyBtnDisabled: { backgroundColor: '#93C5FD' },
+  couponApplyBtnDisabled: { backgroundColor: '#5eead4' },
   couponApplyBtnText:     { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   couponError:            { fontSize: 12, color: '#EF4444', marginBottom: 8 },
 
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB', paddingHorizontal: 12, paddingVertical: 5,
     borderStyle: 'dashed',
   },
-  couponSuggestText: { fontSize: 12, color: '#2563EB', fontWeight: '600' },
+  couponSuggestText: { fontSize: 12, color: '#0d9488', fontWeight: '600' },
 
   couponApplied: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
   billLabel:      { fontSize: 14, color: '#888' },
   billValue:      { fontSize: 14, color: '#111' },
   billTotalLabel: { fontSize: 15, fontWeight: 'bold', color: '#111' },
-  billTotalValue: { fontSize: 15, fontWeight: 'bold', color: '#2563EB' },
+  billTotalValue: { fontSize: 15, fontWeight: 'bold', color: '#0d9488' },
 
   savingsBanner: {
     backgroundColor: '#F0FDF4', borderRadius: 8,
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12, padding: 14,
   },
-  paymentOptionActive: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
+  paymentOptionActive: { borderColor: '#0d9488', backgroundColor: '#f0fdfa' },
   paymentLeft:         { flexDirection: 'row', alignItems: 'center', gap: 12 },
   paymentEmoji:        { fontSize: 24 },
   paymentName:         { fontSize: 14, fontWeight: '600', color: '#111' },
@@ -476,8 +476,8 @@ const styles = StyleSheet.create({
     borderWidth: 2, borderColor: '#D1D5DB',
     justifyContent: 'center', alignItems: 'center',
   },
-  radioActive: { borderColor: '#2563EB' },
-  radioDot:    { width: 10, height: 10, borderRadius: 5, backgroundColor: '#2563EB' },
+  radioActive: { borderColor: '#0d9488' },
+  radioDot:    { width: 10, height: 10, borderRadius: 5, backgroundColor: '#0d9488' },
 
   optional:  { fontSize: 12, color: '#9CA3AF', fontWeight: 'normal' },
   noteInput: {
@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2, borderRadius: 10,
   },
   placeOrderBtn: {
-    backgroundColor: '#2563EB', borderRadius: 14,
+    backgroundColor: '#0d9488', borderRadius: 14,
     padding: 16, alignItems: 'center',
   },
   placeOrderText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },

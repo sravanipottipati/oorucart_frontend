@@ -96,7 +96,7 @@ export default function VendorProfileScreen({ navigation }) {
             onPress={() => navigation.navigate('EditProfile')}
           >
             <View style={styles.menuLeft}>
-              <View style={[styles.menuIconBox, { backgroundColor: '#EFF6FF' }]}>
+              <View style={[styles.menuIconBox, { backgroundColor: '#f0fdfa' }]}>
                 <Text style={styles.menuIcon}>👤</Text>
               </View>
               <Text style={styles.menuLabel}>Edit Profile</Text>
@@ -168,7 +168,7 @@ export default function VendorProfileScreen({ navigation }) {
           <Text style={styles.logoutText}>🚪  Logout</Text>
         </TouchableOpacity>
 
-        <Text style={styles.version}>Shop2me Seller v1.0.0</Text>
+        <Text style={styles.version}>Univerin Seller v1.0.0</Text>
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -197,7 +197,7 @@ export default function VendorProfileScreen({ navigation }) {
           <Text style={styles.tabLabel}>Products</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem}>
-          <Text style={[styles.tabIcon, { color: '#2563EB' }]}>👤</Text>
+          <Text style={[styles.tabIcon, { color: '#0d9488' }]}>👤</Text>
           <Text style={styles.tabLabelActive}>Profile</Text>
         </TouchableOpacity>
       </View>
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   editIcon: { fontSize: 14 },
   avatar: {
     width: 72, height: 72, borderRadius: 36,
-    backgroundColor: '#2563EB', justifyContent: 'center',
+    backgroundColor: '#0d9488', justifyContent: 'center',
     alignItems: 'center', marginBottom: 12,
   },
   avatarText: { color: '#fff', fontSize: 26, fontWeight: 'bold' },
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
 
   earningsCard: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    backgroundColor: '#2563EB', marginHorizontal: 16, marginBottom: 16,
+    backgroundColor: '#0d9488', marginHorizontal: 16, marginBottom: 16,
     borderRadius: 16, padding: 20,
   },
   earningsLabel: { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginBottom: 6 },
@@ -291,5 +291,5 @@ const styles = StyleSheet.create({
   tabItem: { flex: 1, alignItems: 'center' },
   tabIcon: { fontSize: 22, marginBottom: 2, color: '#9CA3AF' },
   tabLabel: { fontSize: 11, color: '#9CA3AF' },
-  tabLabelActive: { fontSize: 11, color: '#2563EB', fontWeight: 'bold' },
+  tabLabelActive: { fontSize: 11, color: '#0d9488', fontWeight: 'bold' },
 });

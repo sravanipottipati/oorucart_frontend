@@ -27,7 +27,7 @@ const CATEGORIES = [
 const SHOP_COLORS = ['#4CAF50', '#FF7043', '#FFA726', '#42A5F5', '#AB47BC', '#26A69A'];
 
 const OFFERS = [
-  { id: '1', title: '50% OFF',          subtitle: 'On your first order',       emoji: '🎉', bg: '#2563EB', tag: 'NEW USER'    },
+  { id: '1', title: '50% OFF',          subtitle: 'On your first order',       emoji: '🎉', bg: '#0d9488', tag: 'NEW USER'    },
   { id: '2', title: 'Free Delivery',    subtitle: 'On all vegetable orders',   emoji: '🥦', bg: '#16A34A', tag: 'TODAY ONLY'  },
   { id: '3', title: 'Order Fresh',      subtitle: 'From local shops near you', emoji: '🏪', bg: '#EA580C', tag: 'LOCAL FIRST' },
   { id: '4', title: 'Cash on Delivery', subtitle: 'Pay when you receive',      emoji: '💵', bg: '#7C3AED', tag: 'SAFE & EASY' },
@@ -405,7 +405,7 @@ export default function HomeScreen({ navigation }) {
       {/* Bottom Tab Bar */}
       <View style={styles.bottomTab}>
         <TouchableOpacity style={styles.tabItem}>
-          <Text style={[styles.tabIcon, { color: '#2563EB' }]}>🏠</Text>
+          <Text style={[styles.tabIcon, { color: '#0d9488' }]}>🏠</Text>
           <Text style={styles.tabLabelActive}>Home</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -436,7 +436,7 @@ export default function HomeScreen({ navigation }) {
               </View>
             )}
           </View>
-          <Text style={[styles.tabLabel, cartCount > 0 && { color: '#2563EB' }]}>Cart</Text>
+          <Text style={[styles.tabLabel, cartCount > 0 && { color: '#0d9488' }]}>Cart</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.tabItem}
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
 
   dotsRow:   { flexDirection: 'row', justifyContent: 'center', gap: 6, marginBottom: 16 },
   dot2:      { width: 6, height: 6, borderRadius: 3, backgroundColor: '#D1D5DB' },
-  dotActive: { backgroundColor: '#2563EB', width: 18 },
+  dotActive: { backgroundColor: '#0d9488', width: 18 },
 
   categoriesRow: { paddingLeft: 16, marginBottom: 8 },
   categoryItem:  { alignItems: 'center', marginRight: 16, marginBottom: 8 },
@@ -506,10 +506,10 @@ const styles = StyleSheet.create({
     marginBottom: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08, shadowRadius: 4, elevation: 2,
   },
-  categoryCircleActive: { backgroundColor: '#DBEAFE' },
+  categoryCircleActive: { backgroundColor: '#ccfbf1' },
   categoryEmoji:        { fontSize: 26 },
   categoryLabel:        { fontSize: 11, color: '#555', textAlign: 'center' },
-  categoryLabelActive:  { color: '#2563EB', fontWeight: 'bold' },
+  categoryLabelActive:  { color: '#0d9488', fontWeight: 'bold' },
 
   sectionTitle: {
     fontSize: 17, fontWeight: 'bold', color: '#111',
@@ -553,19 +553,19 @@ const styles = StyleSheet.create({
   metaDot:       { fontSize: 10, color: '#D1D5DB' },
   shopMetaText:  { fontSize: 12, color: '#555' },
   deliveryFree:  { fontSize: 12, color: '#16A34A', fontWeight: '600' },
-  shopDistance:  { fontSize: 12, color: '#2563EB', fontWeight: '600' },
+  shopDistance:  { fontSize: 12, color: '#0d9488', fontWeight: '600' },
   deliveryFreeSmall: { fontSize: 11, color: '#16A34A', marginTop: 4 },
 
   emptyState:        { alignItems: 'center', marginTop: 60, paddingHorizontal: 32 },
   emptyEmoji:        { fontSize: 50, marginBottom: 12 },
   emptyTitle:        { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 6 },
   emptySubtitle:     { fontSize: 13, color: '#888', marginBottom: 20, textAlign: 'center' },
-  changeTownBtn:     { backgroundColor: '#2563EB', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 },
+  changeTownBtn:     { backgroundColor: '#0d9488', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 },
   changeTownBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
 
   cartBar: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    backgroundColor: '#2563EB', marginHorizontal: 16, borderRadius: 14,
+    backgroundColor: '#0d9488', marginHorizontal: 16, borderRadius: 14,
     padding: 14, position: 'absolute', bottom: 74, left: 0, right: 0,
   },
   cartBarLeft:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -597,5 +597,5 @@ const styles = StyleSheet.create({
   tabItem:        { flex: 1, alignItems: 'center' },
   tabIcon:        { fontSize: 22, marginBottom: 2, color: '#9CA3AF' },
   tabLabel:       { fontSize: 11, color: '#9CA3AF' },
-  tabLabelActive: { fontSize: 11, color: '#2563EB', fontWeight: 'bold' },
+  tabLabelActive: { fontSize: 11, color: '#0d9488', fontWeight: 'bold' },
 });

@@ -15,7 +15,7 @@ const STATUS_FLOW = {
 const STATUS_COLORS = {
   placed:     { bg: '#FFF7ED', text: '#EA580C' },
   accepted:   { bg: '#F0FDF4', text: '#16A34A' },
-  preparing:  { bg: '#EFF6FF', text: '#2563EB' },
+  preparing:  { bg: '#f0fdfa', text: '#0d9488' },
   dispatched: { bg: '#F0FDF4', text: '#16A34A' },
   delivered:  { bg: '#DCFCE7', text: '#16A34A' },
   cancelled:  { bg: '#FEF2F2', text: '#DC2626' },
@@ -86,7 +86,7 @@ export default function VendorOrderDetailScreen({ navigation, route }) {
     ).join('\n');
 
     const message =
-`🛵 *Shop2me Delivery Order*
+`🛵 *Univerin Delivery Order*
 
 📦 Order: #${order.id?.slice(0, 8).toUpperCase()}
 👤 Customer: ${order.buyer_name || 'Customer'}
@@ -104,7 +104,7 @@ ${itemsList}
 💰 Total: ₹${order.total_amount}
 💵 Payment: Cash on Delivery
 
-_Shop2me Hyperlocal Marketplace_`;
+_Univerin Hyperlocal Marketplace_`;
 
     try {
       // Try WhatsApp first
@@ -134,7 +134,7 @@ _Shop2me Hyperlocal Marketplace_`;
     });
 
     const message =
-`🛒 Shop2me Order Details
+`🛒 Univerin Order Details
 
 Order ID: #${order.id?.slice(0, 8).toUpperCase()}
 Date: ${date}
@@ -177,7 +177,7 @@ Payment: Cash on Delivery`;
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563EB" />
+        <ActivityIndicator size="large" color="#0d9488" />
       </View>
     );
   }
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
   },
   customerAvatar: {
     width: 44, height: 44, borderRadius: 22,
-    backgroundColor: '#2563EB', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#0d9488', justifyContent: 'center', alignItems: 'center',
   },
   customerAvatarText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   customerName:       { fontSize: 15, fontWeight: 'bold', color: '#111', marginBottom: 2 },
@@ -444,13 +444,13 @@ const styles = StyleSheet.create({
   actionBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', gap: 5,
-    backgroundColor: '#EFF6FF', borderRadius: 10,
-    paddingVertical: 10, borderWidth: 1, borderColor: '#BFDBFE',
+    backgroundColor: '#f0fdfa', borderRadius: 10,
+    paddingVertical: 10, borderWidth: 1, borderColor: '#99f6e4',
   },
   actionBtnWhatsApp: { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' },
   actionBtnShare:    { backgroundColor: '#F5F3FF', borderColor: '#DDD6FE' },
   actionBtnIcon:     { fontSize: 16 },
-  actionBtnText:     { fontSize: 12, fontWeight: '600', color: '#2563EB' },
+  actionBtnText:     { fontSize: 12, fontWeight: '600', color: '#0d9488' },
 
   itemRow: {
     flexDirection: 'row', alignItems: 'center',
@@ -459,9 +459,9 @@ const styles = StyleSheet.create({
   itemRowBorder: { borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
   itemQtyBox: {
     width: 30, height: 30, borderRadius: 8,
-    backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#f0fdfa', justifyContent: 'center', alignItems: 'center',
   },
-  itemQtyText:  { fontSize: 13, fontWeight: 'bold', color: '#2563EB' },
+  itemQtyText:  { fontSize: 13, fontWeight: 'bold', color: '#0d9488' },
   itemInfo:     { flex: 1 },
   itemName:     { fontSize: 14, fontWeight: '600', color: '#111', marginBottom: 2 },
   itemUnit:     { fontSize: 12, color: '#888' },
@@ -484,6 +484,6 @@ const styles = StyleSheet.create({
     borderRadius: 12, padding: 14, alignItems: 'center',
   },
   rejectBtnText: { color: '#EF4444', fontWeight: 'bold', fontSize: 14 },
-  acceptBtn:     { backgroundColor: '#2563EB', borderRadius: 12, padding: 14, alignItems: 'center' },
+  acceptBtn:     { backgroundColor: '#0d9488', borderRadius: 12, padding: 14, alignItems: 'center' },
   acceptBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
 });

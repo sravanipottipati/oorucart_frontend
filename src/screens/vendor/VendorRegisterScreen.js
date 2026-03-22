@@ -30,6 +30,8 @@ export default function VendorRegisterScreen({ navigation }) {
   const [vendorLng, setVendorLng] = useState(null);
   const [password,  setPassword]  = useState('');
   const [confirmPw, setConfirmPw] = useState('');
+  const [showPassword,  setShowPassword]  = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
 
   const [category,     setCategory]     = useState('vegetables');
   const [deliveryType, setDeliveryType] = useState('delivery');
@@ -112,7 +114,7 @@ export default function VendorRegisterScreen({ navigation }) {
       });
       Alert.alert(
         'Registration Successful! 🎉',
-        'Your shop is now live on Shop2me!',
+        'Your shop is now live on Univerin!',
         [{ text: 'OK', onPress: () => navigation.replace('VendorHome') }]
       );
     } catch (e) {
@@ -125,6 +127,7 @@ export default function VendorRegisterScreen({ navigation }) {
     }
   };
 
+  // ── Progress Bar ──
   const Progress = () => (
     <View style={styles.progressRow}>
       {[1,2,3,4,5].map(i => (
@@ -132,13 +135,14 @@ export default function VendorRegisterScreen({ navigation }) {
           key={i}
           style={[
             styles.progressDot,
-            { backgroundColor: i <= step ? '#2563EB' : '#E0E0E0', flex: 1 },
+            { backgroundColor: i <= step ? '#0d9488' : '#E0E0E0', flex: 1 },
           ]}
         />
       ))}
     </View>
   );
 
+  // ── Step 1 — Basic Info ──
   const renderStep1 = () => (
     <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>Basic Information</Text>
@@ -182,12 +186,12 @@ export default function VendorRegisterScreen({ navigation }) {
         disabled={gpsLoading}
       >
         {gpsLoading
-          ? <ActivityIndicator color="#2563EB" size="small" />
+          ? <ActivityIndicator color="#0d9488" size="small" />
           : <Text style={styles.gpsBtnText}>📍 Auto-detect my location</Text>
         }
       </TouchableOpacity>
 
-      {/* Town detected confirmation */}
+      {/* Town detected */}
       {town && vendorLat ? (
         <View style={styles.townDetected}>
           <View>
@@ -206,20 +210,49 @@ export default function VendorRegisterScreen({ navigation }) {
         </View>
       ) : null}
 
+      {/* Password */}
       <Text style={styles.label}>Password *</Text>
-      <TextInput style={styles.input} placeholder="Min 6 characters"
-        placeholderTextColor="#9CA3AF" value={password}
-        onChangeText={setPassword} secureTextEntry />
+      <View style={styles.passwordWrapper}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Min 6 characters"
+          placeholderTextColor="#9CA3AF"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword}
+        />
+        <TouchableOpacity
+          style={styles.eyeButton}
+          onPress={() => setShowPassword(!showPassword)}
+        >
+          <Text style={styles.eyeText}>{showPassword ? 'Hide' : 'Show'}</Text>
+        </TouchableOpacity>
+      </View>
 
+      {/* Confirm Password */}
       <Text style={styles.label}>Confirm Password *</Text>
-      <TextInput style={styles.input} placeholder="Re-enter password"
-        placeholderTextColor="#9CA3AF" value={confirmPw}
-        onChangeText={setConfirmPw} secureTextEntry />
+      <View style={styles.passwordWrapper}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Re-enter password"
+          placeholderTextColor="#9CA3AF"
+          value={confirmPw}
+          onChangeText={setConfirmPw}
+          secureTextEntry={!showConfirmPw}
+        />
+        <TouchableOpacity
+          style={styles.eyeButton}
+          onPress={() => setShowConfirmPw(!showConfirmPw)}
+        >
+          <Text style={styles.eyeText}>{showConfirmPw ? 'Hide' : 'Show'}</Text>
+        </TouchableOpacity>
+      </View>
 
       <View style={{ height: 20 }} />
     </ScrollView>
   );
 
+  // ── Step 2 — Shop Details ──
   const renderStep2 = () => (
     <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>Shop Details</Text>
@@ -285,6 +318,7 @@ export default function VendorRegisterScreen({ navigation }) {
     </ScrollView>
   );
 
+  // ── Step 3 — Bank Details ──
   const renderStep3 = () => (
     <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>Bank Details</Text>
@@ -319,6 +353,7 @@ export default function VendorRegisterScreen({ navigation }) {
     </ScrollView>
   );
 
+  // ── Step 4 — Timings ──
   const renderStep4 = () => (
     <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>Shop Timings</Text>
@@ -356,6 +391,7 @@ export default function VendorRegisterScreen({ navigation }) {
     </ScrollView>
   );
 
+  // ── Step 5 — Review ──
   const renderStep5 = () => (
     <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>Review & Submit</Text>
@@ -399,7 +435,7 @@ export default function VendorRegisterScreen({ navigation }) {
 
       <View style={styles.approvalNote}>
         <Text style={styles.approvalText}>
-          ✅ Your shop will go live immediately on Shop2me!
+          ✅ Your shop will go live immediately on Univerin!
         </Text>
       </View>
       <View style={{ height: 20 }} />
@@ -411,21 +447,25 @@ export default function VendorRegisterScreen({ navigation }) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* Header */}
+
+      {/* ── Header ── */}
       <View style={styles.header}>
         <TouchableOpacity onPress={goBack} style={styles.backBtn}>
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
         <View style={styles.logoRow}>
           <View style={styles.logoIconBox}>
-            <Text style={styles.logoIconText}>S</Text>
+            <Text style={styles.logoIconText}>U</Text>
           </View>
-          <Text style={styles.logoText}>Shop2me</Text>
+          <Text style={styles.logoText}>
+            <Text style={styles.logoTeal}>Uni</Text>
+            <Text style={styles.logoDark}>verin</Text>
+          </Text>
         </View>
         <View style={{ width: 60 }} />
       </View>
 
-      {/* Buyer / Seller Tab */}
+      {/* ── Buyer / Seller Tab ── */}
       <View style={styles.tabRow}>
         <TouchableOpacity
           style={styles.tabInactive}
@@ -444,7 +484,7 @@ export default function VendorRegisterScreen({ navigation }) {
       {step === 4 && renderStep4()}
       {step === 5 && renderStep5()}
 
-      {/* Footer */}
+      {/* ── Footer ── */}
       <View style={styles.footer}>
         {step < 5 ? (
           <TouchableOpacity style={styles.nextBtn} onPress={goNext}>
@@ -452,7 +492,7 @@ export default function VendorRegisterScreen({ navigation }) {
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            style={styles.submitBtn}
+            style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
             onPress={handleSubmit}
             disabled={loading}
           >
@@ -463,135 +503,351 @@ export default function VendorRegisterScreen({ navigation }) {
           </TouchableOpacity>
         )}
       </View>
+
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
 
+  // ── Layout ──
+  container: {
+    flex: 1,
+    backgroundColor: '#f0fdfa',
+  },
+
+  // ── Header ──
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 52,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccfbf1',
+    backgroundColor: '#f0fdfa',
   },
-  backBtn:  { padding: 4, width: 60 },
-  backText: { color: '#2563EB', fontSize: 15, fontWeight: '600' },
-  logoRow:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  backBtn: {
+    padding: 4,
+    width: 60,
+  },
+  backText: {
+    color: '#0d9488',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   logoIconBox: {
-    width: 32, height: 32, borderRadius: 8,
-    backgroundColor: '#2563EB', justifyContent: 'center', alignItems: 'center',
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#0d9488',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  logoIconText: { fontSize: 16, fontWeight: '900', color: 'white' },
-  logoText:     { fontSize: 20, fontWeight: '700', color: '#111' },
+  logoIconText: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: 'white',
+  },
+  logoText: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  logoTeal: {
+    color: '#0d9488',
+  },
+  logoDark: {
+    color: '#0f172a',
+  },
 
+  // ── Tabs ──
   tabRow: {
-    flexDirection: 'row', margin: 16, borderRadius: 14,
-    backgroundColor: '#F3F4F6', padding: 4,
+    flexDirection: 'row',
+    margin: 16,
+    borderRadius: 14,
+    backgroundColor: '#E5E7EB',
+    padding: 4,
   },
   tabActive: {
-    flex: 1, backgroundColor: '#fff', borderRadius: 10,
-    padding: 10, alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1, shadowRadius: 4, elevation: 2,
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 10,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  tabActiveText:   { fontWeight: '700', color: '#2563EB', fontSize: 14 },
-  tabInactive:     { flex: 1, padding: 10, alignItems: 'center' },
-  tabInactiveText: { color: '#888', fontSize: 14, fontWeight: '500' },
+  tabActiveText: {
+    fontWeight: '700',
+    color: '#0d9488',
+    fontSize: 14,
+  },
+  tabInactive: {
+    flex: 1,
+    padding: 10,
+    alignItems: 'center',
+  },
+  tabInactiveText: {
+    color: '#888',
+    fontSize: 14,
+    fontWeight: '500',
+  },
 
+  // ── Steps ──
   stepContent:  { flex: 1, paddingHorizontal: 16 },
-  stepTitle:    { fontSize: 22, fontWeight: '700', color: '#111', marginTop: 16, marginBottom: 4 },
+  stepTitle:    { fontSize: 22, fontWeight: '700', color: '#0f172a', marginTop: 16, marginBottom: 4 },
   stepSubtitle: { fontSize: 13, color: '#888', marginBottom: 12 },
 
-  progressRow: { flexDirection: 'row', gap: 6, marginBottom: 20, height: 5 },
-  progressDot:  { height: 5, borderRadius: 3 },
+  // ── Progress ──
+  progressRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 20,
+    height: 5,
+  },
+  progressDot: {
+    height: 5,
+    borderRadius: 3,
+  },
 
-  label: { fontSize: 13, color: '#444', fontWeight: '600', marginBottom: 6, marginTop: 4 },
+  // ── Form ──
+  label: {
+    fontSize: 13,
+    color: '#444',
+    fontWeight: '600',
+    marginBottom: 6,
+    marginTop: 4,
+  },
   input: {
-    borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12,
-    padding: 13, fontSize: 15, marginBottom: 12,
-    backgroundColor: '#F9FAFB', color: '#111',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    padding: 13,
+    fontSize: 15,
+    marginBottom: 12,
+    backgroundColor: '#F9FAFB',
+    color: '#111',
   },
-  inputFilled: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
-  row:         { flexDirection: 'row', gap: 12 },
-  halfField:   { flex: 1 },
+  inputFilled: {
+    borderColor: '#0d9488',
+    backgroundColor: '#f0fdfa',
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  halfField: {
+    flex: 1,
+  },
 
-  // GPS
+  // ── Password ──
+  passwordWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 13,
+    fontSize: 15,
+    color: '#111',
+  },
+  eyeButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+  },
+  eyeText: {
+    fontSize: 13,
+    color: '#0d9488',
+    fontWeight: '600',
+  },
+
+  // ── GPS ──
   gpsBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#EFF6FF', borderRadius: 12,
-    borderWidth: 1.5, borderColor: '#2563EB',
-    padding: 12, marginBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f0fdfa',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#0d9488',
+    padding: 12,
+    marginBottom: 10,
   },
-  gpsBtnText: { fontSize: 14, color: '#2563EB', fontWeight: '600' },
-
+  gpsBtnText: {
+    fontSize: 14,
+    color: '#0d9488',
+    fontWeight: '600',
+  },
   townDetected: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    backgroundColor: '#DCFCE7', borderRadius: 10, padding: 10, marginBottom: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#dcfce7',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 12,
   },
   townDetectedText: { fontSize: 13, color: '#16A34A', fontWeight: '600' },
   townDetectedSub:  { fontSize: 11, color: '#16A34A', marginTop: 2 },
   townClear:        { fontSize: 18, color: '#EF4444', fontWeight: '700', paddingHorizontal: 8 },
-
   townManual: {
-    backgroundColor: '#FFF7ED', borderRadius: 10,
-    padding: 10, marginBottom: 12,
-    borderWidth: 1, borderColor: '#FED7AA',
+    backgroundColor: '#FFF7ED',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#FED7AA',
   },
   townManualText: { fontSize: 13, color: '#EA580C', fontWeight: '500' },
 
-  categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 12 },
-  categoryCard: {
-    width: '47%', borderWidth: 1.5, borderColor: '#E5E7EB',
-    borderRadius: 14, padding: 14, alignItems: 'center', backgroundColor: '#F9FAFB',
+  // ── Category ──
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 12,
   },
-  categoryCardActive:  { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
+  categoryCard: {
+    width: '47%',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderRadius: 14,
+    padding: 14,
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+  },
+  categoryCardActive: {
+    borderColor: '#0d9488',
+    backgroundColor: '#f0fdfa',
+  },
   categoryEmoji:       { fontSize: 28, marginBottom: 6 },
   categoryLabel:       { fontSize: 13, color: '#555', fontWeight: '600' },
-  categoryLabelActive: { color: '#2563EB' },
+  categoryLabelActive: { color: '#0d9488' },
 
-  feeInfo:     { backgroundColor: '#EFF6FF', borderRadius: 10, padding: 10, marginBottom: 12 },
-  feeInfoText: { fontSize: 13, color: '#2563EB' },
-
-  toggleRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
-  toggleBtn: {
-    flex: 1, borderWidth: 1.5, borderColor: '#E5E7EB',
-    borderRadius: 10, padding: 10, alignItems: 'center', backgroundColor: '#F9FAFB',
+  // ── Fee Info ──
+  feeInfo: {
+    backgroundColor: '#f0fdfa',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#99f6e4',
   },
-  toggleBtnActive:     { borderColor: '#2563EB', backgroundColor: '#2563EB' },
+  feeInfoText: {
+    fontSize: 13,
+    color: '#0d9488',
+  },
+
+  // ── Delivery Toggle ──
+  toggleRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 14,
+  },
+  toggleBtn: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderRadius: 10,
+    padding: 10,
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+  },
+  toggleBtnActive: {
+    borderColor: '#0d9488',
+    backgroundColor: '#0d9488',
+  },
   toggleBtnText:       { fontSize: 12, color: '#555', fontWeight: '600' },
   toggleBtnTextActive: { color: '#fff' },
 
-  weeklyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
-  dayBtn: {
-    borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 20,
-    paddingHorizontal: 14, paddingVertical: 7, backgroundColor: '#F9FAFB',
+  // ── Weekly Off ──
+  weeklyGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 4,
   },
-  dayBtnActive:     { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  dayBtn: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    backgroundColor: '#F9FAFB',
+  },
+  dayBtnActive: {
+    backgroundColor: '#0d9488',
+    borderColor: '#0d9488',
+  },
   dayBtnText:       { fontSize: 13, color: '#555' },
   dayBtnTextActive: { color: '#fff', fontWeight: '600' },
 
+  // ── Review ──
   reviewCard: {
-    backgroundColor: '#F9FAFB', borderRadius: 14, padding: 14,
-    marginBottom: 12, borderWidth: 1, borderColor: '#F0F0F0',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
   },
   reviewSection: { fontSize: 14, fontWeight: '700', color: '#111', marginBottom: 8 },
   reviewRow:     { fontSize: 13, color: '#555', marginBottom: 4 },
   reviewKey:     { fontWeight: '600', color: '#333' },
-  approvalNote:  { backgroundColor: '#DCFCE7', borderRadius: 12, padding: 14, marginBottom: 20 },
-  approvalText:  { fontSize: 13, color: '#16A34A', lineHeight: 18, fontWeight: '500' },
+  approvalNote: {
+    backgroundColor: '#dcfce7',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 20,
+  },
+  approvalText: {
+    fontSize: 13,
+    color: '#16A34A',
+    lineHeight: 18,
+    fontWeight: '500',
+  },
 
+  // ── Footer ──
   footer: {
-    padding: 16, paddingBottom: 30,
-    borderTopWidth: 1, borderTopColor: '#F0F0F0', backgroundColor: '#fff',
+    padding: 16,
+    paddingBottom: 30,
+    borderTopWidth: 1,
+    borderTopColor: '#ccfbf1',
+    backgroundColor: '#f0fdfa',
   },
   nextBtn: {
-    backgroundColor: '#2563EB', padding: 16,
-    borderRadius: 14, alignItems: 'center',
+    backgroundColor: '#0d9488',
+    padding: 16,
+    borderRadius: 14,
+    alignItems: 'center',
   },
   submitBtn: {
-    backgroundColor: '#16A34A', padding: 16,
-    borderRadius: 14, alignItems: 'center',
+    backgroundColor: '#16A34A',
+    padding: 16,
+    borderRadius: 14,
+    alignItems: 'center',
   },
-  nextBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  submitBtnDisabled: {
+    backgroundColor: '#99f6e4',
+  },
+  nextBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
 });

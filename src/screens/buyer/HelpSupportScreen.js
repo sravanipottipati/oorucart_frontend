@@ -126,7 +126,7 @@ export default function HelpSupportScreen({ navigation }) {
             </View>
             <View style={styles.contactInfo}>
               <Text style={styles.contactTitle}>Email us</Text>
-              <Text style={styles.contactSub}>support@shop2me.in</Text>
+              <Text style={styles.contactSub}>support@univerin.in</Text>
             </View>
             <Text style={styles.contactArrow}>›</Text>
           </TouchableOpacity>
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
   contactDivider: { height: 1, backgroundColor: '#F5F5F5', marginHorizontal: 16 },
   contactIconBox: {
     width: 44, height: 44, borderRadius: 22,
-    backgroundColor: '#EFF6FF', justifyContent: 'center',
+    backgroundColor: '#f0fdfa', justifyContent: 'center',
     alignItems: 'center', marginRight: 12,
   },
   contactIcon: { fontSize: 22 },

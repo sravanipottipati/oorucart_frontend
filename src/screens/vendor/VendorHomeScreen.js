@@ -10,7 +10,7 @@ import client from '../../api/client';
 const STATUS_COLORS = {
   placed:     { bg: '#FFF7ED', text: '#EA580C' },
   accepted:   { bg: '#F0FDF4', text: '#16A34A' },
-  preparing:  { bg: '#EFF6FF', text: '#2563EB' },
+  preparing:  { bg: '#f0fdfa', text: '#0d9488' },
   dispatched: { bg: '#F0FDF4', text: '#16A34A' },
   delivered:  { bg: '#DCFCE7', text: '#16A34A' },
   cancelled:  { bg: '#FEF2F2', text: '#DC2626' },
@@ -97,7 +97,7 @@ export default function VendorHomeScreen({ navigation }) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563EB" />
+        <ActivityIndicator size="large" color="#0d9488" />
       </View>
     );
   }
@@ -138,10 +138,10 @@ export default function VendorHomeScreen({ navigation }) {
               value={isOpen}
               onValueChange={handleToggleShop}
               disabled={toggling}
-              trackColor={{ false: '#FCA5A5', true: '#93C5FD' }}
-              thumbColor={isOpen ? '#2563EB' : '#EF4444'}
+              trackColor={{ false: '#FCA5A5', true: '#5eead4' }}
+              thumbColor={isOpen ? '#0d9488' : '#EF4444'}
             />
-            <Text style={[styles.openLabel, { color: isOpen ? '#2563EB' : '#EF4444' }]}>
+            <Text style={[styles.openLabel, { color: isOpen ? '#0d9488' : '#EF4444' }]}>
               {isOpen ? 'Open' : 'Closed'}
             </Text>
           </View>
@@ -168,10 +168,10 @@ export default function VendorHomeScreen({ navigation }) {
               {pendingOrders.length}
             </Text>
           </View>
-          <View style={[styles.statCard, { backgroundColor: '#EFF6FF' }]}>
+          <View style={[styles.statCard, { backgroundColor: '#f0fdfa' }]}>
             <Text style={styles.statCardIcon}>⚡</Text>
             <Text style={styles.statCardLabel}>Processing Orders</Text>
-            <Text style={[styles.statCardValue, { color: '#2563EB' }]}>
+            <Text style={[styles.statCardValue, { color: '#0d9488' }]}>
               {processingOrders.length}
             </Text>
           </View>
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
     marginTop: 20, marginBottom: 12,
   },
   sectionTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
-  viewAll: { fontSize: 13, color: '#2563EB', fontWeight: '600' },
+  viewAll: { fontSize: 13, color: '#0d9488', fontWeight: '600' },
 
   orderCard: {
     flexDirection: 'row', alignItems: 'center',
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
   },
   tabItem: { flex: 1, alignItems: 'center' },
   tabIcon: { fontSize: 22, marginBottom: 2, color: '#9CA3AF' },
-  tabIconActive: { fontSize: 22, marginBottom: 2, color: '#2563EB' },
+  tabIconActive: { fontSize: 22, marginBottom: 2, color: '#0d9488' },
   tabLabel: { fontSize: 11, color: '#9CA3AF' },
-  tabLabelActive: { fontSize: 11, color: '#2563EB', fontWeight: 'bold' },
+  tabLabelActive: { fontSize: 11, color: '#0d9488', fontWeight: 'bold' },
 });

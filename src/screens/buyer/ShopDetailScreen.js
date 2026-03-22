@@ -226,7 +226,7 @@ export default function ShopDetailScreen({ navigation, route }) {
 
   const { cart, shop: cartShop, addToCart, removeFromCart, cartCount, cartTotal } = useCart();
 
-  const shopColor = SHOP_COLORS[Math.abs((vendorId?.charCodeAt(0) || 65) - 65) % SHOP_COLORS.length] || '#2563EB';
+  const shopColor = SHOP_COLORS[Math.abs((vendorId?.charCodeAt(0) || 65) - 65) % SHOP_COLORS.length] || '#0d9488';
 
   const fetchShopData = async () => {
     try {
@@ -285,7 +285,7 @@ export default function ShopDetailScreen({ navigation, route }) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563EB" />
+        <ActivityIndicator size="large" color="#0d9488" />
       </View>
     );
   }
@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#F3F4F6',
   },
   variantOptionActive: {
-    backgroundColor: '#EFF6FF', borderColor: '#BFDBFE',
+    backgroundColor: '#f0fdfa', borderColor: '#99f6e4',
   },
   variantOptionLeft:  {},
   variantOptionName:  { fontSize: 14, fontWeight: '600', color: '#111', marginBottom: 2 },

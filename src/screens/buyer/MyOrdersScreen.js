@@ -7,7 +7,7 @@ import client from '../../api/client';
 import { useCart } from '../../context/CartContext';
 
 const STATUS_COLORS = {
-  placed:     { bg: '#EFF6FF', text: '#2563EB' },
+  placed:     { bg: '#f0fdfa', text: '#0d9488' },
   accepted:   { bg: '#F0FDF4', text: '#16A34A' },
   preparing:  { bg: '#FFFBEB', text: '#D97706' },
   dispatched: { bg: '#F0FDF4', text: '#16A34A' },
@@ -241,7 +241,7 @@ export default function MyOrdersScreen({ navigation }) {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#0d9488" style={{ marginTop: 40 }} />
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -287,7 +287,7 @@ export default function MyOrdersScreen({ navigation }) {
           <Text style={styles.tabLabel}>Home</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem}>
-          <Text style={[styles.tabIcon, { color: '#2563EB' }]}>📋</Text>
+          <Text style={[styles.tabIcon, { color: '#0d9488' }]}>📋</Text>
           <Text style={styles.tabLabelActive}>Orders</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem}>
@@ -324,9 +324,9 @@ const styles = StyleSheet.create({
     flex: 1, paddingVertical: 14, alignItems: 'center',
     borderBottomWidth: 2, borderBottomColor: 'transparent',
   },
-  tabActive:     { borderBottomColor: '#2563EB' },
+  tabActive:     { borderBottomColor: '#0d9488' },
   tabText:       { fontSize: 14, color: '#888', fontWeight: '500' },
-  tabTextActive: { color: '#2563EB', fontWeight: 'bold' },
+  tabTextActive: { color: '#0d9488', fontWeight: 'bold' },
 
   orderCard: {
     backgroundColor: '#fff', borderRadius: 16,
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
   orderTop:    { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   shopIconBox: {
     width: 44, height: 44, borderRadius: 22,
-    backgroundColor: '#EFF6FF', justifyContent: 'center',
+    backgroundColor: '#f0fdfa', justifyContent: 'center',
     alignItems: 'center', marginRight: 12,
   },
   shopIconText: { fontSize: 22 },
@@ -368,11 +368,11 @@ const styles = StyleSheet.create({
 
   actionBtns:  { flexDirection: 'row', gap: 8, alignItems: 'center' },
   reorderBtn: {
-    backgroundColor: '#EFF6FF', borderRadius: 10,
+    backgroundColor: '#f0fdfa', borderRadius: 10,
     paddingHorizontal: 12, paddingVertical: 8,
-    borderWidth: 1.5, borderColor: '#2563EB',
+    borderWidth: 1.5, borderColor: '#0d9488',
   },
-  reorderBtnText: { fontSize: 13, color: '#2563EB', fontWeight: '700' },
+  reorderBtnText: { fontSize: 13, color: '#0d9488', fontWeight: '700' },
   detailBtn: {
     backgroundColor: '#F9FAFB', borderRadius: 10,
     paddingHorizontal: 12, paddingVertical: 8,
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   emptyTitle:   { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 8 },
   emptySubtitle:{ fontSize: 13, color: '#888', marginBottom: 24, textAlign: 'center' },
   shopNowBtn: {
-    backgroundColor: '#2563EB', borderRadius: 12,
+    backgroundColor: '#0d9488', borderRadius: 12,
     paddingHorizontal: 32, paddingVertical: 12,
   },
   shopNowText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
@@ -399,5 +399,5 @@ const styles = StyleSheet.create({
   tabItem:       { flex: 1, alignItems: 'center' },
   tabIcon:       { fontSize: 22, marginBottom: 2, color: '#9CA3AF' },
   tabLabel:      { fontSize: 11, color: '#9CA3AF' },
-  tabLabelActive:{ fontSize: 11, color: '#2563EB', fontWeight: 'bold' },
+  tabLabelActive:{ fontSize: 11, color: '#0d9488', fontWeight: 'bold' },
 });

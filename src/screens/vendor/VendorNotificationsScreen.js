@@ -6,7 +6,7 @@ import {
 import client from '../../api/client';
 
 const TYPE_CONFIG = {
-  new_order:       { icon: '📦', bg: '#EFF6FF' },
+  new_order:       { icon: '📦', bg: '#f0fdfa' },
   order_cancelled: { icon: '❌', bg: '#FEF2F2' },
   order_delivered: { icon: '✅', bg: '#DCFCE7' },
   settlement:      { icon: '💰', bg: '#DCFCE7' },
@@ -86,7 +86,7 @@ export default function VendorNotificationsScreen({ navigation }) {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#0d9488" style={{ marginTop: 40 }} />
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -143,9 +143,9 @@ const styles = StyleSheet.create({
   headerSub: { fontSize: 12, color: '#888', marginTop: 2 },
   markAllBtn: {
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#f0fdfa', justifyContent: 'center', alignItems: 'center',
   },
-  markAllIcon: { fontSize: 18, color: '#2563EB', fontWeight: 'bold' },
+  markAllIcon: { fontSize: 18, color: '#0d9488', fontWeight: 'bold' },
 
   emptyState: { alignItems: 'center', marginTop: 80 },
   emptyEmoji: { fontSize: 52, marginBottom: 12 },
@@ -170,6 +170,6 @@ const styles = StyleSheet.create({
   notifTime: { fontSize: 11, color: '#9CA3AF' },
   unreadDot: {
     width: 10, height: 10, borderRadius: 5,
-    backgroundColor: '#2563EB', marginTop: 4,
+    backgroundColor: '#0d9488', marginTop: 4,
   },
 });

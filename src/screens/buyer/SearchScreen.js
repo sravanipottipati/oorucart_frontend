@@ -177,12 +177,12 @@ export default function SearchScreen({ navigation }) {
       )}
 
       {loading ? (
-        <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#0d9488" style={{ marginTop: 40 }} />
 
       ) : !query ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>🔍</Text>
-          <Text style={styles.emptyTitle}>Search Shop2me</Text>
+          <Text style={styles.emptyTitle}>Search Univerin</Text>
           <Text style={styles.emptySubtitle}>
             {town ? `Find products and shops in ${town}` : 'Find products and shops near you'}
           </Text>
@@ -379,29 +379,29 @@ const styles = StyleSheet.create({
     width: 42, height: 42, borderRadius: 12,
     backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center', position: 'relative',
   },
-  filterBtnActive: { backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#2563EB' },
+  filterBtnActive: { backgroundColor: '#f0fdfa', borderWidth: 1, borderColor: '#0d9488' },
   filterIcon: { fontSize: 18 },
   filterBadge: {
-    position: 'absolute', top: -4, right: -4, backgroundColor: '#2563EB',
+    position: 'absolute', top: -4, right: -4, backgroundColor: '#0d9488',
     borderRadius: 8, width: 16, height: 16, justifyContent: 'center', alignItems: 'center',
   },
   filterBadgeText: { color: '#fff', fontSize: 9, fontWeight: 'bold' },
   townBar: {
-    backgroundColor: '#EFF6FF', paddingHorizontal: 16,
-    paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#DBEAFE',
+    backgroundColor: '#f0fdfa', paddingHorizontal: 16,
+    paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#ccfbf1',
   },
-  townBarText: { fontSize: 12, color: '#2563EB' },
+  townBarText: { fontSize: 12, color: '#0d9488' },
   townBarBold: { fontWeight: 'bold' },
   activeFiltersRow: {
     backgroundColor: '#fff', paddingVertical: 8,
     borderBottomWidth: 1, borderBottomColor: '#F0F0F0', maxHeight: 46,
   },
   activeFilterChip: {
-    backgroundColor: '#EFF6FF', borderRadius: 20,
+    backgroundColor: '#f0fdfa', borderRadius: 20,
     paddingHorizontal: 12, paddingVertical: 5,
-    borderWidth: 1, borderColor: '#BFDBFE',
+    borderWidth: 1, borderColor: '#99f6e4',
   },
-  activeFilterText: { fontSize: 12, color: '#2563EB', fontWeight: '500' },
+  activeFilterText: { fontSize: 12, color: '#0d9488', fontWeight: '500' },
   clearFiltersChip: { backgroundColor: '#FEE2E2', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
   clearFiltersText: { fontSize: 12, color: '#EF4444', fontWeight: '500' },
   tabsRow: {
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, gap: 8, paddingVertical: 10,
   },
   tab: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20, backgroundColor: '#F3F4F6' },
-  tabActive: { backgroundColor: '#2563EB' },
+  tabActive: { backgroundColor: '#0d9488' },
   tabText: { fontSize: 13, color: '#555', fontWeight: '500' },
   tabTextActive: { color: '#fff', fontWeight: 'bold' },
   emptyState: { alignItems: 'center', marginTop: 50, paddingHorizontal: 32 },
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 6 },
   emptySubtitle: { fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 24 },
   clearFiltersBtn: {
-    backgroundColor: '#2563EB', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12, marginTop: 8,
+    backgroundColor: '#0d9488', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12, marginTop: 8,
   },
   clearFiltersBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   suggestionsBox: { width: '100%' },
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
   },
   productIconBox: {
     width: 46, height: 46, borderRadius: 23,
-    backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#f0fdfa', justifyContent: 'center', alignItems: 'center',
   },
   productIcon: { fontSize: 22 },
   productInfo: { flex: 1 },
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
   productTown: { fontSize: 11, color: '#888' },
   productRating: { fontSize: 11, color: '#F59E0B', marginTop: 2 },
   productRight: { alignItems: 'flex-end', gap: 4 },
-  productPrice: { fontSize: 15, fontWeight: 'bold', color: '#2563EB' },
+  productPrice: { fontSize: 15, fontWeight: 'bold', color: '#0d9488' },
   productArrow: { fontSize: 20, color: '#9CA3AF' },
   shopCard: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
   },
   shopAvatar: {
     width: 46, height: 46, borderRadius: 23,
-    backgroundColor: '#2563EB', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#0d9488', justifyContent: 'center', alignItems: 'center',
   },
   shopAvatarText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
   shopInfo: { flex: 1 },
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
     backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#E5E7EB',
   },
-  sortChipActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  sortChipActive: { backgroundColor: '#0d9488', borderColor: '#0d9488' },
   sortChipText: { fontSize: 13, color: '#555', fontWeight: '500' },
   sortChipTextActive: { color: '#fff', fontWeight: 'bold' },
   priceRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
@@ -503,9 +503,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
     backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#E5E7EB',
   },
-  quickPriceChipActive: { backgroundColor: '#EFF6FF', borderColor: '#2563EB' },
+  quickPriceChipActive: { backgroundColor: '#f0fdfa', borderColor: '#0d9488' },
   quickPriceText: { fontSize: 12, color: '#555' },
-  quickPriceTextActive: { color: '#2563EB', fontWeight: '600' },
-  applyBtn: { backgroundColor: '#2563EB', borderRadius: 14, padding: 16, alignItems: 'center', marginTop: 8 },
+  quickPriceTextActive: { color: '#0d9488', fontWeight: '600' },
+  applyBtn: { backgroundColor: '#0d9488', borderRadius: 14, padding: 16, alignItems: 'center', marginTop: 8 },
   applyBtnText: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
 });

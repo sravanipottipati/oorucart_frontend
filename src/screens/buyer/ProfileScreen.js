@@ -239,7 +239,7 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.logoutText}>🚪  Logout</Text>
         </TouchableOpacity>
 
-        <Text style={styles.version}>Shop2me v1.0.0</Text>
+        <Text style={styles.version}>Univerin v1.0.0</Text>
         <View style={{ height: 100 }} />
       </ScrollView>
 
@@ -264,7 +264,7 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.tabLabel}>Cart</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem}>
-          <Text style={[styles.tabIcon, { color: '#2563EB' }]}>👤</Text>
+          <Text style={[styles.tabIcon, { color: '#0d9488' }]}>👤</Text>
           <Text style={styles.tabLabelActive}>Profile</Text>
         </TouchableOpacity>
       </View>
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   avatarWrapper: { position: 'relative' },
   avatar: {
     width: 80, height: 80, borderRadius: 40,
-    backgroundColor: '#2563EB', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#0d9488', justifyContent: 'center', alignItems: 'center',
   },
   avatarImage: {
     width: 80, height: 80, borderRadius: 40,
@@ -325,10 +325,10 @@ const styles = StyleSheet.create({
   userPhone:    { fontSize: 14, color: '#888', marginBottom: 2 },
   userEmail:    { fontSize: 13, color: '#888', marginBottom: 6 },
   townBadge: {
-    backgroundColor: '#EFF6FF', borderRadius: 20,
+    backgroundColor: '#f0fdfa', borderRadius: 20,
     paddingHorizontal: 12, paddingVertical: 4, marginTop: 4,
   },
-  townBadgeText: { fontSize: 12, color: '#2563EB', fontWeight: '500' },
+  townBadgeText: { fontSize: 12, color: '#0d9488', fontWeight: '500' },
 
   menuCard: {
     backgroundColor: '#fff', marginHorizontal: 16,
@@ -364,5 +364,5 @@ const styles = StyleSheet.create({
   tabItem:        { flex: 1, alignItems: 'center' },
   tabIcon:        { fontSize: 22, marginBottom: 2, color: '#9CA3AF' },
   tabLabel:       { fontSize: 11, color: '#9CA3AF' },
-  tabLabelActive: { fontSize: 11, color: '#2563EB', fontWeight: 'bold' },
+  tabLabelActive: { fontSize: 11, color: '#0d9488', fontWeight: 'bold' },
 });

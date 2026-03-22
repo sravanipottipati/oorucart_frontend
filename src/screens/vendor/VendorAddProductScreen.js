@@ -310,16 +310,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20,
     backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#E5E7EB',
   },
-  categoryChipActive:     { backgroundColor: '#EFF6FF', borderColor: '#2563EB' },
+  categoryChipActive:     { backgroundColor: '#f0fdfa', borderColor: '#0d9488' },
   categoryChipText:       { fontSize: 13, color: '#555' },
-  categoryChipTextActive: { color: '#2563EB', fontWeight: '600' },
+  categoryChipTextActive: { color: '#0d9488', fontWeight: '600' },
 
   footer: {
     padding: 16, paddingBottom: 30, backgroundColor: '#fff',
     borderTopWidth: 1, borderTopColor: '#F0F0F0',
   },
   addBtn: {
-    backgroundColor: '#2563EB', borderRadius: 14,
+    backgroundColor: '#0d9488', borderRadius: 14,
     padding: 16, alignItems: 'center',
   },
   addBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },

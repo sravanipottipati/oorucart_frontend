@@ -115,7 +115,7 @@ export default function AddressScreen({ navigation }) {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#0d9488" style={{ marginTop: 40 }} />
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16 }}>
 
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   backText: { fontSize: 24, color: '#111' },
   headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
   addBtn: {
-    backgroundColor: '#2563EB', borderRadius: 10,
+    backgroundColor: '#0d9488', borderRadius: 10,
     paddingHorizontal: 14, paddingVertical: 7,
   },
   addBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 6 },
   emptySubtitle: { fontSize: 14, color: '#888', marginBottom: 24 },
   addFirstBtn: {
-    backgroundColor: '#2563EB', borderRadius: 12,
+    backgroundColor: '#0d9488', borderRadius: 12,
     paddingHorizontal: 24, paddingVertical: 12,
   },
   addFirstBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
@@ -285,20 +285,20 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
   },
-  addressCardDefault: { borderWidth: 1.5, borderColor: '#2563EB' },
+  addressCardDefault: { borderWidth: 1.5, borderColor: '#0d9488' },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   labelIcon: { fontSize: 18 },
   labelText: { fontSize: 14, fontWeight: 'bold', color: '#111' },
   defaultBadge: {
-    backgroundColor: '#EFF6FF', borderRadius: 20,
+    backgroundColor: '#f0fdfa', borderRadius: 20,
     paddingHorizontal: 8, paddingVertical: 2,
   },
-  defaultBadgeText: { fontSize: 11, color: '#2563EB', fontWeight: '600' },
+  defaultBadgeText: { fontSize: 11, color: '#0d9488', fontWeight: '600' },
   cardActions: { flexDirection: 'row', gap: 8 },
   editBtn: {
     width: 32, height: 32, borderRadius: 8,
-    backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#f0fdfa', justifyContent: 'center', alignItems: 'center',
   },
   editBtnText: { fontSize: 14 },
   deleteBtn: {
@@ -309,10 +309,10 @@ const styles = StyleSheet.create({
   addressText: { fontSize: 14, color: '#111', lineHeight: 20, marginBottom: 4 },
   townText: { fontSize: 13, color: '#888', marginBottom: 10 },
   setDefaultBtn: {
-    alignSelf: 'flex-start', borderWidth: 1, borderColor: '#2563EB',
+    alignSelf: 'flex-start', borderWidth: 1, borderColor: '#0d9488',
     borderRadius: 8, paddingHorizontal: 12, paddingVertical: 5,
   },
-  setDefaultText: { fontSize: 12, color: '#2563EB', fontWeight: '600' },
+  setDefaultText: { fontSize: 12, color: '#0d9488', fontWeight: '600' },
 
   modalOverlay: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
@@ -344,12 +344,12 @@ const styles = StyleSheet.create({
     borderRadius: 10, padding: 10, alignItems: 'center',
     backgroundColor: '#F9FAFB',
   },
-  labelChipActive: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
+  labelChipActive: { borderColor: '#0d9488', backgroundColor: '#f0fdfa' },
   labelChipText: { fontSize: 13, color: '#555', fontWeight: '500' },
-  labelChipTextActive: { color: '#2563EB', fontWeight: 'bold' },
+  labelChipTextActive: { color: '#0d9488', fontWeight: 'bold' },
 
   saveBtn: {
-    backgroundColor: '#2563EB', borderRadius: 14,
+    backgroundColor: '#0d9488', borderRadius: 14,
     padding: 16, alignItems: 'center', marginTop: 20,
   },
   saveBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },

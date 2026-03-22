@@ -15,7 +15,7 @@ const TABS = [
 const STATUS_COLORS = {
   placed:     { bg: '#FFF7ED', text: '#EA580C' },
   accepted:   { bg: '#F0FDF4', text: '#16A34A' },
-  preparing:  { bg: '#EFF6FF', text: '#2563EB' },
+  preparing:  { bg: '#f0fdfa', text: '#0d9488' },
   dispatched: { bg: '#F0FDF4', text: '#16A34A' },
   delivered:  { bg: '#DCFCE7', text: '#16A34A' },
   cancelled:  { bg: '#FEF2F2', text: '#DC2626' },
@@ -114,7 +114,7 @@ export default function VendorOrdersScreen({ navigation }) {
       </ScrollView>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#0d9488" style={{ marginTop: 40 }} />
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -178,7 +178,7 @@ export default function VendorOrdersScreen({ navigation }) {
           <Text style={styles.tabLabel}>Dashboard</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem}>
-          <Text style={[styles.tabIcon, { color: '#2563EB' }]}>📋</Text>
+          <Text style={[styles.tabIcon, { color: '#0d9488' }]}>📋</Text>
           <Text style={styles.tabLabelActive}>Orders</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 8,
     borderRadius: 20, backgroundColor: '#F3F4F6',
   },
-  tabActive: { backgroundColor: '#2563EB' },
+  tabActive: { backgroundColor: '#0d9488' },
   tabText: { fontSize: 13, color: '#555', fontWeight: '500' },
   tabTextActive: { color: '#fff', fontWeight: 'bold' },
 
@@ -260,5 +260,5 @@ const styles = StyleSheet.create({
   tabItem: { flex: 1, alignItems: 'center' },
   tabIcon: { fontSize: 22, marginBottom: 2, color: '#9CA3AF' },
   tabLabel: { fontSize: 11, color: '#9CA3AF' },
-  tabLabelActive: { fontSize: 11, color: '#2563EB', fontWeight: 'bold' },
+  tabLabelActive: { fontSize: 11, color: '#0d9488', fontWeight: 'bold' },
 });

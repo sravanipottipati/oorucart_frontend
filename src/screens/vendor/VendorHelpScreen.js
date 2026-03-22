@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 
 const QUICK_HELP = [
-  { icon: '💰', label: 'Payment & Settlement', bg: '#EFF6FF' },
+  { icon: '💰', label: 'Payment & Settlement', bg: '#f0fdfa' },
   { icon: '📦', label: 'Order Issues',         bg: '#FFF7ED' },
   { icon: '🛍',  label: 'Product Issues',       bg: '#F0FDF4' },
   { icon: '⚙️', label: 'Technical Issues',     bg: '#F5F3FF' },
@@ -31,7 +31,7 @@ const FAQS = [
   },
   {
     q: 'What is the platform fee?',
-    a: 'Shop2me charges a small platform fee per order: ₹5 for vegetables, ₹7 for bakery/supermarket, ₹10 for restaurants.',
+    a: 'Univerin charges a small platform fee per order: ₹5 for vegetables, ₹7 for bakery/supermarket, ₹10 for restaurants.',
   },
 ];
 
@@ -115,7 +115,7 @@ export default function VendorHelpScreen({ navigation }) {
         <Text style={styles.sectionTitle}>Contact Support</Text>
         <View style={styles.contactCard}>
           <TouchableOpacity style={[styles.contactItem, styles.contactItemBorder]}>
-            <View style={[styles.contactIconBox, { backgroundColor: '#EFF6FF' }]}>
+            <View style={[styles.contactIconBox, { backgroundColor: '#f0fdfa' }]}>
               <Text style={styles.contactIcon}>💬</Text>
             </View>
             <View style={styles.contactInfo}>
@@ -131,7 +131,7 @@ export default function VendorHelpScreen({ navigation }) {
             </View>
             <View style={styles.contactInfo}>
               <Text style={styles.contactTitle}>Email Support</Text>
-              <Text style={styles.contactSub}>seller@shop2me.in</Text>
+              <Text style={styles.contactSub}>seller@univerin.in</Text>
             </View>
             <Text style={styles.contactArrow}>›</Text>
           </TouchableOpacity>

@@ -74,7 +74,7 @@ export default function VendorProductsScreen({ navigation }) {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#0d9488" style={{ marginTop: 40 }} />
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -159,7 +159,7 @@ export default function VendorProductsScreen({ navigation }) {
           <Text style={styles.tabLabel}>Orders</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem}>
-          <Text style={[styles.tabIcon, { color: '#2563EB' }]}>📦</Text>
+          <Text style={[styles.tabIcon, { color: '#0d9488' }]}>📦</Text>
           <Text style={styles.tabLabelActive}>Products</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
   addBtn: {
-    backgroundColor: '#2563EB', borderRadius: 12,
+    backgroundColor: '#0d9488', borderRadius: 12,
     paddingHorizontal: 16, paddingVertical: 10,
     flexDirection: 'row', alignItems: 'center', gap: 6,
   },
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   actionBtns: { flexDirection: 'row', gap: 8, marginTop: 8 },
   editBtn: {
     width: 34, height: 34, borderRadius: 8,
-    backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#f0fdfa', justifyContent: 'center', alignItems: 'center',
   },
   editBtnText: { fontSize: 16 },
   deleteBtn: {
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 16, fontWeight: 'bold', color: '#111', marginBottom: 6 },
   emptySubtitle: { fontSize: 13, color: '#888', marginBottom: 20 },
   addFirstBtn: {
-    backgroundColor: '#2563EB', borderRadius: 12,
+    backgroundColor: '#0d9488', borderRadius: 12,
     paddingHorizontal: 24, paddingVertical: 12,
   },
   addFirstBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
@@ -247,5 +247,5 @@ const styles = StyleSheet.create({
   tabItem: { flex: 1, alignItems: 'center' },
   tabIcon: { fontSize: 22, marginBottom: 2, color: '#9CA3AF' },
   tabLabel: { fontSize: 11, color: '#9CA3AF' },
-  tabLabelActive: { fontSize: 11, color: '#2563EB', fontWeight: 'bold' },
+  tabLabelActive: { fontSize: 11, color: '#0d9488', fontWeight: 'bold' },
 });

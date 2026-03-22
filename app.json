@@ -1,29 +1,29 @@
 {
   "expo": {
-    "name": "Shop2me",
-    "slug": "shop2me",
+    "name": "Univerin",
+    "slug": "univerin",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/univerin-icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/univerin-splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#2563EB"
+      "backgroundColor": "#f0fdfa"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.shop2me.app"
+      "bundleIdentifier": "com.univerin.app"
     },
     "android": {
-      "package": "com.shop2me.app",
+      "package": "com.univerin.app",
       "adaptiveIcon": {
-        "backgroundColor": "#2563EB",
-        "foregroundImage": "./assets/android-icon-foreground.png"
+        "backgroundColor": "#0d9488",
+        "foregroundImage": "./assets/univerin-icon.png"
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/univerin-icon.png"
     }
   }
 }

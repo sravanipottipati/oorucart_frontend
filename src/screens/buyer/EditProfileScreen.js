@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   avatarSection: { alignItems: 'center', paddingVertical: 28, backgroundColor: '#fff', marginBottom: 16 },
   avatar: {
     width: 84, height: 84, borderRadius: 42,
-    backgroundColor: '#2563EB', justifyContent: 'center',
+    backgroundColor: '#0d9488', justifyContent: 'center',
     alignItems: 'center', marginBottom: 10,
   },
   avatarText:  { color: '#fff', fontSize: 30, fontWeight: 'bold' },
@@ -201,12 +201,12 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: '#E5E7EB',
     alignItems: 'center', backgroundColor: '#F9FAFB',
   },
-  genderBtnActive:     { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
+  genderBtnActive:     { borderColor: '#0d9488', backgroundColor: '#f0fdfa' },
   genderBtnText:       { fontSize: 13, color: '#555', fontWeight: '500' },
-  genderBtnTextActive: { color: '#2563EB', fontWeight: 'bold' },
+  genderBtnTextActive: { color: '#0d9488', fontWeight: 'bold' },
 
   saveBtn: {
-    backgroundColor: '#2563EB', borderRadius: 14,
+    backgroundColor: '#0d9488', borderRadius: 14,
     marginHorizontal: 16, padding: 16, alignItems: 'center',
   },
   saveBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
