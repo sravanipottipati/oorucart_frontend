@@ -13,6 +13,9 @@ import { ShopCardSkeleton } from '../../components/Skeleton';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+// ── Fixed radius — 10 km like Swiggy (no button needed) ──────────────────────
+const DEFAULT_RADIUS = 10;
+
 const CATEGORIES = [
   { id: 'all',         label: 'All',        emoji: '🛍' },
   { id: 'grocery',     label: 'Grocery',    emoji: '🛒' },
@@ -33,7 +36,7 @@ const OFFERS = [
   { id: '4', title: 'Cash on Delivery', subtitle: 'Pay when you receive',      emoji: '💵', bg: '#7C3AED', tag: 'SAFE & EASY' },
 ];
 
-// Town center fallback coordinates
+// ── Town center fallback coordinates ─────────────────────────────────────────
 const TOWN_COORDS = {
   'nellore':   { lat: 14.4426, lng: 79.9865 },
   'warangal':  { lat: 17.9784, lng: 79.5941 },
@@ -41,6 +44,7 @@ const TOWN_COORDS = {
   'vizag':     { lat: 17.6868, lng: 83.2185 },
   'tirupati':  { lat: 13.6288, lng: 79.4192 },
   'guntur':    { lat: 16.3067, lng: 80.4365 },
+  'kadapa':    { lat: 14.4674, lng: 78.8241 },
   'default':   { lat: 14.4426, lng: 79.9865 },
 };
 
@@ -49,7 +53,6 @@ const getTownCoords = (townName) => {
   return TOWN_COORDS[key] || TOWN_COORDS['default'];
 };
 
-// ── KEY FIX: Check if GPS coords match the town (India check) ──────────────────
 const isCoordInIndia = (lat, lng) => {
   return lat >= 6.0 && lat <= 37.0 && lng >= 68.0 && lng <= 97.0;
 };
@@ -61,7 +64,7 @@ export default function HomeScreen({ navigation }) {
   const [category, setCategory]       = useState('all');
   const [bannerIndex, setBannerIndex] = useState(0);
   const bannerRef                     = useRef(null);
-  const isFetchingRef                 = useRef(false); // ← prevent double fetch
+  const isFetchingRef                 = useRef(false);
 
   const { user }                                 = useAuth();
   const { shop: cartShop, cartCount, cartTotal } = useCart();
@@ -79,18 +82,18 @@ export default function HomeScreen({ navigation }) {
     return () => clearInterval(timer);
   }, []);
 
-  // ── FIXED fetchShops — always uses town coords, ignores foreign GPS ──────────
+  // ── Fetch shops — automatic 10 km radius like Swiggy ─────────────────────
   const fetchShops = useCallback(async (currentTown) => {
-    if (isFetchingRef.current) return; // prevent double fetch
+    if (isFetchingRef.current) return;
     isFetchingRef.current = true;
 
     const t = currentTown || town;
 
-    // Always start with town center coords (safe fallback)
+    // Always start with town center coords as fallback
     const townCoords = getTownCoords(t);
     let   gpsCoords  = townCoords;
 
-    // Try real GPS — but ONLY use it if coords are in India
+    // Try real GPS — only use if in India
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
@@ -103,22 +106,21 @@ export default function HomeScreen({ navigation }) {
         console.log('📍 Real GPS:', lat, lng);
 
         if (isCoordInIndia(lat, lng)) {
-          // ✅ User is in India — use real GPS
           gpsCoords = { lat, lng };
-          console.log('✅ Using real GPS (India)');
+          console.log('✅ Using real GPS');
         } else {
-          // ❌ User is outside India (testing from US/etc) — use town coords
           gpsCoords = townCoords;
-          console.log('⚠️ GPS outside India, using town coords:', townCoords);
+          console.log('⚠️ GPS outside India, using town coords');
         }
       }
     } catch (e) {
-      console.log('📍 GPS error, using town coords:', e.message);
+      console.log('📍 GPS error, using town coords');
       gpsCoords = townCoords;
     }
 
     try {
-      const url = `/vendors/nearby/?town=${t}&lat=${gpsCoords.lat}&lng=${gpsCoords.lng}`;
+      // ── Send radius=10 automatically — no button needed ──────────────────
+      const url = `/vendors/nearby/?town=${t}&lat=${gpsCoords.lat}&lng=${gpsCoords.lng}&radius=${DEFAULT_RADIUS}`;
       console.log('🌐 Fetching:', url);
       const res = await client.get(url);
 
@@ -127,7 +129,7 @@ export default function HomeScreen({ navigation }) {
         console.log('✅ Shops loaded:', res.data.length);
       } else if (res.data.shops) {
         setShops(res.data.shops);
-        console.log('✅ Shops loaded:', res.data.shops.length, '| First distance:', res.data.shops[0]?.distance);
+        console.log('✅ Shops loaded:', res.data.shops.length);
       } else if (res.data.results) {
         setShops(res.data.results);
         console.log('✅ Shops loaded:', res.data.results.length);
@@ -141,11 +143,10 @@ export default function HomeScreen({ navigation }) {
     } finally {
       setLoading(false);
       setRefreshing(false);
-      isFetchingRef.current = false; // release lock
+      isFetchingRef.current = false;
     }
   }, [town]);
 
-  // ── FIXED: Only useFocusEffect handles fetching — removed duplicate useEffect ─
   useFocusEffect(
     useCallback(() => {
       const currentTown = user?.town || 'Nellore';
@@ -159,7 +160,7 @@ export default function HomeScreen({ navigation }) {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    isFetchingRef.current = false; // allow refresh to bypass lock
+    isFetchingRef.current = false;
     fetchShops(town);
   };
 
@@ -236,7 +237,7 @@ export default function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
 
-      {/* Header */}
+      {/* ── Header — Clean like Swiggy ── */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={styles.deliverTo}>Deliver to</Text>
@@ -264,7 +265,7 @@ export default function HomeScreen({ navigation }) {
         </View>
       </View>
 
-      {/* Search Bar */}
+      {/* ── Search Bar ── */}
       <TouchableOpacity
         style={styles.searchBar}
         onPress={() => navigation.navigate('Search')}
@@ -279,7 +280,7 @@ export default function HomeScreen({ navigation }) {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
 
-        {/* Offers Banner */}
+        {/* ── Offers Banner ── */}
         <FlatList
           ref={bannerRef}
           data={OFFERS}
@@ -309,14 +310,14 @@ export default function HomeScreen({ navigation }) {
           decelerationRate="fast"
         />
 
-        {/* Banner Dots */}
+        {/* ── Banner Dots ── */}
         <View style={styles.dotsRow}>
           {OFFERS.map((_, i) => (
             <View key={i} style={[styles.dot2, i === bannerIndex && styles.dotActive]} />
           ))}
         </View>
 
-        {/* Categories */}
+        {/* ── Categories ── */}
         <Text style={styles.sectionTitle}>Categories</Text>
         <ScrollView
           horizontal
@@ -345,16 +346,14 @@ export default function HomeScreen({ navigation }) {
           ))}
         </ScrollView>
 
-        {/* Shops Section */}
+        {/* ── Shops Section ── */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Shops Near You</Text>
           <Text style={styles.shopCount}>{filteredShops.length} shops</Text>
         </View>
 
         {loading ? (
-          <>
-            {[1,2,3,4].map(i => <ShopCardSkeleton key={i} />)}
-          </>
+          <>{[1,2,3,4].map(i => <ShopCardSkeleton key={i} />)}</>
         ) : filteredShops.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>🏪</Text>
@@ -378,7 +377,7 @@ export default function HomeScreen({ navigation }) {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Global Cart Bar */}
+      {/* ── Cart Bar ── */}
       {cartCount > 0 && (
         <TouchableOpacity
           style={styles.cartBar}
@@ -402,7 +401,7 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
       )}
 
-      {/* Bottom Tab Bar */}
+      {/* ── Bottom Tab Bar ── */}
       <View style={styles.bottomTab}>
         <TouchableOpacity style={styles.tabItem}>
           <Text style={[styles.tabIcon, { color: '#0d9488' }]}>🏠</Text>
@@ -484,7 +483,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', marginRight: 12, height: 110,
   },
-  bannerLeft: { flex: 1 },
+  bannerLeft:     { flex: 1 },
   bannerTag: {
     backgroundColor: 'rgba(255,255,255,0.25)', alignSelf: 'flex-start',
     borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 8,

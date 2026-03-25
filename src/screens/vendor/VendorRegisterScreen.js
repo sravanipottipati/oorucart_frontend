@@ -16,6 +16,9 @@ const CATEGORIES = [
 
 const WEEKLY_OFF = ['None','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
+// ── Delivery radius options ───────────────────────────────────────────────────
+const RADIUS_OPTIONS = ['1', '2', '3', '5', '10', '15', '20'];
+
 export default function VendorRegisterScreen({ navigation }) {
   const { login } = useAuth();
   const [step, setStep]             = useState(1);
@@ -33,10 +36,11 @@ export default function VendorRegisterScreen({ navigation }) {
   const [showPassword,  setShowPassword]  = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
 
-  const [category,     setCategory]     = useState('vegetables');
-  const [deliveryType, setDeliveryType] = useState('delivery');
-  const [minOrder,     setMinOrder]     = useState('100');
-  const [deliveryTime, setDeliveryTime] = useState('30');
+  const [category,        setCategory]        = useState('vegetables');
+  const [deliveryType,    setDeliveryType]    = useState('delivery');
+  const [minOrder,        setMinOrder]        = useState('100');
+  const [deliveryTime,    setDeliveryTime]    = useState('30');
+  const [deliveryRadius,  setDeliveryRadius]  = useState('5'); // ← NEW default 5 km
 
   const [accountName, setAccountName] = useState('');
   const [bankName,    setBankName]    = useState('');
@@ -105,7 +109,7 @@ export default function VendorRegisterScreen({ navigation }) {
     else setStep(prev => prev - 1);
   };
 
-  // ── Submit — Final Fixed Version ──
+  // ── Submit ──
   const handleSubmit = async () => {
     if (!shopName.trim()) return Alert.alert('Error', 'Shop name is required');
     if (!town.trim())     return Alert.alert('Error', 'Town is required');
@@ -120,14 +124,13 @@ export default function VendorRegisterScreen({ navigation }) {
         user_type:    'vendor',
       });
 
-      // Step 2 — Login — this saves access_token to AsyncStorage via AuthContext
+      // Step 2 — Login
       await login(phone, password);
 
-      // Step 3 — Wait 1 second for token to fully save
+      // Step 3 — Wait for token to save
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Step 4 — Register shop
-      // Client interceptor in client.js reads access_token automatically
+      // Step 4 — Register shop with delivery_radius
       const response = await client.post('/vendors/register/', {
         shop_name:               shopName,
         category:                category,
@@ -138,6 +141,7 @@ export default function VendorRegisterScreen({ navigation }) {
         longitude:               vendorLng || null,
         delivery_type:           deliveryType,
         estimated_delivery_time: parseInt(deliveryTime),
+        delivery_radius:         parseFloat(deliveryRadius) || 5.0, // ← NEW
       });
 
       console.log('✅ Vendor registered:', response.data);
@@ -176,6 +180,7 @@ export default function VendorRegisterScreen({ navigation }) {
     </View>
   );
 
+  // ── Step 1 — Basic Info ──
   const renderStep1 = () => (
     <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>Basic Information</Text>
@@ -258,6 +263,7 @@ export default function VendorRegisterScreen({ navigation }) {
     </ScrollView>
   );
 
+  // ── Step 2 — Shop Details + Delivery Radius ──
   const renderStep2 = () => (
     <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>Shop Details</Text>
@@ -309,10 +315,36 @@ export default function VendorRegisterScreen({ navigation }) {
             value={minOrder} onChangeText={setMinOrder} keyboardType="numeric" />
         </View>
       </View>
+
+      {/* ── Delivery Radius ── */}
+      <Text style={styles.label}>Delivery Radius *</Text>
+      <Text style={styles.radiusSubLabel}>
+        How far can you deliver from your shop?
+      </Text>
+      <View style={styles.radiusRow}>
+        {RADIUS_OPTIONS.map(val => (
+          <TouchableOpacity
+            key={val}
+            style={[styles.radiusChip, deliveryRadius === val && styles.radiusChipActive]}
+            onPress={() => setDeliveryRadius(val)}
+          >
+            <Text style={[styles.radiusChipText, deliveryRadius === val && styles.radiusChipTextActive]}>
+              {val} km
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <View style={styles.radiusInfo}>
+        <Text style={styles.radiusInfoText}>
+          📡 Buyers within <Text style={{ fontWeight: 'bold' }}>{deliveryRadius} km</Text> of your shop will see you. Buyers outside this range will not see your shop.
+        </Text>
+      </View>
+
       <View style={{ height: 20 }} />
     </ScrollView>
   );
 
+  // ── Step 3 — Bank Details ──
   const renderStep3 = () => (
     <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>Bank Details</Text>
@@ -350,6 +382,7 @@ export default function VendorRegisterScreen({ navigation }) {
     </ScrollView>
   );
 
+  // ── Step 4 — Timings ──
   const renderStep4 = () => (
     <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>Shop Timings</Text>
@@ -385,6 +418,7 @@ export default function VendorRegisterScreen({ navigation }) {
     </ScrollView>
   );
 
+  // ── Step 5 — Review ──
   const renderStep5 = () => (
     <ScrollView style={styles.stepContent} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>Review & Submit</Text>
@@ -409,6 +443,7 @@ export default function VendorRegisterScreen({ navigation }) {
         <Text style={styles.reviewSection}>📦 Shop Details</Text>
         <Text style={styles.reviewRow}><Text style={styles.reviewKey}>Category: </Text>{category}</Text>
         <Text style={styles.reviewRow}><Text style={styles.reviewKey}>Delivery: </Text>{deliveryType}</Text>
+        <Text style={styles.reviewRow}><Text style={styles.reviewKey}>Delivery Radius: </Text>{deliveryRadius} km 📡</Text>
         <Text style={styles.reviewRow}><Text style={styles.reviewKey}>Min Order: </Text>Rs.{minOrder}</Text>
         <Text style={styles.reviewRow}><Text style={styles.reviewKey}>Platform Fee: </Text>{platformFee()}</Text>
       </View>
@@ -586,6 +621,24 @@ const styles = StyleSheet.create({
   toggleBtnActive:     { borderColor: '#0d9488', backgroundColor: '#0d9488' },
   toggleBtnText:       { fontSize: 12, color: '#555', fontWeight: '600' },
   toggleBtnTextActive: { color: '#fff' },
+
+  // ── Delivery Radius ──────────────────────────────────────────────────────────
+  radiusSubLabel: { fontSize: 12, color: '#888', marginBottom: 10, marginTop: -4 },
+  radiusRow:      { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
+  radiusChip: {
+    paddingHorizontal: 16, paddingVertical: 9, borderRadius: 100,
+    borderWidth: 1.5, borderColor: '#E5E7EB', backgroundColor: '#F9FAFB',
+  },
+  radiusChipActive:     { borderColor: '#0d9488', backgroundColor: '#0d9488' },
+  radiusChipText:       { fontSize: 13, fontWeight: '700', color: '#555' },
+  radiusChipTextActive: { color: '#fff' },
+  radiusInfo: {
+    backgroundColor: '#f0fdfa', borderRadius: 10, padding: 12,
+    marginBottom: 12, borderWidth: 1, borderColor: '#99f6e4',
+  },
+  radiusInfoText: { fontSize: 13, color: '#0d9488', lineHeight: 18 },
+  // ────────────────────────────────────────────────────────────────────────────
+
   weeklyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   dayBtn: {
     borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 20,
