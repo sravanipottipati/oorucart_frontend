@@ -13,7 +13,6 @@ import { ShopCardSkeleton } from '../../components/Skeleton';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// ── Fixed radius — 10 km like Swiggy (no button needed) ──────────────────────
 const DEFAULT_RADIUS = 10;
 
 const CATEGORIES = [
@@ -36,7 +35,6 @@ const OFFERS = [
   { id: '4', title: 'Cash on Delivery', subtitle: 'Pay when you receive',      emoji: '💵', bg: '#7C3AED', tag: 'SAFE & EASY' },
 ];
 
-// ── Town center fallback coordinates ─────────────────────────────────────────
 const TOWN_COORDS = {
   'nellore':   { lat: 14.4426, lng: 79.9865 },
   'warangal':  { lat: 17.9784, lng: 79.5941 },
@@ -58,19 +56,19 @@ const isCoordInIndia = (lat, lng) => {
 };
 
 export default function HomeScreen({ navigation }) {
-  const [shops, setShops]             = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [refreshing, setRefreshing]   = useState(false);
-  const [category, setCategory]       = useState('all');
+  const [shops, setShops]           = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [category, setCategory]     = useState('all');
   const [bannerIndex, setBannerIndex] = useState(0);
-  const bannerRef                     = useRef(null);
-  const isFetchingRef                 = useRef(false);
+  const [isOffline, setIsOffline]   = useState(false); // ← NEW offline state
+  const bannerRef                   = useRef(null);
+  const isFetchingRef               = useRef(false);
 
   const { user }                                 = useAuth();
   const { shop: cartShop, cartCount, cartTotal } = useCart();
   const [town, setTown]                          = useState(user?.town || 'Nellore');
 
-  // Auto-scroll banner every 3 seconds
   useEffect(() => {
     const timer = setInterval(() => {
       setBannerIndex(prev => {
@@ -82,18 +80,14 @@ export default function HomeScreen({ navigation }) {
     return () => clearInterval(timer);
   }, []);
 
-  // ── Fetch shops — automatic 10 km radius like Swiggy ─────────────────────
   const fetchShops = useCallback(async (currentTown) => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
 
     const t = currentTown || town;
-
-    // Always start with town center coords as fallback
     const townCoords = getTownCoords(t);
     let   gpsCoords  = townCoords;
 
-    // Try real GPS — only use if in India
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
@@ -103,43 +97,39 @@ export default function HomeScreen({ navigation }) {
         });
         const lat = loc.coords.latitude;
         const lng = loc.coords.longitude;
-        console.log('📍 Real GPS:', lat, lng);
-
         if (isCoordInIndia(lat, lng)) {
           gpsCoords = { lat, lng };
-          console.log('✅ Using real GPS');
         } else {
           gpsCoords = townCoords;
-          console.log('⚠️ GPS outside India, using town coords');
         }
       }
     } catch (e) {
-      console.log('📍 GPS error, using town coords');
       gpsCoords = townCoords;
     }
 
     try {
-      // ── Send radius=10 automatically — no button needed ──────────────────
       const url = `/vendors/nearby/?town=${t}&lat=${gpsCoords.lat}&lng=${gpsCoords.lng}&radius=${DEFAULT_RADIUS}`;
-      console.log('🌐 Fetching:', url);
       const res = await client.get(url);
+      setIsOffline(false); // ← connected successfully
 
       if (Array.isArray(res.data)) {
         setShops(res.data);
-        console.log('✅ Shops loaded:', res.data.length);
       } else if (res.data.shops) {
         setShops(res.data.shops);
-        console.log('✅ Shops loaded:', res.data.shops.length);
       } else if (res.data.results) {
         setShops(res.data.results);
-        console.log('✅ Shops loaded:', res.data.results.length);
       } else {
         setShops([]);
-        console.log('⚠️ No shops found');
       }
     } catch (e) {
-      console.log('❌ Error fetching shops:', e.message);
+      console.log('❌ Error:', e.message);
       setShops([]);
+      // ── Check if offline or server error ─────────────────────────────────
+      if (e.message === 'Network Error' || !e.response) {
+        setIsOffline(true);  // ← no internet
+      } else {
+        setIsOffline(false); // ← server error but connected
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -150,9 +140,7 @@ export default function HomeScreen({ navigation }) {
   useFocusEffect(
     useCallback(() => {
       const currentTown = user?.town || 'Nellore';
-      if (currentTown !== town) {
-        setTown(currentTown);
-      }
+      if (currentTown !== town) setTown(currentTown);
       setLoading(true);
       fetchShops(currentTown);
     }, [user?.town])
@@ -169,6 +157,39 @@ export default function HomeScreen({ navigation }) {
   );
 
   const getShopColor = (index) => SHOP_COLORS[index % SHOP_COLORS.length];
+
+  // ── Empty / Offline State ─────────────────────────────────────────────────
+  const EmptyState = () => {
+    if (isOffline) {
+      return (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyEmoji}>📶</Text>
+          <Text style={styles.emptyTitle}>No internet connection</Text>
+          <Text style={styles.emptySubtitle}>
+            Please check your connection and try again
+          </Text>
+          <TouchableOpacity style={styles.changeTownBtn} onPress={onRefresh}>
+            <Text style={styles.changeTownBtnText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return (
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyEmoji}>🏪</Text>
+        <Text style={styles.emptyTitle}>No shops near you</Text>
+        <Text style={styles.emptySubtitle}>
+          Try a different category or change your location
+        </Text>
+        <TouchableOpacity
+          style={styles.changeTownBtn}
+          onPress={() => navigation.navigate('TownSelection')}
+        >
+          <Text style={styles.changeTownBtnText}>Change Location</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   const ShopCard = ({ shop, index }) => (
     <TouchableOpacity
@@ -237,7 +258,14 @@ export default function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
 
-      {/* ── Header — Clean like Swiggy ── */}
+      {/* ── Offline Banner ── */}
+      {isOffline && (
+        <View style={styles.offlineBanner}>
+          <Text style={styles.offlineBannerText}>📶 No internet connection</Text>
+        </View>
+      )}
+
+      {/* ── Header ── */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={styles.deliverTo}>Deliver to</Text>
@@ -279,7 +307,6 @@ export default function HomeScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-
         {/* ── Offers Banner ── */}
         <FlatList
           ref={bannerRef}
@@ -319,27 +346,13 @@ export default function HomeScreen({ navigation }) {
 
         {/* ── Categories ── */}
         <Text style={styles.sectionTitle}>Categories</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoriesRow}
-        >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesRow}>
           {CATEGORIES.map(cat => (
-            <TouchableOpacity
-              key={cat.id}
-              style={styles.categoryItem}
-              onPress={() => setCategory(cat.id)}
-            >
-              <View style={[
-                styles.categoryCircle,
-                category === cat.id && styles.categoryCircleActive,
-              ]}>
+            <TouchableOpacity key={cat.id} style={styles.categoryItem} onPress={() => setCategory(cat.id)}>
+              <View style={[styles.categoryCircle, category === cat.id && styles.categoryCircleActive]}>
                 <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
               </View>
-              <Text style={[
-                styles.categoryLabel,
-                category === cat.id && styles.categoryLabelActive,
-              ]}>
+              <Text style={[styles.categoryLabel, category === cat.id && styles.categoryLabelActive]}>
                 {cat.label}
               </Text>
             </TouchableOpacity>
@@ -355,19 +368,7 @@ export default function HomeScreen({ navigation }) {
         {loading ? (
           <>{[1,2,3,4].map(i => <ShopCardSkeleton key={i} />)}</>
         ) : filteredShops.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>🏪</Text>
-            <Text style={styles.emptyTitle}>No shops near you</Text>
-            <Text style={styles.emptySubtitle}>
-              Try a different category or change your location
-            </Text>
-            <TouchableOpacity
-              style={styles.changeTownBtn}
-              onPress={() => navigation.navigate('TownSelection')}
-            >
-              <Text style={styles.changeTownBtnText}>Change Location</Text>
-            </TouchableOpacity>
-          </View>
+          <EmptyState />
         ) : (
           filteredShops.map((shop, index) => (
             <ShopCard key={shop.id} shop={shop} index={index} />
@@ -407,10 +408,7 @@ export default function HomeScreen({ navigation }) {
           <Text style={[styles.tabIcon, { color: '#0d9488' }]}>🏠</Text>
           <Text style={styles.tabLabelActive}>Home</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate('MyOrders')}
-        >
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('MyOrders')}>
           <Text style={styles.tabIcon}>📋</Text>
           <Text style={styles.tabLabel}>Orders</Text>
         </TouchableOpacity>
@@ -437,10 +435,7 @@ export default function HomeScreen({ navigation }) {
           </View>
           <Text style={[styles.tabLabel, cartCount > 0 && { color: '#0d9488' }]}>Cart</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate('Profile')}
-        >
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Profile')}>
           <Text style={styles.tabIcon}>👤</Text>
           <Text style={styles.tabLabel}>Profile</Text>
         </TouchableOpacity>
@@ -452,6 +447,13 @@ export default function HomeScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9FA' },
+
+  // ── Offline Banner ──
+  offlineBanner: {
+    backgroundColor: '#EF4444', paddingVertical: 8,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  offlineBannerText: { color: '#fff', fontSize: 13, fontWeight: '600' },
 
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
