@@ -1,43 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, Linking, Share, Alert, Modal, TextInput,
+  ScrollView, ActivityIndicator, Linking, Alert, Modal, TextInput,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
 
 const STATUS_STEPS = ['placed', 'accepted', 'preparing', 'dispatched', 'delivered'];
 const STATUS_INFO = {
-  placed:     { label: 'Order Placed',     icon: '📋', desc: 'Your order has been placed' },
-  accepted:   { label: 'Order Accepted',   icon: '✅', desc: 'Vendor accepted your order' },
-  preparing:  { label: 'Being Prepared',   icon: '👨‍🍳', desc: 'Vendor is preparing your order' },
-  dispatched: { label: 'Out for Delivery', icon: '🛵', desc: 'Your order is on the way' },
-  delivered:  { label: 'Delivered',        icon: '🎉', desc: 'Order delivered successfully!' },
-  cancelled:  { label: 'Cancelled',        icon: '❌', desc: 'Order was cancelled' },
-  rejected:   { label: 'Rejected',         icon: '❌', desc: 'Order was rejected by vendor' },
+  placed:     { label: 'Order Placed',     icon: 'receipt-outline',     desc: 'Your order has been placed' },
+  accepted:   { label: 'Order Accepted',   icon: 'checkmark-circle-outline', desc: 'Vendor accepted your order' },
+  preparing:  { label: 'Being Prepared',   icon: 'restaurant-outline',  desc: 'Vendor is preparing your order' },
+  dispatched: { label: 'Out for~Delivery', icon: 'bicycle-outline',     desc: 'Your order is on the way' },
+  delivered:  { label: 'Delivered',        icon: 'home-outline',        desc: 'Order delivered successfully!' },
+  cancelled:  { label: 'Cancelled',        icon: 'close-circle-outline', desc: 'Order was cancelled' },
+  rejected:   { label: 'Rejected',         icon: 'close-circle-outline', desc: 'Order was rejected by vendor' },
 };
 
 export default function OrderDetailScreen({ navigation, route }) {
-  const { orderId }               = route.params;
-  const [order, setOrder]         = useState(null);
-  const [loading, setLoading]     = useState(true);
-  const [cancelling, setCancelling] = useState(false);
+  const { orderId }             = route.params;
+  const [order, setOrder]       = useState(null);
+  const [loading, setLoading]   = useState(true);
 
-  // Rating states
-  const [showRating, setShowRating]     = useState(false);
-  const [rating, setRating]             = useState(0);
-  const [comment, setComment]           = useState('');
-  const [submitting, setSubmitting]     = useState(false);
-  const [hasReview, setHasReview]       = useState(false);
+  const [showRating, setShowRating]         = useState(false);
+  const [rating, setRating]                 = useState(0);
+  const [comment, setComment]               = useState('');
+  const [submitting, setSubmitting]         = useState(false);
+  const [hasReview, setHasReview]           = useState(false);
   const [existingRating, setExistingRating] = useState(null);
 
   const fetchOrder = async () => {
     try {
       const res = await client.get(`/orders/${orderId}/`);
       setOrder(res.data);
-      // Check if already reviewed
-      if (res.data.status === 'delivered') {
-        checkReview(orderId);
-      }
+      if (res.data.status === 'delivered') checkReview(orderId);
     } catch (e) {
       console.log('Error:', e.message);
     } finally {
@@ -60,10 +56,7 @@ export default function OrderDetailScreen({ navigation, route }) {
   };
 
   const handleSubmitReview = async () => {
-    if (rating === 0) {
-      Alert.alert('Rate First', 'Please select a star rating');
-      return;
-    }
+    if (rating === 0) { Alert.alert('Rate First', 'Please select a star rating'); return; }
     setSubmitting(true);
     try {
       await client.post(`/orders/${order.id}/review/`, { rating, comment });
@@ -82,75 +75,14 @@ export default function OrderDetailScreen({ navigation, route }) {
 
   const handleTrackLocation = () => {
     const address = encodeURIComponent(order.delivery_address);
-    const url = `https://www.google.com/maps/search/?api=1&query=${address}`;
-    Linking.openURL(url).catch(() => Alert.alert('Error', 'Could not open maps'));
-  };
-
-  const handleCallVendor = () => {
-    const phone = order.vendor_phone || order.shop_phone;
-    if (!phone) { Alert.alert('Info', 'Vendor phone not available'); return; }
-    Linking.openURL(`tel:${phone}`);
-  };
-
-  const handleShare = async () => {
-    const itemsList = order.items?.map(
-      item => `  • ${item.product_name || item.name} x${item.quantity} = ₹${(item.quantity * parseFloat(item.price)).toFixed(0)}`
-    ).join('\n');
-    const date = new Date(order.created_at).toLocaleString('en-IN', {
-      day: 'numeric', month: 'short', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    });
-    const statusInfo = STATUS_INFO[order.status];
-    const message =
-`🛒 *Univerin Order Receipt*
-📦 Order ID: #${order.id?.slice(0, 8).toUpperCase()}
-📅 Date: ${date}
-${statusInfo?.icon} Status: ${statusInfo?.label}
-🏪 Shop: ${order.shop_name || order.vendor_name || 'Shop'}
-📍 Deliver to: ${order.delivery_address}
-
-*Items Ordered:*
-${itemsList}
-
-💰 Total: ₹${order.total_amount}
-💵 Payment: Cash on Delivery
-Powered by Univerin 🛍`;
-    try {
-      await Share.share({ message });
-    } catch (e) {
-      console.log('Share error:', e.message);
-    }
-  };
-
-  const handleCancelOrder = () => {
-    Alert.alert(
-      'Cancel Order',
-      'Are you sure you want to cancel this order?',
-      [
-        { text: 'No, Keep it', style: 'cancel' },
-        {
-          text: 'Yes, Cancel',
-          style: 'destructive',
-          onPress: async () => {
-            setCancelling(true);
-            try {
-              await client.post(`/orders/${order.id}/status/`, { status: 'cancelled' });
-              await fetchOrder();
-            } catch (e) {
-              Alert.alert('Error', 'Could not cancel order. Please try again.');
-            } finally {
-              setCancelling(false);
-            }
-          },
-        },
-      ]
-    );
+    Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${address}`)
+      .catch(() => Alert.alert('Error', 'Could not open maps'));
   };
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0d9488" />
+        <ActivityIndicator size="large" color="#1669ef" />
       </View>
     );
   }
@@ -163,15 +95,19 @@ Powered by Univerin 🛍`;
     );
   }
 
-  const currentStep = STATUS_STEPS.indexOf(order.status);
-  const isCancelled = ['cancelled', 'rejected'].includes(order.status);
-  const isDelivered = order.status === 'delivered';
-  const canCancel   = ['placed', 'accepted'].includes(order.status);
-  const statusInfo  = STATUS_INFO[order.status] || STATUS_INFO.placed;
-  const date        = new Date(order.created_at).toLocaleString('en-IN', {
+  const currentStep  = STATUS_STEPS.indexOf(order.status);
+  const isCancelled  = ['cancelled', 'rejected'].includes(order.status);
+  const isDelivered  = order.status === 'delivered';
+  const statusInfo   = STATUS_INFO[order.status] || STATUS_INFO.placed;
+  const date         = new Date(order.created_at).toLocaleString('en-IN', {
     day: 'numeric', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
+
+  // ── Bill calculation ──
+  const subtotal    = order.items?.reduce((sum, item) => sum + item.quantity * parseFloat(item.price), 0) || 0;
+  const deliveryFee = parseFloat(order.delivery_fee || 0);
+  const total       = parseFloat(order.total_amount || 0);
 
   return (
     <View style={styles.container}>
@@ -179,12 +115,10 @@ Powered by Univerin 🛍`;
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <Ionicons name="arrow-back" size={22} color="#111" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Order Details</Text>
-        <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
-          <Text style={styles.shareBtnIcon}>📤</Text>
-        </TouchableOpacity>
+        <View style={{ width: 36 }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -195,44 +129,76 @@ Powered by Univerin 🛍`;
           isCancelled && styles.statusBannerRed,
           isDelivered && styles.statusBannerGreen,
         ]}>
-          <Text style={styles.statusBannerIcon}>{statusInfo.icon}</Text>
+          <Ionicons name={statusInfo.icon} size={32} color="#fff" />
           <View>
             <Text style={styles.statusBannerTitle}>{statusInfo.label}</Text>
             <Text style={styles.statusBannerDesc}>{statusInfo.desc}</Text>
           </View>
         </View>
 
-        {/* Progress Tracker */}
+        {/* Horizontal Progress Stepper */}
         {!isCancelled && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Order Progress</Text>
-            {STATUS_STEPS.map((step, index) => {
-              const info   = STATUS_INFO[step];
-              const isDone = currentStep >= index;
-              const isLast = index === STATUS_STEPS.length - 1;
-              return (
-                <View key={step} style={styles.stepRow}>
-                  <View style={styles.stepLeft}>
-                    <View style={[styles.stepDot, isDone && styles.stepDotDone]}>
-                      <Text style={styles.stepDotText}>{isDone ? '✓' : ''}</Text>
+
+            <View style={styles.activeStepBanner}>
+              <View style={styles.activeStepIconBox}>
+                <Ionicons name={statusInfo.icon} size={22} color="#fff" />
+              </View>
+              <View style={styles.activeStepInfo}>
+                <Text style={styles.activeStepLabel}>{statusInfo.label}</Text>
+                <Text style={styles.activeStepDesc}>{statusInfo.desc}</Text>
+              </View>
+            </View>
+
+            <View style={styles.hStepper}>
+              {STATUS_STEPS.map((step, index) => {
+                const isDone    = currentStep >= index;
+                const isActive  = currentStep === index;
+                const isLast    = index === STATUS_STEPS.length - 1;
+                const info      = STATUS_INFO[step];
+                return (
+                  <View key={step} style={styles.hStepWrapper}>
+                    <View style={[
+                      styles.hStepDot,
+                      isDone && styles.hStepDotDone,
+                      isActive && styles.hStepDotActive,
+                    ]}>
+                      {isDone && !isActive
+                        ? <Ionicons name="checkmark" size={11} color="#fff" />
+                        : isActive
+                        ? <View style={styles.hStepDotPulse} />
+                        : null
+                      }
+                    </View>
+                    <View style={styles.hStepLabelBox}>
+                      {step === 'dispatched' ? (
+                        <>
+                          <Text style={[styles.hStepLabel, isDone && styles.hStepLabelDone, isActive && styles.hStepLabelActive]}>Out for</Text>
+                          <Text style={[styles.hStepLabel, isDone && styles.hStepLabelDone, isActive && styles.hStepLabelActive]}>Delivery</Text>
+                        </>
+                      ) : (
+                        info.label.split('~').map((word, i) => (
+                          <Text key={i} style={[styles.hStepLabel, isDone && styles.hStepLabelDone, isActive && styles.hStepLabelActive]}>
+                            {word}
+                          </Text>
+                        ))
+                      )}
                     </View>
                     {!isLast && (
-                      <View style={[styles.stepLine, isDone && index < currentStep && styles.stepLineDone]} />
+                      <View style={[
+                        styles.hStepLine,
+                        isDone && index < currentStep && styles.hStepLineDone,
+                      ]} />
                     )}
                   </View>
-                  <View style={styles.stepInfo}>
-                    <Text style={[styles.stepLabel, isDone && styles.stepLabelDone]}>
-                      {info.label}
-                    </Text>
-                    {isDone && <Text style={styles.stepDesc}>{info.desc}</Text>}
-                  </View>
-                </View>
-              );
-            })}
+                );
+              })}
+            </View>
           </View>
         )}
 
-        {/* Rating Card — show for delivered orders */}
+        {/* Rating Card */}
         {isDelivered && (
           <View style={styles.ratingCard}>
             {hasReview ? (
@@ -242,9 +208,7 @@ Powered by Univerin 🛍`;
                   <Text style={styles.ratingDoneTitle}>You rated this order</Text>
                   <View style={styles.starsRow}>
                     {[1,2,3,4,5].map(s => (
-                      <Text key={s} style={[styles.starIcon, { color: s <= existingRating ? '#F59E0B' : '#E5E7EB' }]}>
-                        ★
-                      </Text>
+                      <Text key={s} style={[styles.starIcon, { color: s <= existingRating ? '#F59E0B' : '#E5E7EB' }]}>★</Text>
                     ))}
                   </View>
                 </View>
@@ -256,10 +220,7 @@ Powered by Univerin 🛍`;
                   <Text style={styles.ratingPromptTitle}>How was your order?</Text>
                   <Text style={styles.ratingPromptDesc}>Rate your experience</Text>
                 </View>
-                <TouchableOpacity
-                  style={styles.rateBtn}
-                  onPress={() => setShowRating(true)}
-                >
+                <TouchableOpacity style={styles.rateBtn} onPress={() => setShowRating(true)}>
                   <Text style={styles.rateBtnText}>Rate Now</Text>
                 </TouchableOpacity>
               </View>
@@ -271,7 +232,7 @@ Powered by Univerin 🛍`;
         <View style={styles.card}>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Order ID</Text>
-            <Text style={styles.infoValue}>#{order.id?.slice(0, 8).toUpperCase()}</Text>
+            <Text style={styles.infoValue}>#{order.order_number || order.id?.slice(0, 8).toUpperCase()}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.infoRow}>
@@ -285,31 +246,24 @@ Powered by Univerin 🛍`;
           </View>
         </View>
 
-        {/* Delivery Address + Actions */}
+        {/* Delivery Details */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Delivery Details</Text>
           <Text style={styles.fieldLabel}>Deliver to</Text>
           <Text style={styles.fieldValue}>{order.delivery_address}</Text>
-          <View style={styles.actionBtns}>
-            <TouchableOpacity style={styles.mapsBtn} onPress={handleTrackLocation}>
-              <Text style={styles.mapsBtnText}>📍 View on Maps</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.callBtn} onPress={handleCallVendor}>
-              <Text style={styles.callBtnText}>📞 Call Shop</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity style={styles.mapsBtn} onPress={handleTrackLocation}>
+            <Ionicons name="location-outline" size={16} color="#1669ef" />
+            <Text style={styles.mapsBtnText}>View on Maps</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Order Items */}
+        {/* Order Items + Bill */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>
             Items Ordered ({order.items?.length || 0})
           </Text>
           {order.items?.map((item, i) => (
-            <View
-              key={i}
-              style={[styles.itemRow, i < order.items.length - 1 && styles.itemRowBorder]}
-            >
+            <View key={i} style={[styles.itemRow, i < order.items.length - 1 && styles.itemRowBorder]}>
               <View style={styles.itemQtyBox}>
                 <Text style={styles.itemQtyText}>{item.quantity}</Text>
               </View>
@@ -323,86 +277,74 @@ Powered by Univerin 🛍`;
             </View>
           ))}
           <View style={styles.divider} />
+
           <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Item Total</Text>
-            <Text style={styles.billValue}>
-              ₹{(parseFloat(order.total_amount) - parseFloat(order.platform_fee || 5)).toFixed(0)}
-            </Text>
+            <Text style={styles.billLabel}>Items Total (incl. GST)</Text>
+            <Text style={styles.billValue}>₹{subtotal.toFixed(0)}</Text>
           </View>
+
           <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Platform Fee</Text>
-            <Text style={styles.billValue}>₹{order.platform_fee || 5}</Text>
+            <Text style={styles.billLabel}>Delivery Fee</Text>
+            {deliveryFee === 0 ? (
+              <Text style={[styles.billValue, { color: '#16A34A', fontWeight: '600' }]}>FREE ✅</Text>
+            ) : (
+              <Text style={styles.billValue}>₹{deliveryFee.toFixed(0)}</Text>
+            )}
           </View>
+
           <View style={[styles.billRow, styles.billTotal]}>
             <Text style={styles.billTotalLabel}>Total Paid</Text>
-            <Text style={styles.billTotalValue}>₹{order.total_amount}</Text>
+            <Text style={styles.billTotalValue}>₹{total.toFixed(0)}</Text>
           </View>
         </View>
 
-        {/* Share Receipt */}
-        <TouchableOpacity style={styles.shareReceiptBtn} onPress={handleShare}>
-          <Text style={styles.shareReceiptText}>📤  Share Order Receipt</Text>
-        </TouchableOpacity>
-
-        {/* Cancel Order */}
-        {canCancel && (
-          <TouchableOpacity
-            style={styles.cancelBtn}
-            onPress={handleCancelOrder}
-            disabled={cancelling}
-          >
-            <Text style={styles.cancelBtnText}>
-              {cancelling ? 'Cancelling...' : '✕  Cancel Order'}
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        <View style={{ height: 40 }} />
+        <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* ── RATING MODAL ── */}
-      <Modal
-        visible={showRating}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowRating(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowRating(false)}
-        >
-          <TouchableOpacity activeOpacity={1} style={styles.modalCard}>
+      {/* Bottom Tab */}
+      <View style={styles.bottomTab}>
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Home')}>
+          <Ionicons name="home-outline" size={22} color="#9CA3AF" />
+          <Text style={styles.tabLabel}>Home</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Cart')}>
+          <Ionicons name="cart-outline" size={22} color="#9CA3AF" />
+          <Text style={styles.tabLabel}>Cart</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabItem}>
+          <Ionicons name="receipt" size={22} color="#1669ef" />
+          <Text style={styles.tabLabelActive}>Orders</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Profile')}>
+          <Ionicons name="person-outline" size={22} color="#9CA3AF" />
+          <Text style={styles.tabLabel}>Profile</Text>
+        </TouchableOpacity>
+      </View>
 
+      {/* Rating Modal */}
+      <Modal visible={showRating} transparent animationType="slide" onRequestClose={() => setShowRating(false)}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowRating(false)}>
+          <TouchableOpacity activeOpacity={1} style={styles.modalCard}>
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>Rate Your Order 🌟</Text>
             <Text style={styles.modalShop}>{order.vendor_name || 'Shop'}</Text>
 
-            {/* Stars */}
             <View style={styles.starsRowLarge}>
               {[1,2,3,4,5].map(s => (
                 <TouchableOpacity key={s} onPress={() => setRating(s)}>
-                  <Text style={[
-                    styles.starLarge,
-                    { color: s <= rating ? '#F59E0B' : '#E5E7EB' }
-                  ]}>
-                    ★
-                  </Text>
+                  <Text style={[styles.starLarge, { color: s <= rating ? '#F59E0B' : '#E5E7EB' }]}>★</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            {/* Rating label */}
             <Text style={styles.ratingLabel}>
               {rating === 0 ? 'Tap to rate' :
                rating === 1 ? '😞 Poor' :
                rating === 2 ? '😕 Fair' :
                rating === 3 ? '😊 Good' :
-               rating === 4 ? '😃 Very Good' :
-               '🤩 Excellent!'}
+               rating === 4 ? '😃 Very Good' : '🤩 Excellent!'}
             </Text>
 
-            {/* Comment */}
             <TextInput
               style={styles.commentInput}
               placeholder="Share your experience (optional)..."
@@ -413,7 +355,6 @@ Powered by Univerin 🛍`;
               numberOfLines={3}
             />
 
-            {/* Submit */}
             <TouchableOpacity
               style={[styles.submitRatingBtn, rating === 0 && styles.submitRatingBtnDisabled]}
               onPress={handleSubmitReview}
@@ -425,13 +366,9 @@ Powered by Univerin 🛍`;
               }
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.skipBtn}
-              onPress={() => setShowRating(false)}
-            >
+            <TouchableOpacity style={styles.skipBtn} onPress={() => setShowRating(false)}>
               <Text style={styles.skipBtnText}>Skip for now</Text>
             </TouchableOpacity>
-
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
@@ -450,19 +387,15 @@ const styles = StyleSheet.create({
     paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12,
     backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
-  backBtn:      { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
-  backText:     { fontSize: 24, color: '#111' },
-  headerTitle:  { fontSize: 17, fontWeight: 'bold', color: '#111' },
-  shareBtn:     { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
-  shareBtnIcon: { fontSize: 22 },
+  backBtn:     { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
 
   statusBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: '#0d9488', margin: 16, borderRadius: 16, padding: 16,
+    backgroundColor: '#1669ef', margin: 16, borderRadius: 16, padding: 16,
   },
   statusBannerRed:   { backgroundColor: '#EF4444' },
   statusBannerGreen: { backgroundColor: '#16A34A' },
-  statusBannerIcon:  { fontSize: 32 },
   statusBannerTitle: { fontSize: 16, fontWeight: 'bold', color: '#fff', marginBottom: 2 },
   statusBannerDesc:  { fontSize: 12, color: 'rgba(255,255,255,0.85)' },
 
@@ -473,38 +406,62 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 15, fontWeight: 'bold', color: '#111', marginBottom: 14 },
   divider:   { height: 1, backgroundColor: '#F5F5F5', marginVertical: 4 },
 
-  stepRow:     { flexDirection: 'row', marginBottom: 0 },
-  stepLeft:    { alignItems: 'center', width: 28, marginRight: 12 },
-  stepDot: {
-    width: 22, height: 22, borderRadius: 11,
-    backgroundColor: '#E5E7EB', justifyContent: 'center', alignItems: 'center',
+  activeStepBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: '#eff6ff', borderRadius: 12, padding: 12,
+    marginBottom: 20, borderWidth: 1, borderColor: '#bfdbfe',
   },
-  stepDotDone:   { backgroundColor: '#0d9488' },
-  stepDotText:   { fontSize: 11, color: '#fff', fontWeight: 'bold' },
-  stepLine:      { width: 2, flex: 1, minHeight: 24, backgroundColor: '#E5E7EB', marginVertical: 2 },
-  stepLineDone:  { backgroundColor: '#0d9488' },
-  stepInfo:      { flex: 1, paddingBottom: 16 },
-  stepLabel:     { fontSize: 13, color: '#9CA3AF', fontWeight: '500', marginTop: 2 },
-  stepLabelDone: { color: '#111', fontWeight: '600' },
-  stepDesc:      { fontSize: 11, color: '#888', marginTop: 2 },
+  activeStepIconBox: {
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: '#1669ef', justifyContent: 'center', alignItems: 'center',
+  },
+  activeStepInfo:  { flex: 1 },
+  activeStepLabel: { fontSize: 14, fontWeight: '800', color: '#1669ef', marginBottom: 2 },
+  activeStepDesc:  { fontSize: 12, color: '#555' },
 
-  // Rating Card
+  hStepper: {
+    flexDirection: 'row', alignItems: 'flex-start',
+    justifyContent: 'space-between', paddingHorizontal: 4,
+  },
+  hStepWrapper: { flex: 1, alignItems: 'center', position: 'relative' },
+  hStepDot: {
+    width: 22, height: 22, borderRadius: 11,
+    backgroundColor: '#E5E7EB', justifyContent: 'center',
+    alignItems: 'center', marginBottom: 8, zIndex: 1,
+    borderWidth: 2, borderColor: '#E5E7EB',
+  },
+  hStepDotDone:   { backgroundColor: '#1669ef', borderColor: '#1669ef' },
+  hStepDotActive: {
+    backgroundColor: '#fff', borderColor: '#1669ef',
+    shadowColor: '#1669ef', shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4, shadowRadius: 8, elevation: 4,
+  },
+  hStepDotPulse: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1669ef' },
+  hStepLine: {
+    position: 'absolute', top: 10, left: '50%', right: '-50%',
+    height: 2, backgroundColor: '#E5E7EB', zIndex: 0,
+  },
+  hStepLineDone:    { backgroundColor: '#1669ef' },
+  hStepLabelBox:    { alignItems: 'center', width: 54 },
+  hStepLabel:       { fontSize: 10, color: '#9CA3AF', textAlign: 'center', fontWeight: '500', lineHeight: 14 },
+  hStepLabelDone:   { color: '#555', fontWeight: '600' },
+  hStepLabelActive: { color: '#1669ef', fontWeight: '800' },
+
   ratingCard: {
     backgroundColor: '#fff', borderRadius: 16,
     margin: 16, marginBottom: 0, padding: 16,
     borderWidth: 1.5, borderColor: '#FEF3C7',
   },
-  ratingPrompt: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  ratingPrompt:      { flexDirection: 'row', alignItems: 'center', gap: 12 },
   ratingPromptEmoji: { fontSize: 32 },
-  ratingPromptInfo: { flex: 1 },
+  ratingPromptInfo:  { flex: 1 },
   ratingPromptTitle: { fontSize: 15, fontWeight: '700', color: '#111' },
   ratingPromptDesc:  { fontSize: 12, color: '#888', marginTop: 2 },
   rateBtn: {
     backgroundColor: '#F59E0B', borderRadius: 10,
     paddingHorizontal: 14, paddingVertical: 8,
   },
-  rateBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-
+  rateBtnText:     { color: '#fff', fontSize: 13, fontWeight: '700' },
   ratingDone:      { flexDirection: 'row', alignItems: 'center', gap: 12 },
   ratingDoneEmoji: { fontSize: 28 },
   ratingDoneTitle: { fontSize: 14, fontWeight: '600', color: '#111', marginBottom: 4 },
@@ -521,28 +478,20 @@ const styles = StyleSheet.create({
   fieldLabel: { fontSize: 12, color: '#888', marginBottom: 4 },
   fieldValue: { fontSize: 14, color: '#111', fontWeight: '500', lineHeight: 20, marginBottom: 12 },
 
-  actionBtns: { flexDirection: 'row', gap: 10, marginTop: 4 },
   mapsBtn: {
-    flex: 1, backgroundColor: '#f0fdfa',
-    borderRadius: 10, padding: 12, alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: '#eff6ff', borderRadius: 10, padding: 12,
+    justifyContent: 'center',
   },
-  mapsBtnText: { fontSize: 13, color: '#0d9488', fontWeight: '600' },
-  callBtn: {
-    flex: 1, backgroundColor: '#F0FDF4',
-    borderRadius: 10, padding: 12, alignItems: 'center',
-  },
-  callBtnText: { fontSize: 13, color: '#16A34A', fontWeight: '600' },
+  mapsBtnText: { fontSize: 13, color: '#1669ef', fontWeight: '600' },
 
-  itemRow: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingVertical: 12, gap: 12,
-  },
+  itemRow:       { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 12 },
   itemRowBorder: { borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
   itemQtyBox: {
     width: 30, height: 30, borderRadius: 8,
-    backgroundColor: '#f0fdfa', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center',
   },
-  itemQtyText: { fontSize: 13, fontWeight: 'bold', color: '#0d9488' },
+  itemQtyText: { fontSize: 13, fontWeight: 'bold', color: '#1669ef' },
   itemInfo:    { flex: 1 },
   itemName:    { fontSize: 14, fontWeight: '600', color: '#111', marginBottom: 2 },
   itemUnit:    { fontSize: 12, color: '#888' },
@@ -553,27 +502,9 @@ const styles = StyleSheet.create({
   billValue:      { fontSize: 13, color: '#111' },
   billTotal:      { borderTopWidth: 1, borderTopColor: '#F5F5F5', marginTop: 4, paddingTop: 10 },
   billTotalLabel: { fontSize: 14, fontWeight: 'bold', color: '#111' },
-  billTotalValue: { fontSize: 15, fontWeight: 'bold', color: '#0d9488' },
+  billTotalValue: { fontSize: 15, fontWeight: 'bold', color: '#1669ef' },
 
-  shareReceiptBtn: {
-    backgroundColor: '#fff', marginHorizontal: 16, marginTop: 16,
-    borderRadius: 14, padding: 16, alignItems: 'center',
-    borderWidth: 1.5, borderColor: '#E5E7EB',
-  },
-  shareReceiptText: { fontSize: 15, color: '#111', fontWeight: '600' },
-
-  cancelBtn: {
-    backgroundColor: '#FEF2F2', marginHorizontal: 16, marginTop: 12,
-    borderRadius: 14, padding: 16, alignItems: 'center',
-    borderWidth: 1.5, borderColor: '#EF4444',
-  },
-  cancelBtnText: { fontSize: 15, color: '#EF4444', fontWeight: 'bold' },
-
-  // Rating Modal
-  modalOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalCard: {
     backgroundColor: '#fff', borderTopLeftRadius: 28,
     borderTopRightRadius: 28, padding: 24, paddingBottom: 40,
@@ -595,14 +526,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB', minHeight: 80,
     textAlignVertical: 'top', marginBottom: 16,
   },
-
-  submitRatingBtn: {
-    backgroundColor: '#F59E0B', padding: 16, borderRadius: 14,
-    alignItems: 'center', marginBottom: 10,
-  },
+  submitRatingBtn:         { backgroundColor: '#F59E0B', padding: 16, borderRadius: 14, alignItems: 'center', marginBottom: 10 },
   submitRatingBtnDisabled: { backgroundColor: '#FDE68A' },
   submitRatingBtnText:     { color: '#fff', fontSize: 16, fontWeight: '700' },
-
   skipBtn:     { alignItems: 'center', padding: 12 },
   skipBtnText: { fontSize: 14, color: '#888' },
+
+  bottomTab: {
+    flexDirection: 'row', backgroundColor: '#fff',
+    borderTopWidth: 1, borderTopColor: '#F0F0F0',
+    paddingBottom: 24, paddingTop: 10,
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+  },
+  tabItem:        { flex: 1, alignItems: 'center', gap: 3 },
+  tabLabel:       { fontSize: 11, color: '#9CA3AF' },
+  tabLabelActive: { fontSize: 11, color: '#1669ef', fontWeight: 'bold' },
 });

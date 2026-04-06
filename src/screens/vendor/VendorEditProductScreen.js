@@ -16,6 +16,7 @@ export default function VendorEditProductScreen({ navigation, route }) {
   const [isAvailable, setAvail] = useState(product?.is_available ?? true);
   const [image, setImage]       = useState(null);
   const [loading, setLoading]   = useState(false);
+  const [gst, setGst]               = useState(product?.gst_percentage?.toString() || '0');
 
   const handlePickImage = async () => {
     Alert.alert(
@@ -60,6 +61,7 @@ export default function VendorEditProductScreen({ navigation, route }) {
         formData.append('price',        parseFloat(price));
         formData.append('description',  description.trim());
         formData.append('is_available', isAvailable.toString());
+        formData.append('gst_percentage', parseFloat(gst) || 0);
         formData.append('image', {
           uri:  image.uri,
           name: 'product_image.jpg',
@@ -72,6 +74,7 @@ export default function VendorEditProductScreen({ navigation, route }) {
         await client.patch(`/vendors/products/${product.id}/`, {
           name: name.trim(), price: parseFloat(price),
           description: description.trim(), is_available: isAvailable,
+        gst_percentage: parseFloat(gst) || 0,
         }, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -274,7 +277,7 @@ const styles = StyleSheet.create({
     width: 48, height: 28, borderRadius: 14,
     backgroundColor: '#E5E7EB', padding: 3, justifyContent: 'center',
   },
-  toggleBtnActive:  { backgroundColor: '#0d9488' },
+  toggleBtnActive:  { backgroundColor: '#1669ef' },
   toggleThumb: {
     width: 22, height: 22, borderRadius: 11, backgroundColor: '#fff',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
@@ -286,7 +289,12 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: '#F0F0F0',
   },
   saveBtn: {
-    backgroundColor: '#0d9488', borderRadius: 14, padding: 16, alignItems: 'center',
+    backgroundColor: '#1669ef', borderRadius: 14, padding: 16, alignItems: 'center',
   },
   saveBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  gstRow: { flexDirection: 'row', gap: 8, marginBottom: 12, flexWrap: 'wrap' },
+  gstChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#E5E7EB' },
+  gstChipActive: { backgroundColor: '#eff6ff', borderColor: '#1669ef' },
+  gstChipText: { fontSize: 13, color: '#555', fontWeight: '600' },
+  gstChipTextActive: { color: '#1669ef', fontWeight: '700' },
 });

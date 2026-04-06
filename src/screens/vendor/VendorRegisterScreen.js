@@ -6,12 +6,14 @@ import {
 import * as Location from 'expo-location';
 import client from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
+import { Image } from 'react-native';
 
 const CATEGORIES = [
-  { id: 'vegetables',  label: 'Vegetables',  emoji: '🥦' },
-  { id: 'bakery',      label: 'Bakery',      emoji: '🍞' },
   { id: 'restaurant',  label: 'Restaurant',  emoji: '🍽' },
   { id: 'supermarket', label: 'Supermarket', emoji: '🛒' },
+  { id: 'bakery',      label: 'Bakery',      emoji: '🍞' },
+  { id: 'vegetables',  label: 'Vegetables',  emoji: '🥦' },
+  { id: 'fruits',      label: 'Fruits',      emoji: '🍎' },
 ];
 
 const WEEKLY_OFF = ['None','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
@@ -36,7 +38,7 @@ export default function VendorRegisterScreen({ navigation }) {
   const [showPassword,  setShowPassword]  = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
 
-  const [category,        setCategory]        = useState('vegetables');
+  const [category,        setCategory]        = useState('restaurant');
   const [deliveryType,    setDeliveryType]    = useState('delivery');
   const [minOrder,        setMinOrder]        = useState('100');
   const [deliveryTime,    setDeliveryTime]    = useState('30');
@@ -52,8 +54,9 @@ export default function VendorRegisterScreen({ navigation }) {
   const [weeklyOff, setWeeklyOff] = useState('None');
 
   const platformFee = () => {
-    if (category === 'vegetables') return 'Rs.5 per order';
-    if (category === 'restaurant') return 'Rs.10 per order';
+    if (category === 'restaurant')  return 'Rs.10 per order';
+    if (category === 'vegetables')  return 'Rs.5 per order';
+    if (category === 'fruits')      return 'Rs.5 per order';
     return 'Rs.7 per order';
   };
 
@@ -173,7 +176,7 @@ export default function VendorRegisterScreen({ navigation }) {
           key={i}
           style={[
             styles.progressDot,
-            { backgroundColor: i <= step ? '#0d9488' : '#E0E0E0', flex: 1 },
+            { backgroundColor: i <= step ? '#1669ef' : '#E0E0E0', flex: 1 },
           ]}
         />
       ))}
@@ -219,7 +222,7 @@ export default function VendorRegisterScreen({ navigation }) {
 
       <TouchableOpacity style={styles.gpsBtn} onPress={handleDetectLocation} disabled={gpsLoading}>
         {gpsLoading
-          ? <ActivityIndicator color="#0d9488" size="small" />
+          ? <ActivityIndicator color="#1669ef" size="small" />
           : <Text style={styles.gpsBtnText}>📍 Auto-detect my location</Text>
         }
       </TouchableOpacity>
@@ -477,15 +480,11 @@ export default function VendorRegisterScreen({ navigation }) {
         <TouchableOpacity onPress={goBack} style={styles.backBtn}>
           <Text style={styles.backText}>← Back</Text>
         </TouchableOpacity>
-        <View style={styles.logoRow}>
-          <View style={styles.logoIconBox}>
-            <Text style={styles.logoIconText}>U</Text>
-          </View>
-          <Text style={styles.logoText}>
-            <Text style={styles.logoTeal}>Uni</Text>
-            <Text style={styles.logoDark}>verin</Text>
-          </Text>
-        </View>
+        <Image
+            source={require('../../../assets/app-logo-full.png')}
+            style={styles.logoIconBox}
+            resizeMode="contain"
+          />
         <View style={{ width: 60 }} />
       </View>
 
@@ -526,23 +525,15 @@ export default function VendorRegisterScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f0fdfa' },
+  container: { flex: 1, backgroundColor: '#eff6ff' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: '#ccfbf1', backgroundColor: '#f0fdfa',
+    borderBottomWidth: 1, borderBottomColor: '#dbeafe', backgroundColor: '#eff6ff',
   },
   backBtn:  { padding: 4, width: 60 },
-  backText: { color: '#0d9488', fontSize: 15, fontWeight: '600' },
-  logoRow:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  logoIconBox: {
-    width: 32, height: 32, borderRadius: 8,
-    backgroundColor: '#0d9488', justifyContent: 'center', alignItems: 'center',
-  },
-  logoIconText: { fontSize: 16, fontWeight: '900', color: 'white' },
-  logoText:     { fontSize: 20, fontWeight: '700' },
-  logoTeal:     { color: '#0d9488' },
-  logoDark:     { color: '#0f172a' },
+  backText: { color: '#1669ef', fontSize: 15, fontWeight: '600' },
+  logoIconBox: { width: 160, height: 40 },
   tabRow: {
     flexDirection: 'row', margin: 16, borderRadius: 14,
     backgroundColor: '#E5E7EB', padding: 4,
@@ -552,7 +543,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1, shadowRadius: 4, elevation: 2,
   },
-  tabActiveText:   { fontWeight: '700', color: '#0d9488', fontSize: 14 },
+  tabActiveText:   { fontWeight: '700', color: '#1669ef', fontSize: 14 },
   tabInactive:     { flex: 1, padding: 10, alignItems: 'center' },
   tabInactiveText: { color: '#888', fontSize: 14, fontWeight: '500' },
   stepContent:  { flex: 1, paddingHorizontal: 16 },
@@ -565,7 +556,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12,
     padding: 13, fontSize: 15, marginBottom: 12, backgroundColor: '#F9FAFB', color: '#111',
   },
-  inputFilled: { borderColor: '#0d9488', backgroundColor: '#f0fdfa' },
+  inputFilled: { borderColor: '#1669ef', backgroundColor: '#eff6ff' },
   row:         { flexDirection: 'row', gap: 12 },
   halfField:   { flex: 1 },
   passwordWrapper: {
@@ -575,13 +566,13 @@ const styles = StyleSheet.create({
   },
   passwordInput: { flex: 1, padding: 13, fontSize: 15, color: '#111' },
   eyeButton:     { paddingHorizontal: 14, paddingVertical: 13 },
-  eyeText:       { fontSize: 13, color: '#0d9488', fontWeight: '600' },
+  eyeText:       { fontSize: 13, color: '#1669ef', fontWeight: '600' },
   gpsBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#f0fdfa', borderRadius: 12, borderWidth: 1.5,
-    borderColor: '#0d9488', padding: 12, marginBottom: 10,
+    backgroundColor: '#eff6ff', borderRadius: 12, borderWidth: 1.5,
+    borderColor: '#1669ef', padding: 12, marginBottom: 10,
   },
-  gpsBtnText:       { fontSize: 14, color: '#0d9488', fontWeight: '600' },
+  gpsBtnText:       { fontSize: 14, color: '#1669ef', fontWeight: '600' },
   townDetected: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     backgroundColor: '#dcfce7', borderRadius: 10, padding: 10, marginBottom: 12,
@@ -599,15 +590,15 @@ const styles = StyleSheet.create({
     width: '47%', borderWidth: 1.5, borderColor: '#E5E7EB',
     borderRadius: 14, padding: 14, alignItems: 'center', backgroundColor: '#F9FAFB',
   },
-  categoryCardActive:  { borderColor: '#0d9488', backgroundColor: '#f0fdfa' },
+  categoryCardActive:  { borderColor: '#1669ef', backgroundColor: '#eff6ff' },
   categoryEmoji:       { fontSize: 28, marginBottom: 6 },
   categoryLabel:       { fontSize: 13, color: '#555', fontWeight: '600' },
-  categoryLabelActive: { color: '#0d9488' },
+  categoryLabelActive: { color: '#1669ef' },
   feeInfo: {
-    backgroundColor: '#f0fdfa', borderRadius: 10, padding: 10,
-    marginBottom: 12, borderWidth: 1, borderColor: '#99f6e4',
+    backgroundColor: '#eff6ff', borderRadius: 10, padding: 10,
+    marginBottom: 12, borderWidth: 1, borderColor: '#bfdbfe',
   },
-  feeInfoText:  { fontSize: 13, color: '#0d9488' },
+  feeInfoText:  { fontSize: 13, color: '#1669ef' },
   optionalNote: {
     backgroundColor: '#fefce8', borderRadius: 10, padding: 10,
     marginTop: 4, borderWidth: 1, borderColor: '#fde68a',
@@ -618,7 +609,7 @@ const styles = StyleSheet.create({
     flex: 1, borderWidth: 1.5, borderColor: '#E5E7EB',
     borderRadius: 10, padding: 10, alignItems: 'center', backgroundColor: '#F9FAFB',
   },
-  toggleBtnActive:     { borderColor: '#0d9488', backgroundColor: '#0d9488' },
+  toggleBtnActive:     { borderColor: '#1669ef', backgroundColor: '#1669ef' },
   toggleBtnText:       { fontSize: 12, color: '#555', fontWeight: '600' },
   toggleBtnTextActive: { color: '#fff' },
 
@@ -629,14 +620,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 9, borderRadius: 100,
     borderWidth: 1.5, borderColor: '#E5E7EB', backgroundColor: '#F9FAFB',
   },
-  radiusChipActive:     { borderColor: '#0d9488', backgroundColor: '#0d9488' },
+  radiusChipActive:     { borderColor: '#1669ef', backgroundColor: '#1669ef' },
   radiusChipText:       { fontSize: 13, fontWeight: '700', color: '#555' },
   radiusChipTextActive: { color: '#fff' },
   radiusInfo: {
-    backgroundColor: '#f0fdfa', borderRadius: 10, padding: 12,
-    marginBottom: 12, borderWidth: 1, borderColor: '#99f6e4',
+    backgroundColor: '#eff6ff', borderRadius: 10, padding: 12,
+    marginBottom: 12, borderWidth: 1, borderColor: '#bfdbfe',
   },
-  radiusInfoText: { fontSize: 13, color: '#0d9488', lineHeight: 18 },
+  radiusInfoText: { fontSize: 13, color: '#1669ef', lineHeight: 18 },
   // ────────────────────────────────────────────────────────────────────────────
 
   weeklyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
@@ -644,7 +635,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 20,
     paddingHorizontal: 14, paddingVertical: 7, backgroundColor: '#F9FAFB',
   },
-  dayBtnActive:     { backgroundColor: '#0d9488', borderColor: '#0d9488' },
+  dayBtnActive:     { backgroundColor: '#1669ef', borderColor: '#1669ef' },
   dayBtnText:       { fontSize: 13, color: '#555' },
   dayBtnTextActive: { color: '#fff', fontWeight: '600' },
   reviewCard: {
@@ -658,10 +649,10 @@ const styles = StyleSheet.create({
   approvalText:  { fontSize: 13, color: '#16A34A', lineHeight: 18, fontWeight: '500' },
   footer: {
     padding: 16, paddingBottom: 30,
-    borderTopWidth: 1, borderTopColor: '#ccfbf1', backgroundColor: '#f0fdfa',
+    borderTopWidth: 1, borderTopColor: '#dbeafe', backgroundColor: '#eff6ff',
   },
-  nextBtn:           { backgroundColor: '#0d9488', padding: 16, borderRadius: 14, alignItems: 'center' },
+  nextBtn:           { backgroundColor: '#1669ef', padding: 16, borderRadius: 14, alignItems: 'center' },
   submitBtn:         { backgroundColor: '#16A34A', padding: 16, borderRadius: 14, alignItems: 'center' },
-  submitBtnDisabled: { backgroundColor: '#99f6e4' },
+  submitBtnDisabled: { backgroundColor: '#bfdbfe' },
   nextBtnText:       { color: '#fff', fontSize: 16, fontWeight: '700' },
 });

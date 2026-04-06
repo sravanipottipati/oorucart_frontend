@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, RefreshControl, Alert,
@@ -7,7 +8,7 @@ import client from '../../api/client';
 import { useCart } from '../../context/CartContext';
 
 const STATUS_COLORS = {
-  placed:     { bg: '#f0fdfa', text: '#0d9488' },
+  placed:     { bg: '#eff6ff', text: '#1669ef' },
   accepted:   { bg: '#F0FDF4', text: '#16A34A' },
   preparing:  { bg: '#FFFBEB', text: '#D97706' },
   dispatched: { bg: '#F0FDF4', text: '#16A34A' },
@@ -101,7 +102,7 @@ export default function MyOrdersScreen({ navigation }) {
     // Fetch shop details and add items to cart
     const shopData = {
       id:        order.vendor_id,
-      shop_name: order.vendor_name || 'Shop',
+      shop_name: order.shop_name || order.vendor_name || 'Shop',
       town:      order.vendor_town || '',
       platform_fee: order.platform_fee || 5,
     };
@@ -115,13 +116,13 @@ export default function MyOrdersScreen({ navigation }) {
     });
     Alert.alert(
       'Cart Ready! 🛒',
-      `${order.items?.length} items added from ${order.vendor_name}`,
+      `${order.items?.length} items added from ${order.shop_name || order.vendor_name}`,
       [
         {
           text: 'View Cart',
           onPress: () => navigation.navigate('ShopDetail', {
             vendorId: order.vendor_id,
-            shopName: order.vendor_name,
+            shopName: order.shop_name || order.vendor_name,
           }),
         },
         { text: 'OK', style: 'cancel' },
@@ -150,7 +151,7 @@ export default function MyOrdersScreen({ navigation }) {
             <Text style={styles.shopIconText}>🏪</Text>
           </View>
           <View style={styles.orderInfo}>
-            <Text style={styles.shopName}>{order.vendor_name || 'Shop'}</Text>
+            <Text style={styles.shopName}>{order.shop_name || order.vendor_name || 'Shop'}</Text>
             <Text style={styles.orderDate}>{date}</Text>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }]}>
@@ -241,7 +242,7 @@ export default function MyOrdersScreen({ navigation }) {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#0d9488" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#1669ef" style={{ marginTop: 40 }} />
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -265,7 +266,7 @@ export default function MyOrdersScreen({ navigation }) {
               {tab === 'active' && (
                 <TouchableOpacity
                   style={styles.shopNowBtn}
-                  onPress={() => navigation.navigate('Home')}
+                  onPress={() => navigation.navigate('Cart')}
                 >
                   <Text style={styles.shopNowText}>Browse Shops</Text>
                 </TouchableOpacity>
@@ -283,19 +284,19 @@ export default function MyOrdersScreen({ navigation }) {
       {/* Bottom Tab */}
       <View style={styles.bottomTab}>
         <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Home')}>
-          <Text style={styles.tabIcon}>🏠</Text>
+          <Ionicons name="home-outline" size={25} color="#9CA3AF" />
           <Text style={styles.tabLabel}>Home</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem}>
-          <Text style={[styles.tabIcon, { color: '#0d9488' }]}>📋</Text>
+          <Ionicons name="receipt" size={25} color="#1669ef" />
           <Text style={styles.tabLabelActive}>Orders</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem}>
-          <Text style={styles.tabIcon}>🛒</Text>
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Home')}>
+          <Ionicons name="cart-outline" size={25} color="#9CA3AF" />
           <Text style={styles.tabLabel}>Cart</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Profile')}>
-          <Text style={styles.tabIcon}>👤</Text>
+          <Ionicons name="person-outline" size={25} color="#9CA3AF" />
           <Text style={styles.tabLabel}>Profile</Text>
         </TouchableOpacity>
       </View>
@@ -324,9 +325,9 @@ const styles = StyleSheet.create({
     flex: 1, paddingVertical: 14, alignItems: 'center',
     borderBottomWidth: 2, borderBottomColor: 'transparent',
   },
-  tabActive:     { borderBottomColor: '#0d9488' },
+  tabActive:     { borderBottomColor: '#1669ef' },
   tabText:       { fontSize: 14, color: '#888', fontWeight: '500' },
-  tabTextActive: { color: '#0d9488', fontWeight: 'bold' },
+  tabTextActive: { color: '#1669ef', fontWeight: 'bold' },
 
   orderCard: {
     backgroundColor: '#fff', borderRadius: 16,
@@ -337,7 +338,7 @@ const styles = StyleSheet.create({
   orderTop:    { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   shopIconBox: {
     width: 44, height: 44, borderRadius: 22,
-    backgroundColor: '#f0fdfa', justifyContent: 'center',
+    backgroundColor: '#eff6ff', justifyContent: 'center',
     alignItems: 'center', marginRight: 12,
   },
   shopIconText: { fontSize: 22 },
@@ -368,11 +369,11 @@ const styles = StyleSheet.create({
 
   actionBtns:  { flexDirection: 'row', gap: 8, alignItems: 'center' },
   reorderBtn: {
-    backgroundColor: '#f0fdfa', borderRadius: 10,
+    backgroundColor: '#eff6ff', borderRadius: 10,
     paddingHorizontal: 12, paddingVertical: 8,
-    borderWidth: 1.5, borderColor: '#0d9488',
+    borderWidth: 1.5, borderColor: '#1669ef',
   },
-  reorderBtnText: { fontSize: 13, color: '#0d9488', fontWeight: '700' },
+  reorderBtnText: { fontSize: 13, color: '#1669ef', fontWeight: '700' },
   detailBtn: {
     backgroundColor: '#F9FAFB', borderRadius: 10,
     paddingHorizontal: 12, paddingVertical: 8,
@@ -385,7 +386,7 @@ const styles = StyleSheet.create({
   emptyTitle:   { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 8 },
   emptySubtitle:{ fontSize: 13, color: '#888', marginBottom: 24, textAlign: 'center' },
   shopNowBtn: {
-    backgroundColor: '#0d9488', borderRadius: 12,
+    backgroundColor: '#1669ef', borderRadius: 12,
     paddingHorizontal: 32, paddingVertical: 12,
   },
   shopNowText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
@@ -399,5 +400,5 @@ const styles = StyleSheet.create({
   tabItem:       { flex: 1, alignItems: 'center' },
   tabIcon:       { fontSize: 22, marginBottom: 2, color: '#9CA3AF' },
   tabLabel:      { fontSize: 11, color: '#9CA3AF' },
-  tabLabelActive:{ fontSize: 11, color: '#0d9488', fontWeight: 'bold' },
+  tabLabelActive:{ fontSize: 11, color: '#1669ef', fontWeight: 'bold' },
 });

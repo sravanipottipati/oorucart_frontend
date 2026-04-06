@@ -5,57 +5,52 @@ import client from '../api/client';
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-  const [cart, setCart]         = useState({});   // { productId: quantity }
-  const [shop, setShop]         = useState(null); // current shop
-  const [products, setProducts] = useState([]);   // products of current shop
-  const [cartDbItems, setCartDbItems] = useState([]); // DB synced items
-  const [loading, setLoading]   = useState(false);
+  // carts = { vendorId: { shop: { id, shop_name }, items: { productId: qty }, products: [] } }
+  const [carts, setCarts]   = useState({});
+  const [loading, setLoading] = useState(false);
 
-  // ── Load cart from DB on app start ──────────────────────────────────────────
-  useEffect(() => {
-    fetchCartFromDb();
-  }, []);
+  useEffect(() => { fetchCartFromDb(); }, []);
 
   const getHeaders = async () => {
-    const token = await AsyncStorage.getItem('token');
+    const token = await AsyncStorage.getItem('access_token');
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
+  // ── Fetch all cart items from DB and group by vendor ──────────────────────
   const fetchCartFromDb = async () => {
     try {
       setLoading(true);
       const headers = await getHeaders();
-      if (!headers.Authorization) return; // not logged in yet
-      const res = await client.get('/orders/cart/', { headers });
+      if (!headers.Authorization) return;
+      const res   = await client.get('/orders/cart/', { headers });
       const items = res.data.items || [];
-      setCartDbItems(items);
 
-      // ── Rebuild local cart state from DB items ─────────────────────────────
-      if (items.length > 0) {
-        const newCart     = {};
-        const newProducts = [];
-        let   newShop     = null;
-
-        items.forEach(item => {
-          newCart[item.product_id] = item.quantity;
-          newProducts.push({
-            id:    item.product_id,
-            name:  item.product_name,
-            price: item.product_price,
-            image: item.product_image,
+      // Group by vendor
+      const grouped = {};
+      items.forEach(item => {
+        const vid = item.vendor_id;
+        if (!grouped[vid]) {
+          grouped[vid] = {
+            shop:     { id: vid, shop_name: item.vendor_name },
+            items:    {},
+            products: [],
+            dbItems:  [],
+          };
+        }
+        grouped[vid].items[item.product_id] = item.quantity;
+        grouped[vid].dbItems.push(item);
+        if (!grouped[vid].products.find(p => p.id === item.product_id)) {
+          grouped[vid].products.push({
+            id:            item.product_id,
+            name:          item.product_name,
+            price:         item.product_price,
+            image:         item.product_image,
+            gst_percentage: item.product_gst || 0,
           });
-          if (!newShop) {
-            newShop = {
-              id:   item.vendor_id,
-              name: item.vendor_name,
-            };
-          }
-        });
-
-        setCart(newCart);
-        setProducts(newProducts);
-        setShop(newShop);
-      }
+        }
+      });
+      console.log('fetchCartFromDb grouped keys:', Object.keys(grouped));
+      setCarts(grouped);
     } catch (err) {
       console.log('fetchCartFromDb error:', err?.response?.data || err.message);
     } finally {
@@ -63,139 +58,146 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // ── Add to cart — local state + DB sync ─────────────────────────────────────
+  // ── Add to cart ───────────────────────────────────────────────────────────
   const addToCart = async (product, shopData) => {
-    // If adding from different shop — clear cart first
-    if (shop && shopData && shop.id !== shopData.id) {
-      setCart({ [product.id]: 1 });
-      setShop(shopData);
-      setProducts([product]);
-      await syncClearCart();
-      await syncAddToCart(product, shopData, 1);
-      return;
-    }
+    const vid = shopData.id;
 
-    if (shopData && !shop) setShop(shopData);
-
-    setProducts(prev => {
-      const exists = prev.find(p => p.id === product.id);
-      return exists ? prev : [...prev, product];
+    setCarts(prev => {
+      const existing = prev[vid] || { shop: shopData, items: {}, products: [], dbItems: [] };
+      const newQty   = (existing.items[product.id] || 0) + 1;
+      const products = existing.products.find(p => p.id === product.id)
+        ? existing.products
+        : [...existing.products, product];
+      return {
+        ...prev,
+        [vid]: {
+          ...existing,
+          shop:     shopData,
+          items:    { ...existing.items, [product.id]: newQty },
+          products,
+        },
+      };
     });
 
-    setCart(prev => ({
-      ...prev,
-      [product.id]: (prev[product.id] || 0) + 1,
-    }));
-
-    // Sync to DB
-    await syncAddToCart(product, shopData || shop, 1);
-  };
-
-  // ── Remove from cart — local state + DB sync ────────────────────────────────
-  const removeFromCart = async (product) => {
-    setCart(prev => {
-      const newCart = { ...prev };
-      if (newCart[product.id] > 1) {
-        newCart[product.id]--;
-      } else {
-        delete newCart[product.id];
-      }
-      if (Object.keys(newCart).length === 0) {
-        setShop(null);
-        setProducts([]);
-      }
-      return newCart;
-    });
-
-    // Find DB item and update/remove
-    const dbItem = cartDbItems.find(i => i.product_id === product.id);
-    if (dbItem) {
-      const newQty = (dbItem.quantity || 1) - 1;
-      if (newQty <= 0) {
-        await syncRemoveItem(dbItem.id);
-      } else {
-        await syncUpdateItem(dbItem.id, newQty);
-      }
-    }
-  };
-
-  // ── Clear cart — local state + DB sync ──────────────────────────────────────
-  const clearCart = async () => {
-    setCart({});
-    setShop(null);
-    setProducts([]);
-    setCartDbItems([]);
-    await syncClearCart();
-  };
-
-  // ── DB sync helpers ──────────────────────────────────────────────────────────
-  const syncAddToCart = async (product, shopData, quantity) => {
     try {
       const headers = await getHeaders();
       if (!headers.Authorization) return;
-      const res = await client.post('/orders/cart/add/', {
+      await client.post('/orders/cart/add/', {
         product_id: product.id,
-        vendor_id:  shopData?.id,
-        quantity,
+        vendor_id:  vid,
+        quantity:   1,
       }, { headers });
-      // Refresh DB items
       await fetchCartFromDb();
     } catch (err) {
-      console.log('syncAddToCart error:', err?.response?.data || err.message);
+      console.log('addToCart error:', err?.response?.data || err.message);
     }
   };
 
-  const syncUpdateItem = async (itemId, quantity) => {
+  // ── Remove from cart ──────────────────────────────────────────────────────
+  const removeFromCart = async (product, vendorId) => {
+    const vid = vendorId || Object.keys(carts).find(k => carts[k].items[product.id]);
+    if (!vid) return;
+
+    setCarts(prev => {
+      const existing = prev[vid];
+      if (!existing) return prev;
+      const newQty = (existing.items[product.id] || 1) - 1;
+      const newItems = { ...existing.items };
+      if (newQty <= 0) delete newItems[product.id];
+      else newItems[product.id] = newQty;
+
+      const newProducts = newQty <= 0
+        ? existing.products.filter(p => p.id !== product.id)
+        : existing.products;
+
+      if (Object.keys(newItems).length === 0) {
+        const updated = { ...prev };
+        delete updated[vid];
+        return updated;
+      }
+
+      return { ...prev, [vid]: { ...existing, items: newItems, products: newProducts } };
+    });
+
     try {
       const headers = await getHeaders();
       if (!headers.Authorization) return;
-      await client.patch(`/orders/cart/update/${itemId}/`, { quantity }, { headers });
-      await fetchCartFromDb();
+      const dbItem = carts[vid]?.dbItems?.find(i => i.product_id === product.id);
+      if (dbItem) {
+        const newQty = (dbItem.quantity || 1) - 1;
+        if (newQty <= 0) {
+          await client.delete(`/orders/cart/remove/${dbItem.id}/`, { headers });
+        } else {
+          await client.patch(`/orders/cart/update/${dbItem.id}/`, { quantity: newQty }, { headers });
+        }
+        await fetchCartFromDb();
+      }
     } catch (err) {
-      console.log('syncUpdateItem error:', err?.response?.data || err.message);
+      console.log('removeFromCart error:', err?.response?.data || err.message);
     }
   };
 
-  const syncRemoveItem = async (itemId) => {
+  // ── Clear a single shop cart ──────────────────────────────────────────────
+  const clearShopCart = async (vendorId) => {
+    setCarts(prev => {
+      const updated = { ...prev };
+      delete updated[vendorId];
+      return updated;
+    });
     try {
       const headers = await getHeaders();
       if (!headers.Authorization) return;
-      await client.delete(`/orders/cart/remove/${itemId}/`, { headers });
-      await fetchCartFromDb();
+      await client.delete(`/orders/cart/clear/?vendor_id=${vendorId}`, { headers });
     } catch (err) {
-      console.log('syncRemoveItem error:', err?.response?.data || err.message);
+      console.log('clearShopCart error:', err?.response?.data || err.message);
     }
   };
 
-  const syncClearCart = async () => {
+  // ── Clear all carts ───────────────────────────────────────────────────────
+  const clearCart = async () => {
+    setCarts({});
     try {
       const headers = await getHeaders();
       if (!headers.Authorization) return;
       await client.delete('/orders/cart/clear/', { headers });
     } catch (err) {
-      console.log('syncClearCart error:', err?.response?.data || err.message);
+      console.log('clearCart error:', err?.response?.data || err.message);
     }
   };
 
-  // ── Computed values ──────────────────────────────────────────────────────────
-  const cartCount = Object.values(cart).reduce((a, b) => a + b, 0);
-  const cartTotal = products.reduce((sum, p) => {
-    return sum + (cart[p.id] || 0) * parseFloat(p.price);
+  // ── Computed values ───────────────────────────────────────────────────────
+  const cartCount = Object.values(carts).reduce((total, shopCart) => {
+    return total + Object.values(shopCart.items).reduce((a, b) => a + b, 0);
   }, 0);
+
+  const shopCount = Object.keys(carts).length;
+
+  const cartTotal = Object.values(carts).reduce((total, shopCart) => {
+    return total + shopCart.products.reduce((sum, p) => {
+      return sum + (shopCart.items[p.id] || 0) * parseFloat(p.price);
+    }, 0);
+  }, 0);
+
+  // Legacy support — single shop
+  const shop     = Object.values(carts)[0]?.shop || null;
+  const cart     = Object.values(carts)[0]?.items || {};
+  const products = Object.values(carts)[0]?.products || [];
 
   return (
     <CartContext.Provider value={{
+      carts,
       cart,
       shop,
       products,
-      cartDbItems,
       loading,
       addToCart,
       removeFromCart,
+      clearShopCart,
       clearCart,
       fetchCartFromDb,
       cartCount,
       cartTotal,
+      shopCount,
     }}>
       {children}
     </CartContext.Provider>

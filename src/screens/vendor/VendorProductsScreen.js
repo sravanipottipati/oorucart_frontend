@@ -1,7 +1,8 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, RefreshControl, Alert,
+  ScrollView, ActivityIndicator, RefreshControl, Alert, Switch,
 } from 'react-native';
 import client from '../../api/client';
 
@@ -27,6 +28,24 @@ export default function VendorProductsScreen({ navigation }) {
 
   useEffect(() => { fetchProducts(); }, []);
   const onRefresh = () => { setRefreshing(true); fetchProducts(); };
+
+  const handleToggleAvailable = async (product) => {
+    // Update UI immediately
+    setProducts(prev => prev.map(p =>
+      p.id === product.id ? { ...p, is_available: !p.is_available } : p
+    ));
+    try {
+      await client.patch(`/vendors/products/${product.id}/`, {
+        is_available: !product.is_available,
+      });
+    } catch (e) {
+      // Revert on error
+      setProducts(prev => prev.map(p =>
+        p.id === product.id ? { ...p, is_available: product.is_available } : p
+      ));
+      Alert.alert('Error', 'Could not update product status');
+    }
+  };
 
   const handleDelete = (productId, productName) => {
     Alert.alert('Delete Product', `Delete "${productName}"?`, [
@@ -74,7 +93,7 @@ export default function VendorProductsScreen({ navigation }) {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#0d9488" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#1669ef" style={{ marginTop: 40 }} />
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -103,15 +122,16 @@ export default function VendorProductsScreen({ navigation }) {
                       {product.description}
                     </Text>
                   ) : null}
-                  <View style={[
-                    styles.availableBadge,
-                    { backgroundColor: product.is_available ? '#DCFCE7' : '#F3F4F6' }
-                  ]}>
-                    <Text style={[
-                      styles.availableText,
-                      { color: product.is_available ? '#16A34A' : '#9CA3AF' }
-                    ]}>
-                      {product.is_available ? '● In Stock' : '● Out of Stock'}
+                  <View style={styles.stockRow}>
+                    <Switch
+                      value={product.is_available}
+                      onValueChange={() => handleToggleAvailable(product)}
+                      trackColor={{ false: '#fecaca', true: '#bbf7d0' }}
+                      thumbColor={product.is_available ? '#16A34A' : '#EF4444'}
+                      style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
+                    />
+                    <Text style={[styles.stockText, { color: product.is_available ? '#16A34A' : '#EF4444' }]}>
+                      {product.is_available ? 'In Stock' : 'Out of Stock'}
                     </Text>
                   </View>
                 </View>
@@ -144,29 +164,20 @@ export default function VendorProductsScreen({ navigation }) {
 
       {/* Bottom Tab */}
       <View style={styles.bottomTab}>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate('VendorHome')}
-        >
-          <Text style={styles.tabIcon}>⊞</Text>
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('VendorHome')}>
+          <Ionicons name="grid-outline" size={22} color="#9CA3AF" />
           <Text style={styles.tabLabel}>Dashboard</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate('VendorOrders')}
-        >
-          <Text style={styles.tabIcon}>📋</Text>
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('VendorOrders')}>
+          <Ionicons name="receipt-outline" size={22} color="#9CA3AF" />
           <Text style={styles.tabLabel}>Orders</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem}>
-          <Text style={[styles.tabIcon, { color: '#0d9488' }]}>📦</Text>
+          <Ionicons name="cube" size={22} color="#1669ef" />
           <Text style={styles.tabLabelActive}>Products</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate('VendorProfile')}
-        >
-          <Text style={styles.tabIcon}>👤</Text>
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('VendorProfile')}>
+          <Ionicons name="person-outline" size={22} color="#9CA3AF" />
           <Text style={styles.tabLabel}>Profile</Text>
         </TouchableOpacity>
       </View>
@@ -193,7 +204,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
   addBtn: {
-    backgroundColor: '#0d9488', borderRadius: 12,
+    backgroundColor: '#1669ef', borderRadius: 12,
     paddingHorizontal: 16, paddingVertical: 10,
     flexDirection: 'row', alignItems: 'center', gap: 6,
   },
@@ -212,6 +223,8 @@ const styles = StyleSheet.create({
   productInfo: { flex: 1, paddingRight: 12 },
   productName: { fontSize: 15, fontWeight: 'bold', color: '#111', marginBottom: 4 },
   productDesc: { fontSize: 12, color: '#888', marginBottom: 6 },
+  stockRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  stockText: { fontSize: 12, fontWeight: '600' },
   availableBadge: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
   availableText: { fontSize: 11, fontWeight: '600' },
   productRight: { alignItems: 'flex-end', justifyContent: 'space-between' },
@@ -219,7 +232,7 @@ const styles = StyleSheet.create({
   actionBtns: { flexDirection: 'row', gap: 8, marginTop: 8 },
   editBtn: {
     width: 34, height: 34, borderRadius: 8,
-    backgroundColor: '#f0fdfa', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center',
   },
   editBtnText: { fontSize: 16 },
   deleteBtn: {
@@ -233,7 +246,7 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 16, fontWeight: 'bold', color: '#111', marginBottom: 6 },
   emptySubtitle: { fontSize: 13, color: '#888', marginBottom: 20 },
   addFirstBtn: {
-    backgroundColor: '#0d9488', borderRadius: 12,
+    backgroundColor: '#1669ef', borderRadius: 12,
     paddingHorizontal: 24, paddingVertical: 12,
   },
   addFirstBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
@@ -247,5 +260,5 @@ const styles = StyleSheet.create({
   tabItem: { flex: 1, alignItems: 'center' },
   tabIcon: { fontSize: 22, marginBottom: 2, color: '#9CA3AF' },
   tabLabel: { fontSize: 11, color: '#9CA3AF' },
-  tabLabelActive: { fontSize: 11, color: '#0d9488', fontWeight: 'bold' },
+  tabLabelActive: { fontSize: 11, color: '#1669ef', fontWeight: 'bold' },
 });

@@ -3,12 +3,42 @@ import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, TextInput, ActivityIndicator, Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
 import { useCart } from '../../context/CartContext';
 
+// ── Delivery Fee Logic — Distance + Minimum Order ─────────────────────────────
+const getDeliveryInfo = (distanceKm, subtotal) => {
+  const dist = parseFloat(distanceKm) || 0;
+
+  let fee        = 0;
+  let minOrder   = 0;
+  let slab       = '';
+
+  if (dist <= 2) {
+    fee      = 10;
+    minOrder = 99;
+    slab     = '0–2 km';
+  } else if (dist <= 5) {
+    fee      = 20;
+    minOrder = 149;
+    slab     = '2–5 km';
+  } else {
+    fee      = 30;
+    minOrder = 199;
+    slab     = '5–10 km';
+  }
+
+  const isFree      = subtotal >= minOrder;
+  const deliveryFee = isFree ? 0 : fee;
+  const amountLeft  = isFree ? 0 : minOrder - subtotal;
+
+  return { fee, minOrder, slab, isFree, deliveryFee, amountLeft };
+};
+
 export default function CheckoutScreen({ navigation, route }) {
-  const { cart, products, shop, cartTotal } = route.params;
-  const { clearCart } = useCart();
+  const { cart, products, shop, cartTotal, distance } = route.params;
+  const { clearCart, clearShopCart } = useCart();
 
   const [address, setAddress]           = useState('');
   const [note, setNote]                 = useState('');
@@ -17,23 +47,19 @@ export default function CheckoutScreen({ navigation, route }) {
   const [addresses, setAddresses]       = useState([]);
   const [selectedAddr, setSelectedAddr] = useState(null);
 
-  // ── Coupon state ──────────────────────────────────────────────────────────
-  const [couponCode, setCouponCode]       = useState('');
-  const [couponLoading, setCouponLoading] = useState(false);
-  const [appliedCoupon, setAppliedCoupon] = useState(null);
-  const [couponError, setCouponError]     = useState('');
-
-  const platformFee = parseFloat(shop?.platform_fee || 5);
-
   const cartItems = products.filter(p => cart[p.id] > 0).map(p => ({
     ...p,
     qty:   cart[p.id],
     total: cart[p.id] * parseFloat(p.price),
   }));
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.total, 0);
-  const discount = appliedCoupon ? appliedCoupon.discount : 0;
-  const total    = subtotal + platformFee - discount;
+  const subtotal     = cartItems.reduce((sum, item) => sum + item.total, 0);
+  const gstTotal = cartItems.reduce((sum, item) => {
+    const gstPct = parseFloat(item.gst_percentage || 0);
+    return sum + (item.total * gstPct / 100);
+  }, 0);
+  const deliveryInfo = getDeliveryInfo(distance, subtotal);
+  const total        = subtotal + deliveryInfo.deliveryFee;
 
   useEffect(() => {
     const fetchAddresses = async () => {
@@ -52,37 +78,6 @@ export default function CheckoutScreen({ navigation, route }) {
     };
     fetchAddresses();
   }, []);
-
-  // ── Apply Coupon ───────────────────────────────────────────────────────────
-  const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) {
-      setCouponError('Please enter a coupon code');
-      return;
-    }
-    setCouponLoading(true);
-    setCouponError('');
-    try {
-      const res = await client.post('/orders/coupon/validate/', {
-        code:         couponCode.toUpperCase().trim(),
-        order_amount: subtotal,
-      });
-      setAppliedCoupon(res.data);
-      setCouponError('');
-      Alert.alert('🎉 Coupon Applied!', `You saved ₹${res.data.discount}!`);
-    } catch (e) {
-      const msg = e.response?.data?.error || 'Invalid coupon code';
-      setCouponError(msg);
-      setAppliedCoupon(null);
-    } finally {
-      setCouponLoading(false);
-    }
-  };
-
-  const handleRemoveCoupon = () => {
-    setAppliedCoupon(null);
-    setCouponCode('');
-    setCouponError('');
-  };
 
   // ── Place Order ────────────────────────────────────────────────────────────
   const handlePlaceOrder = async () => {
@@ -103,10 +98,9 @@ export default function CheckoutScreen({ navigation, route }) {
         delivery_address: address,
         payment_mode:     payment,
         notes:            note,
-        coupon_code:      appliedCoupon?.code || null,
-        discount_amount:  discount,
+        delivery_fee:     deliveryInfo.deliveryFee,
       });
-      clearCart();
+      clearShopCart(shop.id);
       navigation.replace('OrderSuccess', { order: res.data.order });
     } catch (e) {
       const msg = e.response?.data?.error || 'Failed to place order. Please try again.';
@@ -122,13 +116,31 @@ export default function CheckoutScreen({ navigation, route }) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <Ionicons name="arrow-back" size={22} color="#111" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Checkout</Text>
         <View style={{ width: 36 }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
+
+        {/* ── Free Delivery Progress Banner ── */}
+        {!deliveryInfo.isFree && (
+          <View style={styles.freeDeliveryBanner}>
+            <Ionicons name="bicycle-outline" size={18} color="#1669ef" />
+            <Text style={styles.freeDeliveryText}>
+              Add <Text style={styles.freeDeliveryAmount}>₹{deliveryInfo.amountLeft.toFixed(0)}</Text> more for FREE delivery!
+            </Text>
+          </View>
+        )}
+        {deliveryInfo.isFree && (
+          <View style={styles.freeDeliveryBannerGreen}>
+            <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
+            <Text style={styles.freeDeliveryTextGreen}>
+              You have FREE delivery on this order! 🎉
+            </Text>
+          </View>
+        )}
 
         {/* Deliver To */}
         <View style={styles.card}>
@@ -185,116 +197,43 @@ export default function CheckoutScreen({ navigation, route }) {
           ))}
         </View>
 
-        {/* ── COUPON SECTION ──────────────────────────────────────────────── */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>🎟️ Apply Coupon</Text>
-
-          {appliedCoupon ? (
-            // Coupon applied state
-            <View style={styles.couponApplied}>
-              <View style={styles.couponAppliedLeft}>
-                <Text style={styles.couponAppliedIcon}>✅</Text>
-                <View>
-                  <Text style={styles.couponAppliedCode}>{appliedCoupon.code}</Text>
-                  <Text style={styles.couponAppliedSaving}>
-                    You save ₹{appliedCoupon.discount}!
-                  </Text>
-                </View>
-              </View>
-              <TouchableOpacity onPress={handleRemoveCoupon}>
-                <Text style={styles.couponRemoveBtn}>Remove</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            // Coupon input state
-            <>
-              <View style={styles.couponRow}>
-                <TextInput
-                  style={styles.couponInput}
-                  placeholder="Enter coupon code"
-                  placeholderTextColor="#9CA3AF"
-                  value={couponCode}
-                  onChangeText={text => {
-                    setCouponCode(text.toUpperCase());
-                    setCouponError('');
-                  }}
-                  autoCapitalize="characters"
-                />
-                <TouchableOpacity
-                  style={[
-                    styles.couponApplyBtn,
-                    !couponCode.trim() && styles.couponApplyBtnDisabled
-                  ]}
-                  onPress={handleApplyCoupon}
-                  disabled={couponLoading || !couponCode.trim()}
-                >
-                  {couponLoading
-                    ? <ActivityIndicator color="#fff" size="small" />
-                    : <Text style={styles.couponApplyBtnText}>Apply</Text>
-                  }
-                </TouchableOpacity>
-              </View>
-              {couponError ? (
-                <Text style={styles.couponError}>❌ {couponError}</Text>
-              ) : null}
-
-              {/* Quick coupon suggestions */}
-              <View style={styles.couponSuggestions}>
-                <Text style={styles.couponSuggestLabel}>Try these:</Text>
-                {['SHOP10', 'FLAT50', 'WELCOME20'].map(code => (
-                  <TouchableOpacity
-                    key={code}
-                    style={styles.couponSuggestChip}
-                    onPress={() => {
-                      setCouponCode(code);
-                      setCouponError('');
-                    }}
-                  >
-                    <Text style={styles.couponSuggestText}>{code}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </>
-          )}
-        </View>
-
         {/* Bill Details */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Bill Details</Text>
+
           <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Item Total</Text>
+            <Text style={styles.billLabel}>Items Total (incl. GST)</Text>
             <Text style={styles.billValue}>₹{subtotal.toFixed(0)}</Text>
           </View>
+
           <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Platform Fee</Text>
-            <Text style={styles.billValue}>₹{platformFee}</Text>
-          </View>
-          <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Delivery</Text>
-            <Text style={[styles.billValue, { color: '#16A34A' }]}>FREE</Text>
-          </View>
-          {discount > 0 && (
-            <View style={styles.billRow}>
-              <Text style={[styles.billLabel, { color: '#16A34A' }]}>
-                Coupon ({appliedCoupon?.code})
-              </Text>
-              <Text style={[styles.billValue, { color: '#16A34A' }]}>
-                − ₹{discount.toFixed(0)}
+            <View>
+              <Text style={styles.billLabel}>Delivery Fee</Text>
+              <Text style={styles.billLabelSub}>
+                {distance ? `📍 ${distance} km away` : ''} • Free above ₹{deliveryInfo.minOrder}
               </Text>
             </View>
-          )}
+            {deliveryInfo.isFree ? (
+              <Text style={styles.billValueFree}>FREE ✅</Text>
+            ) : (
+              <Text style={styles.billValue}>₹{deliveryInfo.deliveryFee}</Text>
+            )}
+          </View>
+
           <View style={styles.divider} />
+
           <View style={styles.billRow}>
             <Text style={styles.billTotalLabel}>Total Amount</Text>
             <Text style={styles.billTotalValue}>₹{total.toFixed(0)}</Text>
           </View>
-          {discount > 0 && (
-            <View style={styles.savingsBanner}>
-              <Text style={styles.savingsBannerText}>
-                🎉 You are saving ₹{discount.toFixed(0)} on this order!
-              </Text>
-            </View>
-          )}
+
+          {/* Delivery slab info */}
+          <View style={styles.slabInfo}>
+            <Ionicons name="information-circle-outline" size={14} color="#888" />
+            <Text style={styles.slabInfoText}>
+              Delivery fee based on distance ({deliveryInfo.slab})
+            </Text>
+          </View>
         </View>
 
         {/* Payment Method */}
@@ -340,9 +279,11 @@ export default function CheckoutScreen({ navigation, route }) {
       <View style={styles.footer}>
         <View style={styles.footerTop}>
           <Text style={styles.footerTotal}>₹{total.toFixed(0)}</Text>
-          <Text style={styles.footerTotalLabel}>Total (incl. fees)</Text>
-          {discount > 0 && (
-            <Text style={styles.footerSaving}>Save ₹{discount.toFixed(0)}</Text>
+          <Text style={styles.footerTotalLabel}>Total</Text>
+          {deliveryInfo.isFree && (
+            <View style={styles.footerFreeTag}>
+              <Text style={styles.footerFreeTagText}>Free Delivery</Text>
+            </View>
           )}
         </View>
         <TouchableOpacity
@@ -363,14 +304,29 @@ export default function CheckoutScreen({ navigation, route }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9FA' },
+
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12,
     backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
   backBtn:     { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
-  backText:    { fontSize: 24, color: '#111' },
   headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
+
+  freeDeliveryBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#eff6ff', marginHorizontal: 16, marginTop: 16,
+    padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#dbeafe',
+  },
+  freeDeliveryText:   { fontSize: 13, color: '#1254c4', flex: 1 },
+  freeDeliveryAmount: { fontWeight: '800', color: '#1669ef' },
+
+  freeDeliveryBannerGreen: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#f0fdf4', marginHorizontal: 16, marginTop: 16,
+    padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#bbf7d0',
+  },
+  freeDeliveryTextGreen: { fontSize: 13, color: '#166534', flex: 1, fontWeight: '600' },
 
   card: {
     backgroundColor: '#fff', borderRadius: 16,
@@ -381,7 +337,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', marginBottom: 12,
   },
   cardTitle:  { fontSize: 15, fontWeight: 'bold', color: '#111', marginBottom: 12 },
-  changeBtn:  { fontSize: 13, color: '#0d9488', fontWeight: '600' },
+  changeBtn:  { fontSize: 13, color: '#1669ef', fontWeight: '600' },
 
   addrRow: { marginBottom: 12 },
   addrChip: {
@@ -390,10 +346,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 8, marginRight: 8,
     backgroundColor: '#F9FAFB',
   },
-  addrChipActive:     { borderColor: '#0d9488', backgroundColor: '#f0fdfa' },
+  addrChipActive:     { borderColor: '#1669ef', backgroundColor: '#eff6ff' },
   addrChipIcon:       { fontSize: 14 },
   addrChipText:       { fontSize: 13, color: '#555', fontWeight: '500' },
-  addrChipTextActive: { color: '#0d9488', fontWeight: 'bold' },
+  addrChipTextActive: { color: '#1669ef', fontWeight: 'bold' },
+
   addressInput: {
     borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12,
     padding: 12, fontSize: 14, color: '#111', minHeight: 80,
@@ -405,79 +362,43 @@ const styles = StyleSheet.create({
 
   orderItem:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   orderItemLeft:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  qtyBadge:       { width: 24, height: 24, borderRadius: 6, backgroundColor: '#f0fdfa', justifyContent: 'center', alignItems: 'center' },
-  qtyBadgeText:   { fontSize: 12, fontWeight: 'bold', color: '#0d9488' },
-  orderItemName:  { fontSize: 14, color: '#555' },
+  qtyBadge:       { width: 24, height: 24, borderRadius: 6, backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center' },
+  qtyBadgeText:   { fontSize: 12, fontWeight: 'bold', color: '#1669ef' },
+  orderItemName:  { fontSize: 14, color: '#555', flex: 1 },
   orderItemPrice: { fontSize: 14, fontWeight: '600', color: '#111' },
 
-  // ── Coupon styles ──────────────────────────────────────────────────────────
-  couponRow: { flexDirection: 'row', gap: 10, marginBottom: 8 },
-  couponInput: {
-    flex: 1, borderWidth: 1.5, borderColor: '#E5E7EB',
-    borderRadius: 12, padding: 12, fontSize: 14,
-    color: '#111', backgroundColor: '#F9FAFB',
-    fontWeight: '600', letterSpacing: 1,
-  },
-  couponApplyBtn: {
-    backgroundColor: '#0d9488', borderRadius: 12,
-    paddingHorizontal: 20, justifyContent: 'center', alignItems: 'center',
-    minWidth: 80,
-  },
-  couponApplyBtnDisabled: { backgroundColor: '#5eead4' },
-  couponApplyBtnText:     { color: '#fff', fontWeight: 'bold', fontSize: 14 },
-  couponError:            { fontSize: 12, color: '#EF4444', marginBottom: 8 },
+  billRow:         { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 },
+  billLabel:       { fontSize: 14, color: '#888' },
+  billLabelSub:    { fontSize: 11, color: '#aaa', marginTop: 2 },
+  billValue:       { fontSize: 14, color: '#111' },
+  billValueFree:   { fontSize: 14, color: '#16A34A', fontWeight: '700' },
+  billTotalLabel:  { fontSize: 15, fontWeight: 'bold', color: '#111' },
+  billTotalValue:  { fontSize: 15, fontWeight: 'bold', color: '#1669ef' },
 
-  couponSuggestions: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  couponSuggestLabel: { fontSize: 12, color: '#888' },
-  couponSuggestChip: {
-    backgroundColor: '#F3F4F6', borderRadius: 20, borderWidth: 1,
-    borderColor: '#E5E7EB', paddingHorizontal: 12, paddingVertical: 5,
-    borderStyle: 'dashed',
+  slabInfo: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    marginTop: 4, backgroundColor: '#F9FAFB',
+    padding: 8, borderRadius: 8,
   },
-  couponSuggestText: { fontSize: 12, color: '#0d9488', fontWeight: '600' },
+  slabInfoText: { fontSize: 11, color: '#888' },
 
-  couponApplied: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    backgroundColor: '#F0FDF4', borderRadius: 12, padding: 14,
-    borderWidth: 1, borderColor: '#BBF7D0',
-  },
-  couponAppliedLeft:   { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  couponAppliedIcon:   { fontSize: 20 },
-  couponAppliedCode:   { fontSize: 14, fontWeight: 'bold', color: '#166534' },
-  couponAppliedSaving: { fontSize: 12, color: '#16A34A' },
-  couponRemoveBtn:     { fontSize: 13, color: '#EF4444', fontWeight: '600' },
-
-  // ── Bill styles ────────────────────────────────────────────────────────────
-  billRow:        { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  billLabel:      { fontSize: 14, color: '#888' },
-  billValue:      { fontSize: 14, color: '#111' },
-  billTotalLabel: { fontSize: 15, fontWeight: 'bold', color: '#111' },
-  billTotalValue: { fontSize: 15, fontWeight: 'bold', color: '#0d9488' },
-
-  savingsBanner: {
-    backgroundColor: '#F0FDF4', borderRadius: 8,
-    padding: 10, marginTop: 8,
-    borderWidth: 1, borderColor: '#BBF7D0',
-  },
-  savingsBannerText: { fontSize: 13, color: '#16A34A', fontWeight: '600', textAlign: 'center' },
-
-  // ── Payment styles ─────────────────────────────────────────────────────────
   paymentOption: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12, padding: 14,
   },
-  paymentOptionActive: { borderColor: '#0d9488', backgroundColor: '#f0fdfa' },
+  paymentOptionActive: { borderColor: '#1669ef', backgroundColor: '#eff6ff' },
   paymentLeft:         { flexDirection: 'row', alignItems: 'center', gap: 12 },
   paymentEmoji:        { fontSize: 24 },
   paymentName:         { fontSize: 14, fontWeight: '600', color: '#111' },
   paymentDesc:         { fontSize: 12, color: '#888' },
+
   radio: {
     width: 20, height: 20, borderRadius: 10,
     borderWidth: 2, borderColor: '#D1D5DB',
     justifyContent: 'center', alignItems: 'center',
   },
-  radioActive: { borderColor: '#0d9488' },
-  radioDot:    { width: 10, height: 10, borderRadius: 5, backgroundColor: '#0d9488' },
+  radioActive: { borderColor: '#1669ef' },
+  radioDot:    { width: 10, height: 10, borderRadius: 5, backgroundColor: '#1669ef' },
 
   optional:  { fontSize: 12, color: '#9CA3AF', fontWeight: 'normal' },
   noteInput: {
@@ -486,24 +407,25 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top', backgroundColor: '#F9FAFB',
   },
 
-  // ── Footer ─────────────────────────────────────────────────────────────────
   footer: {
     padding: 16, paddingBottom: 30, backgroundColor: '#fff',
     borderTopWidth: 1, borderTopColor: '#F0F0F0',
   },
   footerTop: {
-    flexDirection: 'row', alignItems: 'baseline',
-    gap: 6, marginBottom: 10,
+    flexDirection: 'row', alignItems: 'center',
+    gap: 8, marginBottom: 10,
   },
   footerTotal:      { fontSize: 20, fontWeight: 'bold', color: '#111' },
   footerTotalLabel: { fontSize: 12, color: '#888' },
-  footerSaving: {
-    fontSize: 12, color: '#16A34A', fontWeight: '600',
-    backgroundColor: '#F0FDF4', paddingHorizontal: 8,
-    paddingVertical: 2, borderRadius: 10,
+  footerFreeTag: {
+    backgroundColor: '#f0fdf4', borderRadius: 20,
+    paddingHorizontal: 10, paddingVertical: 3,
+    borderWidth: 1, borderColor: '#bbf7d0',
   },
+  footerFreeTagText: { fontSize: 11, color: '#16A34A', fontWeight: '700' },
+
   placeOrderBtn: {
-    backgroundColor: '#0d9488', borderRadius: 14,
+    backgroundColor: '#1669ef', borderRadius: 14,
     padding: 16, alignItems: 'center',
   },
   placeOrderText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },

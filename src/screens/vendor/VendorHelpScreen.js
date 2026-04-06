@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 
 const QUICK_HELP = [
-  { icon: '💰', label: 'Payment & Settlement', bg: '#f0fdfa' },
+  { icon: '💰', label: 'Payment & Settlement', bg: '#eff6ff' },
   { icon: '📦', label: 'Order Issues',         bg: '#FFF7ED' },
   { icon: '🛍',  label: 'Product Issues',       bg: '#F0FDF4' },
   { icon: '⚙️', label: 'Technical Issues',     bg: '#F5F3FF' },
@@ -115,7 +115,7 @@ export default function VendorHelpScreen({ navigation }) {
         <Text style={styles.sectionTitle}>Contact Support</Text>
         <View style={styles.contactCard}>
           <TouchableOpacity style={[styles.contactItem, styles.contactItemBorder]}>
-            <View style={[styles.contactIconBox, { backgroundColor: '#f0fdfa' }]}>
+            <View style={[styles.contactIconBox, { backgroundColor: '#eff6ff' }]}>
               <Text style={styles.contactIcon}>💬</Text>
             </View>
             <View style={styles.contactInfo}>

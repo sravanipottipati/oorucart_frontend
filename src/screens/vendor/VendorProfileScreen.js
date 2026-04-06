@@ -1,6 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import client from '../../api/client';
@@ -26,9 +27,22 @@ export default function VendorProfileScreen({ navigation }) {
     fetchData();
   }, []);
 
-  const handleLogout = async () => {
-    await logout();
-    navigation.replace('Login');
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout from Univerin?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+            navigation.replace('Login');
+          },
+        },
+      ]
+    );
   };
 
   const initials = user?.full_name
@@ -96,7 +110,7 @@ export default function VendorProfileScreen({ navigation }) {
             onPress={() => navigation.navigate('EditProfile')}
           >
             <View style={styles.menuLeft}>
-              <View style={[styles.menuIconBox, { backgroundColor: '#f0fdfa' }]}>
+              <View style={[styles.menuIconBox, { backgroundColor: '#eff6ff' }]}>
                 <Text style={styles.menuIcon}>👤</Text>
               </View>
               <Text style={styles.menuLabel}>Edit Profile</Text>
@@ -165,7 +179,8 @@ export default function VendorProfileScreen({ navigation }) {
 
         {/* Logout */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Text style={styles.logoutText}>🚪  Logout</Text>
+          <Ionicons name="log-out-outline" size={20} color="#1669ef" />
+          <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
 
         <Text style={styles.version}>Univerin Seller v1.0.0</Text>
@@ -175,29 +190,20 @@ export default function VendorProfileScreen({ navigation }) {
 
       {/* Bottom Tab */}
       <View style={styles.bottomTab}>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate('VendorHome')}
-        >
-          <Text style={styles.tabIcon}>⊞</Text>
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('VendorHome')}>
+          <Ionicons name="grid-outline" size={22} color="#9CA3AF" />
           <Text style={styles.tabLabel}>Dashboard</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate('VendorOrders')}
-        >
-          <Text style={styles.tabIcon}>📋</Text>
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('VendorOrders')}>
+          <Ionicons name="receipt-outline" size={22} color="#9CA3AF" />
           <Text style={styles.tabLabel}>Orders</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate('VendorProducts')}
-        >
-          <Text style={styles.tabIcon}>📦</Text>
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('VendorProducts')}>
+          <Ionicons name="cube-outline" size={22} color="#9CA3AF" />
           <Text style={styles.tabLabel}>Products</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem}>
-          <Text style={[styles.tabIcon, { color: '#0d9488' }]}>👤</Text>
+          <Ionicons name="person" size={22} color="#1669ef" />
           <Text style={styles.tabLabelActive}>Profile</Text>
         </TouchableOpacity>
       </View>
@@ -230,7 +236,7 @@ const styles = StyleSheet.create({
   editIcon: { fontSize: 14 },
   avatar: {
     width: 72, height: 72, borderRadius: 36,
-    backgroundColor: '#0d9488', justifyContent: 'center',
+    backgroundColor: '#1669ef', justifyContent: 'center',
     alignItems: 'center', marginBottom: 12,
   },
   avatarText: { color: '#fff', fontSize: 26, fontWeight: 'bold' },
@@ -242,7 +248,7 @@ const styles = StyleSheet.create({
 
   earningsCard: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    backgroundColor: '#0d9488', marginHorizontal: 16, marginBottom: 16,
+    backgroundColor: '#1669ef', marginHorizontal: 16, marginBottom: 16,
     borderRadius: 16, padding: 20,
   },
   earningsLabel: { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginBottom: 6 },
@@ -276,10 +282,12 @@ const styles = StyleSheet.create({
   infoValue: { fontSize: 13, fontWeight: '600', color: '#111' },
 
   logoutBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    borderWidth: 1.5, borderColor: '#1669ef',
     backgroundColor: '#fff', marginHorizontal: 16, borderRadius: 16,
     padding: 16, alignItems: 'center', marginBottom: 12,
   },
-  logoutText: { fontSize: 15, color: '#EF4444', fontWeight: '600' },
+  logoutText: { fontSize: 15, color: '#1669ef', fontWeight: '700' },
   version: { textAlign: 'center', fontSize: 12, color: '#9CA3AF', marginBottom: 8 },
 
   bottomTab: {
@@ -291,5 +299,5 @@ const styles = StyleSheet.create({
   tabItem: { flex: 1, alignItems: 'center' },
   tabIcon: { fontSize: 22, marginBottom: 2, color: '#9CA3AF' },
   tabLabel: { fontSize: 11, color: '#9CA3AF' },
-  tabLabelActive: { fontSize: 11, color: '#0d9488', fontWeight: 'bold' },
+  tabLabelActive: { fontSize: 11, color: '#1669ef', fontWeight: 'bold' },
 });

@@ -6,14 +6,14 @@ import {
 import client from '../../api/client';
 
 const TYPE_CONFIG = {
-  order_placed:    { icon: '📋', bg: '#f0fdfa' },
+  order_placed:    { icon: '📋', bg: '#eff6ff' },
   order_accepted:  { icon: '✅', bg: '#DCFCE7' },
   order_rejected:  { icon: '❌', bg: '#FEF2F2' },
   order_preparing: { icon: '👨‍🍳', bg: '#FFF7ED' },
   order_dispatched:{ icon: '🛵', bg: '#F0FDF4' },
   order_delivered: { icon: '🎉', bg: '#DCFCE7' },
   order_cancelled: { icon: '❌', bg: '#FEF2F2' },
-  new_order:       { icon: '📦', bg: '#f0fdfa' },
+  new_order:       { icon: '📦', bg: '#eff6ff' },
   settlement:      { icon: '💰', bg: '#DCFCE7' },
 };
 
@@ -90,7 +90,7 @@ export default function NotificationsScreen({ navigation }) {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#0d9488" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#1669ef" style={{ marginTop: 40 }} />
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -149,9 +149,9 @@ const styles = StyleSheet.create({
   headerSub: { fontSize: 12, color: '#888', marginTop: 2 },
   markAllBtn: {
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: '#f0fdfa', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center',
   },
-  markAllIcon: { fontSize: 18, color: '#0d9488', fontWeight: 'bold' },
+  markAllIcon: { fontSize: 18, color: '#1669ef', fontWeight: 'bold' },
 
   emptyState: { alignItems: 'center', marginTop: 80 },
   emptyEmoji: { fontSize: 52, marginBottom: 12 },
@@ -176,6 +176,6 @@ const styles = StyleSheet.create({
   notifTime: { fontSize: 11, color: '#9CA3AF' },
   unreadDot: {
     width: 10, height: 10, borderRadius: 5,
-    backgroundColor: '#0d9488', marginTop: 4,
+    backgroundColor: '#1669ef', marginTop: 4,
   },
 });

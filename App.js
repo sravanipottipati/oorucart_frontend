@@ -23,6 +23,7 @@ import HelpSupportScreen from './src/screens/buyer/HelpSupportScreen';
 import SearchScreen from './src/screens/buyer/SearchScreen';
 import OrderDetailScreen from './src/screens/buyer/OrderDetailScreen';
 import TownSelectionScreen from './src/screens/buyer/TownSelectionScreen';
+import CartScreen from './src/screens/buyer/CartScreen';
 
 import VendorHomeScreen from './src/screens/vendor/VendorHomeScreen';
 import VendorOrdersScreen from './src/screens/vendor/VendorOrdersScreen';
@@ -79,7 +80,8 @@ function AppNavigator() {
         <Stack.Screen name="Wishlist"      component={WishlistScreen} />
         <Stack.Screen name="Address"       component={AddressScreen} />
         <Stack.Screen name="HelpSupport"   component={HelpSupportScreen} />
-        <Stack.Screen name="Search"        component={SearchScreen} />
+        <Stack.Screen name="Cart" component={CartScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Search"        component={SearchScreen} />
         <Stack.Screen name="OrderDetail"   component={OrderDetailScreen} />
         <Stack.Screen name="TownSelection" component={TownSelectionScreen} />
 

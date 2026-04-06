@@ -40,7 +40,7 @@ export default function VendorWalletScreen({ navigation }) {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0d9488" />
+        <ActivityIndicator size="large" color="#1669ef" />
       </View>
     );
   }
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
 
   totalCard: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    backgroundColor: '#0d9488', margin: 16, borderRadius: 20, padding: 24,
+    backgroundColor: '#1669ef', margin: 16, borderRadius: 20, padding: 24,
   },
   totalCardLeft: {},
   totalLabel: { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginBottom: 6 },
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', paddingHorizontal: 16, marginBottom: 12,
   },
   sectionTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
-  viewAll: { fontSize: 13, color: '#0d9488', fontWeight: '600' },
+  viewAll: { fontSize: 13, color: '#1669ef', fontWeight: '600' },
 
   txnCard: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',

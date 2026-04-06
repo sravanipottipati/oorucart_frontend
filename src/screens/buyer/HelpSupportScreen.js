@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
   contactDivider: { height: 1, backgroundColor: '#F5F5F5', marginHorizontal: 16 },
   contactIconBox: {
     width: 44, height: 44, borderRadius: 22,
-    backgroundColor: '#f0fdfa', justifyContent: 'center',
+    backgroundColor: '#eff6ff', justifyContent: 'center',
     alignItems: 'center', marginRight: 12,
   },
   contactIcon: { fontSize: 22 },

@@ -57,7 +57,7 @@ export default function WishlistScreen({ navigation }) {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#0d9488" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#1669ef" style={{ marginTop: 40 }} />
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -135,17 +135,17 @@ const styles = StyleSheet.create({
   backText: { fontSize: 24, color: '#111' },
   headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
   countBadge: {
-    backgroundColor: '#f0fdfa', borderRadius: 12,
+    backgroundColor: '#eff6ff', borderRadius: 12,
     paddingHorizontal: 10, paddingVertical: 4,
   },
-  countText: { fontSize: 13, color: '#0d9488', fontWeight: 'bold' },
+  countText: { fontSize: 13, color: '#1669ef', fontWeight: 'bold' },
 
   emptyState: { alignItems: 'center', marginTop: 60, paddingHorizontal: 32 },
   emptyEmoji: { fontSize: 52, marginBottom: 12 },
   emptyTitle: { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 6 },
   emptySubtitle: { fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 24, lineHeight: 20 },
   shopBtn: {
-    backgroundColor: '#0d9488', borderRadius: 12,
+    backgroundColor: '#1669ef', borderRadius: 12,
     paddingHorizontal: 24, paddingVertical: 12,
   },
   shopBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   },
   productIconBox: {
     width: 52, height: 52, borderRadius: 26,
-    backgroundColor: '#f0fdfa', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center',
   },
   productIcon: { fontSize: 26 },
   productInfo: { flex: 1 },
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   },
   availText: { fontSize: 11, fontWeight: '600' },
   productRight: { alignItems: 'flex-end', gap: 10 },
-  productPrice: { fontSize: 16, fontWeight: 'bold', color: '#0d9488' },
+  productPrice: { fontSize: 16, fontWeight: 'bold', color: '#1669ef' },
   removeBtn: {
     width: 34, height: 34, borderRadius: 8,
     backgroundColor: '#FEF2F2', justifyContent: 'center', alignItems: 'center',

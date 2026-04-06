@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, Alert, ActivityIndicator, Image,
@@ -16,9 +17,22 @@ export default function ProfileScreen({ navigation }) {
     ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     : 'U';
 
-  const handleLogout = async () => {
-    await logout();
-    navigation.replace('Login');
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout from Univerin?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+            navigation.replace('Login');
+          },
+        },
+      ]
+    );
   };
 
   // ── Profile Photo Upload ───────────────────────────────────────────────────
@@ -236,7 +250,8 @@ export default function ProfileScreen({ navigation }) {
 
         {/* Logout */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Text style={styles.logoutText}>🚪  Logout</Text>
+          <Ionicons name="log-out-outline" size={20} color="#1669ef" />
+          <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
 
         <Text style={styles.version}>Univerin v1.0.0</Text>
@@ -245,26 +260,20 @@ export default function ProfileScreen({ navigation }) {
 
       {/* Bottom Tab */}
       <View style={styles.bottomTab}>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate('Home')}
-        >
-          <Text style={styles.tabIcon}>🏠</Text>
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Cart')}>
+          <Ionicons name="home-outline" size={25} color="#9CA3AF" />
           <Text style={styles.tabLabel}>Home</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => navigation.navigate('MyOrders')}
-        >
-          <Text style={styles.tabIcon}>📋</Text>
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('MyOrders')}>
+          <Ionicons name="receipt-outline" size={25} color="#9CA3AF" />
           <Text style={styles.tabLabel}>Orders</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem}>
-          <Text style={styles.tabIcon}>🛒</Text>
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Home')}>
+          <Ionicons name="cart-outline" size={25} color="#9CA3AF" />
           <Text style={styles.tabLabel}>Cart</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem}>
-          <Text style={[styles.tabIcon, { color: '#0d9488' }]}>👤</Text>
+          <Ionicons name="person" size={25} color="#1669ef" />
           <Text style={styles.tabLabelActive}>Profile</Text>
         </TouchableOpacity>
       </View>
@@ -295,7 +304,7 @@ const styles = StyleSheet.create({
   avatarWrapper: { position: 'relative' },
   avatar: {
     width: 80, height: 80, borderRadius: 40,
-    backgroundColor: '#0d9488', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#1669ef', justifyContent: 'center', alignItems: 'center',
   },
   avatarImage: {
     width: 80, height: 80, borderRadius: 40,
@@ -325,10 +334,10 @@ const styles = StyleSheet.create({
   userPhone:    { fontSize: 14, color: '#888', marginBottom: 2 },
   userEmail:    { fontSize: 13, color: '#888', marginBottom: 6 },
   townBadge: {
-    backgroundColor: '#f0fdfa', borderRadius: 20,
+    backgroundColor: '#eff6ff', borderRadius: 20,
     paddingHorizontal: 12, paddingVertical: 4, marginTop: 4,
   },
-  townBadgeText: { fontSize: 12, color: '#0d9488', fontWeight: '500' },
+  townBadgeText: { fontSize: 12, color: '#1669ef', fontWeight: '500' },
 
   menuCard: {
     backgroundColor: '#fff', marginHorizontal: 16,
@@ -349,10 +358,12 @@ const styles = StyleSheet.create({
   menuArrow: { fontSize: 20, color: '#9CA3AF' },
 
   logoutBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     backgroundColor: '#fff', marginHorizontal: 16, borderRadius: 16,
-    padding: 16, alignItems: 'center', marginBottom: 12,
+    padding: 16, marginBottom: 12,
+    borderWidth: 1.5, borderColor: '#1669ef',
   },
-  logoutText: { fontSize: 15, color: '#EF4444', fontWeight: '600' },
+  logoutText: { fontSize: 15, color: '#1669ef', fontWeight: '700' },
   version:    { textAlign: 'center', fontSize: 12, color: '#9CA3AF', marginBottom: 8 },
 
   bottomTab: {
@@ -364,5 +375,5 @@ const styles = StyleSheet.create({
   tabItem:        { flex: 1, alignItems: 'center' },
   tabIcon:        { fontSize: 22, marginBottom: 2, color: '#9CA3AF' },
   tabLabel:       { fontSize: 11, color: '#9CA3AF' },
-  tabLabelActive: { fontSize: 11, color: '#0d9488', fontWeight: 'bold' },
+  tabLabelActive: { fontSize: 11, color: '#1669ef', fontWeight: 'bold' },
 });
