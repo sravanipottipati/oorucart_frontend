@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, Alert, Modal, Image,
+  ScrollView, ActivityIndicator, Modal, Image, Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
 import { useCart } from '../../context/CartContext';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2;
+
 const CATEGORY_EMOJIS = {
   vegetables: '🥬', fruits: '🍎', dairy: '🥛',
   bakery: '🥐', snacks: '🍿', beverages: '🥤',
@@ -13,132 +17,132 @@ const CATEGORY_EMOJIS = {
 };
 const SHOP_COLORS = ['#4CAF50', '#FF7043', '#FFA726', '#42A5F5', '#AB47BC', '#26A69A'];
 const CATEGORY_LABELS = {
-  all:              { label: 'All Items',          emoji: '🍽' },
-  supermarket:      { label: 'All Items',          emoji: '🛒' },
-  groceries:        { label: 'Groceries & Staples',emoji: '🌾' },
-  staples:          { label: 'Groceries & Staples',emoji: '🌾' },
-  dal_pulses:       { label: 'Dal & Pulses',        emoji: '🫘' },
-  oils:             { label: 'Oils & Ghee',         emoji: '🫙' },
-  sugar_salt:       { label: 'Sugar & Salt',        emoji: '🧂' },
-  spices:           { label: 'Spices',              emoji: '🌶' },
-  flour:            { label: 'Flour & Grains',      emoji: '🌾' },
-  rice_grains:      { label: 'Rice & Grains',       emoji: '🌾' },
-  beverages:        { label: 'Beverages',           emoji: '🧃' },
-  snacks:           { label: 'Snacks & Packaged',   emoji: '🍿' },
-  packaged:         { label: 'Packaged Food',       emoji: '🥫' },
-  dairy_eggs:       { label: 'Dairy & Eggs',        emoji: '🥛' },
-  milk:             { label: 'Milk',                emoji: '🥛' },
-  curd:             { label: 'Curd & Yogurt',       emoji: '🥣' },
-  butter:           { label: 'Butter & Cheese',     emoji: '🧈' },
-  paneer:           { label: 'Paneer',              emoji: '🧀' },
-  ghee:             { label: 'Ghee',                emoji: '🫙' },
-  dairy:            { label: 'Dairy',               emoji: '🥛' },
-  eggs:             { label: 'Eggs',                emoji: '🥚' },
-  personal_care:    { label: 'Personal Care',       emoji: '🧴' },
-  cleaning:         { label: 'Household Cleaning',  emoji: '🧹' },
-  baby_kids:        { label: 'Baby & Kids',         emoji: '👶' },
-  stationery:       { label: 'Fancy & Stationery',  emoji: '✏️' },
-  health_wellness:  { label: 'Health & Wellness',   emoji: '💊' },
-  frozen:           { label: 'Frozen & Chilled',    emoji: '🧊' },
-  grocery:          { label: 'Grocery',             emoji: '🛒' },
-  chips:            { label: 'Chips',               emoji: '🥔' },
-  namkeen:          { label: 'Namkeen',             emoji: '🍿' },
-  soft_drinks:      { label: 'Soft Drinks',         emoji: '🥤' },
-  chocolates:       { label: 'Chocolates',          emoji: '🍫' },
-  juices:           { label: 'Juices',              emoji: '🧃' },
-  water:            { label: 'Water',               emoji: '💧' },
-  restaurant:       { label: 'All Items',           emoji: '🍽' },
-  breakfast:        { label: 'Breakfast',           emoji: '🍳' },
-  lunch:            { label: 'Lunch',               emoji: '🍛' },
-  dinner:           { label: 'Dinner',              emoji: '🌙' },
-  vegetarian:       { label: 'Vegetarian',          emoji: '🥗' },
-  non_vegetarian:   { label: 'Non-Veg',             emoji: '🍗' },
-  tiffins_snacks:   { label: 'Tiffins & Snacks',    emoji: '🥙' },
-  beverages_juices: { label: 'Beverages & Juices',  emoji: '🥤' },
-  desserts_sweets:  { label: 'Desserts & Sweets',   emoji: '🍮' },
-  combos:           { label: 'Combos & Meals',      emoji: '🍱' },
-  main_course:      { label: 'Main Course',         emoji: '🍛' },
-  biryani:          { label: 'Biryani',             emoji: '🍚' },
-  rice:             { label: 'Rice',                emoji: '🍚' },
-  starters:         { label: 'Starters',            emoji: '🥗' },
-  desserts:         { label: 'Desserts',            emoji: '🍮' },
-  drinks:           { label: 'Drinks',              emoji: '🥤' },
-  fast_food:        { label: 'All Items',           emoji: '🍔' },
-  burgers:          { label: 'Burgers',             emoji: '🍔' },
-  pizza:            { label: 'Pizza',               emoji: '🍕' },
-  fries_sides:      { label: 'Fries & Sides',       emoji: '🍟' },
-  wraps_rolls:      { label: 'Wraps & Rolls',       emoji: '🌯' },
-  fried_chicken:    { label: 'Fried Chicken',       emoji: '🍗' },
-  hot_dogs:         { label: 'Hot Dogs & Sandwiches',emoji: '🌭' },
-  chinese:          { label: 'All Items',           emoji: '🥡' },
-  chinese_rice:     { label: 'Rice',                emoji: '🍚' },
-  noodles:          { label: 'Noodles',             emoji: '🍜' },
-  manchurian:       { label: 'Manchurian & Starters',emoji: '🥢' },
-  momos:            { label: 'Momos',               emoji: '🥟' },
-  soups:            { label: 'Soups',               emoji: '🍲' },
-  chilli_dishes:    { label: 'Chilli Dishes',       emoji: '🌶' },
-  bakery:           { label: 'All Items',           emoji: '🎂' },
-  cakes:            { label: 'Cakes',               emoji: '🎂' },
-  breads:           { label: 'Breads & Loaves',     emoji: '🍞' },
-  puffs:            { label: 'Puffs & Savouries',   emoji: '🥐' },
-  biscuits_cookies: { label: 'Biscuits & Cookies',  emoji: '🍪' },
-  cookies:          { label: 'Cookies',             emoji: '🍪' },
-  sweets_mithais:   { label: 'Sweets & Mithais',    emoji: '🍬' },
-  hot_snacks:       { label: 'Hot Snacks',          emoji: '🍿' },
-  rusks:            { label: 'Rusks & Toast',       emoji: '🍞' },
-  pastries:         { label: 'Pastries & Tarts',    emoji: '🧁' },
-  festival:         { label: 'Festival Specials',   emoji: '🎉' },
-  buns:             { label: 'Buns',                emoji: '🥐' },
-  vegetables:       { label: 'All Vegetables',      emoji: '🥦' },
-  leafy_greens:     { label: 'Leafy Vegetables',    emoji: '🥬' },
-  root_vegetables:  { label: 'Root Vegetables',     emoji: '🥕' },
-  gourds:           { label: 'Gourds & Squash',     emoji: '🥒' },
-  beans_pods:       { label: 'Beans & Pods',        emoji: '🫘' },
-  stem_flower:      { label: 'Stem & Flower',       emoji: '🥦' },
-  tomatoes:         { label: 'Tomato & Capsicum',   emoji: '🍅' },
-  exotic_veg:       { label: 'Exotic & Specialty',  emoji: '🍄' },
-  herbs:            { label: 'Herbs & Aromatics',   emoji: '🌿' },
-  onions:           { label: 'Onions',              emoji: '🧅' },
-  potatoes:         { label: 'Potatoes',            emoji: '🥔' },
-  carrots:          { label: 'Carrots',             emoji: '🥕' },
-  cucumber:         { label: 'Cucumber',            emoji: '🥒' },
-  brinjal:          { label: 'Brinjal',             emoji: '🍆' },
-  chillies:         { label: 'Chillies',            emoji: '🌶' },
-  ice_cream:        { label: 'All Items',           emoji: '🍦' },
-  scoops:           { label: 'Ice Cream Scoops',    emoji: '🍨' },
-  shakes:           { label: 'Shakes & Floats',     emoji: '🥤' },
-  sundaes:          { label: 'Sundaes & Splits',    emoji: '🍧' },
-  kulfi:            { label: 'Kulfi & Indian',      emoji: '🍡' },
-  waffles:          { label: 'Waffles & Crepes',    emoji: '🧇' },
-  dessert_cakes:    { label: 'Cakes & Dessert Jars',emoji: '🎂' },
-  bulk_packs:       { label: 'Bulk & Party Packs',  emoji: '📦' },
-  fruits:           { label: 'All Fruits',          emoji: '🍎' },
-  common_fruits:    { label: 'Common Indian Fruits',emoji: '🍌' },
-  citrus:           { label: 'Citrus Fruits',       emoji: '🍊' },
-  tropical:         { label: 'Tropical Fruits',     emoji: '🍍' },
-  temperate:        { label: 'Temperate Fruits',    emoji: '🍇' },
-  berries:          { label: 'Berries & Small',     emoji: '🍓' },
-  dry_fruits:       { label: 'Dry Fruits & Nuts',   emoji: '🥜' },
-  exotic_fruits:    { label: 'Exotic & Imported',   emoji: '🥝' },
-  seasonal:         { label: 'Seasonal Specials',   emoji: '🥭' },
-  bananas:          { label: 'Bananas',             emoji: '🍌' },
-  apples:           { label: 'Apples',              emoji: '🍎' },
-  mangoes:          { label: 'Mangoes',             emoji: '🥭' },
-  grapes:           { label: 'Grapes',              emoji: '🍇' },
-  melons:           { label: 'Melons',              emoji: '🍉' },
-  exotic:           { label: 'Exotic',              emoji: '🍍' },
-  fresh_leafies:    { label: 'Fresh Leafies',       emoji: '🥬' },
-  fresh_veggies:    { label: 'Fresh Veggies',       emoji: '🥕' },
-  masala_powders:   { label: 'Masala & Spice Powders', emoji: '🌶' },
-  other:            { label: 'Other',               emoji: '📦' },
+  all:              { label: 'All Items',             emoji: '🍽' },
+  supermarket:      { label: 'All Items',             emoji: '🛒' },
+  groceries:        { label: 'Groceries & Staples',   emoji: '🌾' },
+  staples:          { label: 'Groceries & Staples',   emoji: '🌾' },
+  dal_pulses:       { label: 'Dal & Pulses',          emoji: '🫘' },
+  oils:             { label: 'Oils & Ghee',           emoji: '🫙' },
+  sugar_salt:       { label: 'Sugar & Salt',          emoji: '🧂' },
+  spices:           { label: 'Spices',                emoji: '🌶' },
+  flour:            { label: 'Flour & Grains',        emoji: '🌾' },
+  rice_grains:      { label: 'Rice & Grains',         emoji: '🌾' },
+  beverages:        { label: 'Beverages',             emoji: '🧃' },
+  snacks:           { label: 'Snacks & Packaged',     emoji: '🍿' },
+  packaged:         { label: 'Packaged Food',         emoji: '🥫' },
+  dairy_eggs:       { label: 'Dairy & Eggs',          emoji: '🥛' },
+  milk:             { label: 'Milk',                  emoji: '🥛' },
+  curd:             { label: 'Curd & Yogurt',         emoji: '🥣' },
+  butter:           { label: 'Butter & Cheese',       emoji: '🧈' },
+  paneer:           { label: 'Paneer',                emoji: '🧀' },
+  ghee:             { label: 'Ghee',                  emoji: '🫙' },
+  dairy:            { label: 'Dairy',                 emoji: '🥛' },
+  eggs:             { label: 'Eggs',                  emoji: '🥚' },
+  personal_care:    { label: 'Personal Care',         emoji: '🧴' },
+  cleaning:         { label: 'Household Cleaning',    emoji: '🧹' },
+  baby_kids:        { label: 'Baby & Kids',           emoji: '👶' },
+  stationery:       { label: 'Fancy & Stationery',    emoji: '✏️' },
+  health_wellness:  { label: 'Health & Wellness',     emoji: '💊' },
+  frozen:           { label: 'Frozen & Chilled',      emoji: '🧊' },
+  grocery:          { label: 'Grocery',               emoji: '🛒' },
+  chips:            { label: 'Chips',                 emoji: '🥔' },
+  namkeen:          { label: 'Namkeen',               emoji: '🍿' },
+  soft_drinks:      { label: 'Soft Drinks',           emoji: '🥤' },
+  chocolates:       { label: 'Chocolates',            emoji: '🍫' },
+  juices:           { label: 'Juices',                emoji: '🧃' },
+  water:            { label: 'Water',                 emoji: '💧' },
+  restaurant:       { label: 'All Items',             emoji: '🍽' },
+  breakfast:        { label: 'Breakfast',             emoji: '🍳' },
+  lunch:            { label: 'Lunch',                 emoji: '🍛' },
+  dinner:           { label: 'Dinner',                emoji: '🌙' },
+  vegetarian:       { label: 'Vegetarian',            emoji: '🥗' },
+  non_vegetarian:   { label: 'Non-Veg',               emoji: '🍗' },
+  tiffins_snacks:   { label: 'Tiffins & Snacks',      emoji: '🥙' },
+  beverages_juices: { label: 'Beverages & Juices',    emoji: '🥤' },
+  desserts_sweets:  { label: 'Desserts & Sweets',     emoji: '🍮' },
+  combos:           { label: 'Combos & Meals',        emoji: '🍱' },
+  main_course:      { label: 'Main Course',           emoji: '🍛' },
+  biryani:          { label: 'Biryani',               emoji: '🍚' },
+  rice:             { label: 'Rice',                  emoji: '🍚' },
+  starters:         { label: 'Starters',              emoji: '🥗' },
+  desserts:         { label: 'Desserts',              emoji: '🍮' },
+  drinks:           { label: 'Drinks',                emoji: '🥤' },
+  fast_food:        { label: 'All Items',             emoji: '🍔' },
+  burgers:          { label: 'Burgers',               emoji: '🍔' },
+  pizza:            { label: 'Pizza',                 emoji: '🍕' },
+  fries_sides:      { label: 'Fries & Sides',         emoji: '🍟' },
+  wraps_rolls:      { label: 'Wraps & Rolls',         emoji: '🌯' },
+  fried_chicken:    { label: 'Fried Chicken',         emoji: '🍗' },
+  hot_dogs:         { label: 'Hot Dogs & Sandwiches', emoji: '🌭' },
+  chinese:          { label: 'All Items',             emoji: '🥡' },
+  chinese_rice:     { label: 'Rice',                  emoji: '🍚' },
+  noodles:          { label: 'Noodles',               emoji: '🍜' },
+  manchurian:       { label: 'Manchurian & Starters', emoji: '🥢' },
+  momos:            { label: 'Momos',                 emoji: '🥟' },
+  soups:            { label: 'Soups',                 emoji: '🍲' },
+  chilli_dishes:    { label: 'Chilli Dishes',         emoji: '🌶' },
+  bakery:           { label: 'All Items',             emoji: '🎂' },
+  cakes:            { label: 'Cakes',                 emoji: '🎂' },
+  breads:           { label: 'Breads & Loaves',       emoji: '🍞' },
+  puffs:            { label: 'Puffs & Savouries',     emoji: '🥐' },
+  biscuits_cookies: { label: 'Biscuits & Cookies',    emoji: '🍪' },
+  cookies:          { label: 'Cookies',               emoji: '🍪' },
+  sweets_mithais:   { label: 'Sweets & Mithais',      emoji: '🍬' },
+  hot_snacks:       { label: 'Hot Snacks',            emoji: '🍿' },
+  rusks:            { label: 'Rusks & Toast',         emoji: '🍞' },
+  pastries:         { label: 'Pastries & Tarts',      emoji: '🧁' },
+  festival:         { label: 'Festival Specials',     emoji: '🎉' },
+  buns:             { label: 'Buns',                  emoji: '🥐' },
+  vegetables:       { label: 'All Vegetables',        emoji: '🥦' },
+  leafy_greens:     { label: 'Leafy Vegetables',      emoji: '🥬' },
+  root_vegetables:  { label: 'Root Vegetables',       emoji: '🥕' },
+  gourds:           { label: 'Gourds & Squash',       emoji: '🥒' },
+  beans_pods:       { label: 'Beans & Pods',          emoji: '🫘' },
+  stem_flower:      { label: 'Stem & Flower',         emoji: '🥦' },
+  tomatoes:         { label: 'Tomato & Capsicum',     emoji: '🍅' },
+  exotic_veg:       { label: 'Exotic & Specialty',    emoji: '🍄' },
+  herbs:            { label: 'Herbs & Aromatics',     emoji: '🌿' },
+  onions:           { label: 'Onions',                emoji: '🧅' },
+  potatoes:         { label: 'Potatoes',              emoji: '🥔' },
+  carrots:          { label: 'Carrots',               emoji: '🥕' },
+  cucumber:         { label: 'Cucumber',              emoji: '🥒' },
+  brinjal:          { label: 'Brinjal',               emoji: '🍆' },
+  chillies:         { label: 'Chillies',              emoji: '🌶' },
+  ice_cream:        { label: 'All Items',             emoji: '🍦' },
+  scoops:           { label: 'Ice Cream Scoops',      emoji: '🍨' },
+  shakes:           { label: 'Shakes & Floats',       emoji: '🥤' },
+  sundaes:          { label: 'Sundaes & Splits',      emoji: '🍧' },
+  kulfi:            { label: 'Kulfi & Indian',        emoji: '🍡' },
+  waffles:          { label: 'Waffles & Crepes',      emoji: '🧇' },
+  dessert_cakes:    { label: 'Cakes & Dessert Jars',  emoji: '🎂' },
+  bulk_packs:       { label: 'Bulk & Party Packs',    emoji: '📦' },
+  fruits:           { label: 'All Fruits',            emoji: '🍎' },
+  common_fruits:    { label: 'Common Indian Fruits',  emoji: '🍌' },
+  citrus:           { label: 'Citrus Fruits',         emoji: '🍊' },
+  tropical:         { label: 'Tropical Fruits',       emoji: '🍍' },
+  temperate:        { label: 'Temperate Fruits',      emoji: '🍇' },
+  berries:          { label: 'Berries & Small',       emoji: '🍓' },
+  dry_fruits:       { label: 'Dry Fruits & Nuts',     emoji: '🥜' },
+  exotic_fruits:    { label: 'Exotic & Imported',     emoji: '🥝' },
+  seasonal:         { label: 'Seasonal Specials',     emoji: '🥭' },
+  bananas:          { label: 'Bananas',               emoji: '🍌' },
+  apples:           { label: 'Apples',                emoji: '🍎' },
+  mangoes:          { label: 'Mangoes',               emoji: '🥭' },
+  grapes:           { label: 'Grapes',                emoji: '🍇' },
+  melons:           { label: 'Melons',                emoji: '🍉' },
+  exotic:           { label: 'Exotic',                emoji: '🍍' },
+  fresh_leafies:    { label: 'Fresh Leafies',         emoji: '🥬' },
+  fresh_veggies:    { label: 'Fresh Veggies',         emoji: '🥕' },
+  masala_powders:   { label: 'Masala & Spice Powders',emoji: '🌶' },
+  other:            { label: 'Other',                 emoji: '📦' },
 };
+
 const getCatLabel = (cat) => {
   const info = CATEGORY_LABELS[cat];
   if (!info) return { label: cat.charAt(0).toUpperCase() + cat.slice(1).replace('_', ' '), emoji: '📦' };
   return info;
 };
 
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
 const getDiscount = (price, mrp) => {
   if (!mrp || !price) return null;
   const p = parseFloat(price);
@@ -147,17 +151,20 @@ const getDiscount = (price, mrp) => {
   return Math.round(((m - p) / m) * 100);
 };
 
-// ─── PRODUCT CARD ─────────────────────────────────────────────────────────────
+const formatPrice = (price) => {
+  const p = parseFloat(price);
+  return p % 1 === 0 ? `₹${Math.round(p)}` : `₹${p.toFixed(2)}`;
+};
+
+// ─── GRID PRODUCT CARD ────────────────────────────────────────────────────────
 const ProductCard = ({ product, qty, onAdd, onRemove, shopColor }) => {
   const [showVariants, setShowVariants]       = useState(false);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const hasVariants = product.variants && product.variants.length > 0;
 
-  // ── Stock logic ──
-  const productOutOfStock = !hasVariants && product.stock_quantity === 0;
-  const allVariantsOutOfStock = hasVariants &&
-    product.variants.every(v => v.stock_quantity === 0);
-  const isOutOfStock = productOutOfStock || allVariantsOutOfStock;
+  const productOutOfStock     = !hasVariants && product.stock_quantity === 0;
+  const allVariantsOutOfStock = hasVariants && product.variants.every(v => v.stock_quantity === 0);
+  const isOutOfStock          = productOutOfStock || allVariantsOutOfStock;
 
   const handleAddPress = () => {
     if (isOutOfStock) return;
@@ -177,128 +184,114 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor }) => {
   const discount    = getDiscount(activePrice, activeMrp);
 
   return (
-    <View style={[styles.productCard, isOutOfStock && styles.productCardOOS]}>
-      <View style={styles.productInfo}>
-        {/* Veg/Non-veg indicator */}
+    <View style={[styles.gridCard, isOutOfStock && { opacity: 0.85 }]}>
+
+      {/* ── Large Image ── */}
+      <View style={[styles.gridImageBox, { backgroundColor: shopColor + '15' }]}>
+        {product.image_url ? (
+          <Image source={{ uri: product.image_url }}
+            style={[styles.gridImage, isOutOfStock && { opacity: 0.4 }]}
+            resizeMode="cover" />
+        ) : (
+          <Text style={[styles.gridEmoji, isOutOfStock && { opacity: 0.4 }]}>
+            {CATEGORY_EMOJIS[product.category] || '🛍'}
+          </Text>
+        )}
+        {/* Discount badge — top left */}
+        {!isOutOfStock && discount && (
+          <View style={styles.gridDiscountBadge}>
+            <Text style={styles.gridDiscountText}>{discount}% OFF</Text>
+          </View>
+        )}
+        {/* OOS overlay */}
+        {isOutOfStock && (
+          <View style={styles.gridOOSOverlay}>
+            <Text style={styles.gridOOSOverlayText}>Out of{'\n'}Stock</Text>
+          </View>
+        )}
+        {/* Veg/Non-veg dot — top right */}
         {['restaurant','fast_food','chinese','breakfast','lunch','dinner',
           'vegetarian','non_vegetarian','tiffins_snacks','main_course',
           'biryani','starters','combos'].includes(product.category) && (
-          <View style={[styles.vegIndicator, product.category === 'non_vegetarian' && styles.nonVegIndicator]}>
-            <View style={[styles.vegDot, product.category === 'non_vegetarian' && styles.nonVegDot]} />
+          <View style={[styles.gridVegDot, product.category === 'non_vegetarian' && styles.gridNonVegDot]}>
+            <View style={[styles.gridVegInner, product.category === 'non_vegetarian' && styles.gridNonVegInner]} />
           </View>
         )}
+      </View>
 
-        <Text style={[styles.productName, isOutOfStock && styles.textOOS]}>{product.name}</Text>
+      {/* ── Info ── */}
+      <View style={styles.gridInfo}>
+        <Text style={[styles.gridName, isOutOfStock && { color: '#9CA3AF' }]} numberOfLines={2}>
+          {product.name}
+        </Text>
         {product.description ? (
-          <Text style={styles.productDesc} numberOfLines={2}>{product.description}</Text>
+          <Text style={styles.gridDesc} numberOfLines={1}>{product.description}</Text>
         ) : null}
 
-        {/* ── Variant Pills ── */}
+        {/* Variant pills */}
         {hasVariants && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}
-            style={styles.variantScroll} contentContainerStyle={{ gap: 6 }}>
+            style={{ marginBottom: 6 }} contentContainerStyle={{ gap: 4 }}>
             {product.variants.map(v => {
-              const isActive  = selectedVariant?.id === v.id;
-              const isVarOOS  = v.stock_quantity === 0;
-              const vDiscount = getDiscount(v.price, v.mrp);
+              const isActive = selectedVariant?.id === v.id;
+              const isVarOOS = v.stock_quantity === 0;
               return (
                 <TouchableOpacity key={v.id}
                   style={[
-                    styles.variantPill,
-                    isActive  && { backgroundColor: shopColor, borderColor: shopColor },
-                    isVarOOS  && styles.variantPillOOS,
+                    styles.gridVariantPill,
+                    isActive && { backgroundColor: shopColor, borderColor: shopColor },
+                    isVarOOS && { opacity: 0.5 },
                   ]}
                   onPress={() => !isVarOOS && setSelectedVariant(isActive ? null : v)}
-                  disabled={isVarOOS}
-                >
-                  <Text style={[styles.variantPillName, isActive && { color: '#fff' }, isVarOOS && styles.variantTextOOS]}>
+                  disabled={isVarOOS}>
+                  <Text style={[
+                    styles.gridVariantText,
+                    isActive && { color: '#fff' },
+                    isVarOOS && { textDecorationLine: 'line-through', color: '#9CA3AF' },
+                  ]}>
                     {v.name}
                   </Text>
-                  <View style={styles.variantPillPriceRow}>
-                    <Text style={[styles.variantPillPrice, isActive && { color: '#fff' }, isVarOOS && styles.variantTextOOS]}>
-                      ₹{v.price}
-                    </Text>
-                    {v.mrp && parseFloat(v.mrp) > parseFloat(v.price) && !isVarOOS && (
-                      <Text style={[styles.variantPillMrp, isActive && { color: 'rgba(255,255,255,0.65)' }]}>
-                        ₹{parseFloat(v.mrp).toFixed(0)}
-                      </Text>
-                    )}
-                  </View>
-                  {isVarOOS ? (
-                    <Text style={styles.variantOOSText}>Out of stock</Text>
-                  ) : vDiscount ? (
-                    <View style={[styles.variantDiscountBadge, isActive && { backgroundColor: 'rgba(255,255,255,0.25)' }]}>
-                      <Text style={[styles.variantDiscountText, isActive && { color: '#fff' }]}>{vDiscount}% OFF</Text>
-                    </View>
-                  ) : null}
                 </TouchableOpacity>
               );
             })}
           </ScrollView>
         )}
 
-        {/* ── Price + MRP + Discount ── */}
-        <View style={styles.priceRow}>
-          <Text style={[styles.productPrice, isOutOfStock && styles.textOOS]}>₹{activePrice}</Text>
+        {/* Price */}
+        <View style={styles.gridPriceRow}>
+          <Text style={[styles.gridPrice, isOutOfStock && { color: '#9CA3AF' }]}>
+            {formatPrice(activePrice)}
+          </Text>
           {!isOutOfStock && activeMrp && parseFloat(activeMrp) > parseFloat(activePrice) && (
-            <Text style={styles.mrpPrice}>₹{parseFloat(activeMrp).toFixed(0)}</Text>
-          )}
-          {!isOutOfStock && discount && (
-            <View style={styles.discountBadge}>
-              <Text style={styles.discountBadgeText}>{discount}% OFF</Text>
-            </View>
+            <Text style={styles.gridMrp}>{formatPrice(activeMrp)}</Text>
           )}
         </View>
 
-        {selectedVariant && !isOutOfStock && (
-          <Text style={styles.selectedVariantLabel}>Selected: {selectedVariant.name}</Text>
-        )}
-      </View>
-
-      {/* ── Right: Image + Button ── */}
-      <View style={styles.productRight}>
-        <View style={[styles.productImageBox, { backgroundColor: shopColor + '20' }]}>
-          {product.image_url ? (
-            <Image source={{ uri: product.image_url }}
-              style={[styles.productImage, isOutOfStock && { opacity: 0.4 }]}
-              resizeMode="cover" />
-          ) : (
-            <Text style={[styles.productEmoji, isOutOfStock && { opacity: 0.4 }]}>
-              {CATEGORY_EMOJIS[product.category] || '🛍'}
-            </Text>
-          )}
-          {isOutOfStock && (
-            <View style={styles.oosOverlay}>
-              <Text style={styles.oosOverlayText}>Out of{'\n'}Stock</Text>
-            </View>
-          )}
-        </View>
-
+        {/* Button */}
         {isOutOfStock ? (
-          <View style={styles.oosBtn}>
-            <Text style={styles.oosBtnText}>Out of Stock</Text>
+          <View style={styles.gridOOSBtn}>
+            <Text style={styles.gridOOSBtnText}>Out of Stock</Text>
           </View>
         ) : qty === 0 ? (
-          <TouchableOpacity style={[styles.addBtn, { borderColor: shopColor }]} onPress={handleAddPress}>
-            <Text style={[styles.addBtnText, { color: shopColor }]}>ADD</Text>
-            {hasVariants && !selectedVariant && (
-              <Text style={[styles.addBtnSub, { color: shopColor }]}>▾</Text>
-            )}
+          <TouchableOpacity style={[styles.gridAddBtn, { backgroundColor: shopColor }]} onPress={handleAddPress}>
+            <Text style={styles.gridAddBtnText}>
+              {hasVariants && !selectedVariant ? 'ADD  ▾' : 'ADD'}
+            </Text>
           </TouchableOpacity>
         ) : (
-          <View style={[styles.qtyControl, { backgroundColor: shopColor }]}>
-            <TouchableOpacity style={styles.qtyBtn} onPress={() => onRemove(product)}>
-              <Text style={styles.qtyBtnText}>−</Text>
+          <View style={[styles.gridQtyControl, { borderColor: shopColor }]}>
+            <TouchableOpacity style={styles.gridQtyBtn} onPress={() => onRemove(product)}>
+              <Text style={[styles.gridQtyBtnText, { color: shopColor }]}>−</Text>
             </TouchableOpacity>
-            <Text style={styles.qtyText}>{qty}</Text>
-            <TouchableOpacity style={styles.qtyBtn} onPress={handleAddPress}>
-              <Text style={styles.qtyBtnText}>+</Text>
+            <Text style={[styles.gridQtyText, { color: shopColor }]}>{qty}</Text>
+            <TouchableOpacity style={styles.gridQtyBtn} onPress={handleAddPress}>
+              <Text style={[styles.gridQtyBtnText, { color: shopColor }]}>+</Text>
             </TouchableOpacity>
           </View>
         )}
       </View>
 
-      {/* ── Variant Picker Modal ── */}
+      {/* ── Variant Modal ── */}
       <Modal visible={showVariants} animationType="slide" transparent onRequestClose={() => setShowVariants(false)}>
         <TouchableOpacity style={styles.variantOverlay} activeOpacity={1} onPress={() => setShowVariants(false)} />
         <View style={styles.variantModal}>
@@ -309,59 +302,42 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor }) => {
             </TouchableOpacity>
           </View>
           <Text style={styles.variantModalSub}>Select size / weight</Text>
-
           <TouchableOpacity
             style={[styles.variantOption, !selectedVariant && styles.variantOptionActive]}
-            onPress={() => { setSelectedVariant(null); setShowVariants(false); onAdd(product, null); }}
-          >
+            onPress={() => { setSelectedVariant(null); setShowVariants(false); onAdd(product, null); }}>
             <View style={styles.variantOptionLeft}>
               <Text style={styles.variantOptionName}>Standard</Text>
               <Text style={styles.variantOptionDesc}>Default size</Text>
             </View>
             <View style={styles.variantOptionRight}>
-              <Text style={[styles.variantOptionPrice, { color: shopColor }]}>₹{product.price}</Text>
+              <Text style={[styles.variantOptionPrice, { color: shopColor }]}>{formatPrice(product.price)}</Text>
               {product.mrp && parseFloat(product.mrp) > parseFloat(product.price) && (
-                <Text style={styles.variantOptionMrp}>₹{parseFloat(product.mrp).toFixed(0)}</Text>
+                <Text style={styles.variantOptionMrp}>{formatPrice(product.mrp)}</Text>
               )}
             </View>
           </TouchableOpacity>
-
           {product.variants.map(v => {
             const vDiscount = getDiscount(v.price, v.mrp);
             const isVarOOS  = v.stock_quantity === 0;
             return (
               <TouchableOpacity key={v.id}
-                style={[
-                  styles.variantOption,
-                  selectedVariant?.id === v.id && styles.variantOptionActive,
-                  isVarOOS && styles.variantOptionOOS,
-                ]}
-                onPress={() => !isVarOOS && handleVariantSelect(v)}
-                disabled={isVarOOS}
-              >
+                style={[styles.variantOption, selectedVariant?.id === v.id && styles.variantOptionActive, isVarOOS && { opacity: 0.6 }]}
+                onPress={() => !isVarOOS && handleVariantSelect(v)} disabled={isVarOOS}>
                 <View style={styles.variantOptionLeft}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Text style={[styles.variantOptionName, isVarOOS && styles.textOOS]}>{v.name}</Text>
+                    <Text style={[styles.variantOptionName, isVarOOS && { color: '#9CA3AF' }]}>{v.name}</Text>
                     {isVarOOS ? (
-                      <View style={styles.modalOOSBadge}>
-                        <Text style={styles.modalOOSText}>Out of stock</Text>
-                      </View>
+                      <View style={styles.modalOOSBadge}><Text style={styles.modalOOSText}>Out of stock</Text></View>
                     ) : vDiscount ? (
-                      <View style={styles.modalDiscountBadge}>
-                        <Text style={styles.modalDiscountText}>{vDiscount}% OFF</Text>
-                      </View>
+                      <View style={styles.modalDiscountBadge}><Text style={styles.modalDiscountText}>{vDiscount}% OFF</Text></View>
                     ) : null}
                   </View>
-                  {!isVarOOS && v.stock_quantity > 0 && (
-                    <Text style={styles.variantOptionDesc}>In stock</Text>
-                  )}
+                  {!isVarOOS && v.stock_quantity > 0 && <Text style={styles.variantOptionDesc}>In stock</Text>}
                 </View>
                 <View style={styles.variantOptionRight}>
-                  <Text style={[styles.variantOptionPrice, { color: isVarOOS ? '#9CA3AF' : shopColor }]}>
-                    ₹{v.price}
-                  </Text>
+                  <Text style={[styles.variantOptionPrice, { color: isVarOOS ? '#9CA3AF' : shopColor }]}>{formatPrice(v.price)}</Text>
                   {!isVarOOS && v.mrp && parseFloat(v.mrp) > parseFloat(v.price) && (
-                    <Text style={styles.variantOptionMrp}>₹{parseFloat(v.mrp).toFixed(0)}</Text>
+                    <Text style={styles.variantOptionMrp}>{formatPrice(v.mrp)}</Text>
                   )}
                 </View>
               </TouchableOpacity>
@@ -382,9 +358,9 @@ export default function ShopDetailScreen({ navigation, route }) {
   const [loading, setLoading]               = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
   const { carts, addToCart, removeFromCart, cartCount } = useCart();
-  const cart = carts[vendorId]?.items || {};
+  const cart          = carts[vendorId]?.items || {};
   const shopCartCount = Object.values(cart).reduce((a, b) => a + b, 0);
-  const shopColor = SHOP_COLORS[Math.abs((vendorId?.charCodeAt(0) || 65) - 65) % SHOP_COLORS.length] || '#1669ef';
+  const shopColor     = SHOP_COLORS[Math.abs((vendorId?.charCodeAt(0) || 65) - 65) % SHOP_COLORS.length] || '#1669ef';
 
   const fetchShopData = async () => {
     try {
@@ -396,11 +372,8 @@ export default function ShopDetailScreen({ navigation, route }) {
       if (Array.isArray(productsRes.data)) setProducts(productsRes.data);
       else if (productsRes.data.products) setProducts(productsRes.data.products);
       else setProducts([]);
-    } catch (e) {
-      console.log('Error:', e.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { console.log('Error:', e.message); }
+    finally { setLoading(false); }
   };
 
   useEffect(() => { fetchShopData(); }, []);
@@ -413,20 +386,22 @@ export default function ShopDetailScreen({ navigation, route }) {
   };
 
   const productCategories = ['all', ...new Set(products.map(p => p.category))];
-
-  // Hide is_available=false products entirely; show OOS products greyed out
-  const visibleProducts = products.filter(p => p.is_available !== false);
-  const filteredProducts = activeCategory === 'all'
+  const visibleProducts   = products.filter(p => p.is_available !== false);
+  const filteredProducts  = activeCategory === 'all'
     ? visibleProducts
     : visibleProducts.filter(p => p.category === activeCategory);
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1669ef" />
-      </View>
-    );
+  // Build 2-column grid rows
+  const gridRows = [];
+  for (let i = 0; i < filteredProducts.length; i += 2) {
+    gridRows.push(filteredProducts.slice(i, i + 2));
   }
+
+  if (loading) return (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color="#1669ef" />
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -479,7 +454,7 @@ export default function ShopDetailScreen({ navigation, route }) {
         </View>
       </View>
 
-      {/* Category Filter Tabs */}
+      {/* Category Tabs */}
       {productCategories.length > 1 && (
         <View style={styles.categoryTabsWrapper}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}
@@ -500,8 +475,9 @@ export default function ShopDetailScreen({ navigation, route }) {
         </View>
       )}
 
-      {/* Products List */}
-      <ScrollView style={styles.productsList} showsVerticalScrollIndicator={false}>
+      {/* Products Grid */}
+      <ScrollView style={styles.productsList} showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8 }}>
         <Text style={styles.itemsCount}>
           {filteredProducts.length} item{filteredProducts.length !== 1 ? 's' : ''}
         </Text>
@@ -514,10 +490,15 @@ export default function ShopDetailScreen({ navigation, route }) {
             <Text style={styles.emptySubtitle}>This shop has not added products yet</Text>
           </View>
         ) : (
-          filteredProducts.map(product => (
-            <ProductCard key={product.id} product={product}
-              qty={cart[product.id] || 0}
-              onAdd={handleAddToCart} onRemove={removeFromCart} shopColor={shopColor} />
+          gridRows.map((row, rowIdx) => (
+            <View key={rowIdx} style={styles.gridRow}>
+              {row.map(product => (
+                <ProductCard key={product.id} product={product}
+                  qty={cart[product.id] || 0}
+                  onAdd={handleAddToCart} onRemove={removeFromCart} shopColor={shopColor} />
+              ))}
+              {row.length === 1 && <View style={{ width: CARD_WIDTH }} />}
+            </View>
           ))
         )}
         <View style={{ height: 160 }} />
@@ -574,20 +555,10 @@ const styles = StyleSheet.create({
   container:        { flex: 1, backgroundColor: '#F8F9FA' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   shopBanner:       { height: 160, justifyContent: 'center', alignItems: 'center', position: 'relative' },
-  backBtn: {
-    position: 'absolute', top: 52, left: 16, width: 38, height: 38, borderRadius: 19,
-    backgroundColor: 'rgba(0,0,0,0.25)', justifyContent: 'center', alignItems: 'center',
-  },
-  notifBtn: {
-    position: 'absolute', top: 52, right: 16, width: 38, height: 38, borderRadius: 19,
-    backgroundColor: 'rgba(0,0,0,0.25)', justifyContent: 'center', alignItems: 'center',
-  },
+  backBtn:  { position: 'absolute', top: 52, left: 16, width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(0,0,0,0.25)', justifyContent: 'center', alignItems: 'center' },
+  notifBtn: { position: 'absolute', top: 52, right: 16, width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(0,0,0,0.25)', justifyContent: 'center', alignItems: 'center' },
   bannerEmoji: { fontSize: 64 },
-  shopInfoCard: {
-    backgroundColor: '#fff', marginHorizontal: 16, marginTop: -20, borderRadius: 16, padding: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08, shadowRadius: 8, elevation: 4, marginBottom: 8,
-  },
+  shopInfoCard: { backgroundColor: '#fff', marginHorizontal: 16, marginTop: -20, borderRadius: 16, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 4, marginBottom: 8 },
   shopInfoTop:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
   shopInfoLeft:     { flex: 1 },
   shopInfoName:     { fontSize: 18, fontWeight: '800', color: '#111', marginBottom: 4 },
@@ -606,76 +577,53 @@ const styles = StyleSheet.create({
   shopDistance:     { fontSize: 12, color: '#1669ef', fontWeight: '600' },
   categoryTabsWrapper: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
   categoryTabs:        { paddingVertical: 4 },
-  categoryTab: {
-    alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10,
-    marginRight: 4, borderBottomWidth: 2, borderBottomColor: 'transparent', gap: 4,
+  categoryTab:         { alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, marginRight: 4, borderBottomWidth: 2, borderBottomColor: 'transparent', gap: 4 },
+  categoryTabEmoji:    { fontSize: 18 },
+  categoryTabText:     { fontSize: 12, color: '#888', fontWeight: '500' },
+  productsList:        { flex: 1 },
+  itemsCount:          { fontSize: 12, color: '#888', fontWeight: '500', paddingBottom: 8 },
+
+  // ── Grid ──
+  gridRow:  { flexDirection: 'row', gap: 16, marginBottom: 16 },
+
+  // ── Grid Card ──
+  gridCard: {
+    width: CARD_WIDTH, backgroundColor: '#fff', borderRadius: 16,
+    overflow: 'hidden', shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07,
+    shadowRadius: 8, elevation: 3,
   },
-  categoryTabEmoji: { fontSize: 18 },
-  categoryTabText:  { fontSize: 12, color: '#888', fontWeight: '500' },
-  productsList:     { flex: 1 },
-  itemsCount:       { fontSize: 12, color: '#888', fontWeight: '500', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 },
+  gridImageBox: { width: '100%', height: CARD_WIDTH * 0.85, justifyContent: 'center', alignItems: 'center', position: 'relative' },
+  gridImage:    { width: '100%', height: '100%' },
+  gridEmoji:    { fontSize: 52 },
 
-  // ── Product Card ──
-  productCard: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    paddingVertical: 16, paddingHorizontal: 16,
-    borderBottomWidth: 1, borderBottomColor: '#F5F5F5', backgroundColor: '#fff',
-  },
-  productCardOOS:  { backgroundColor: '#FAFAFA' },
-  productInfo:     { flex: 1, paddingRight: 12 },
-  vegIndicator:    { width: 16, height: 16, borderRadius: 2, borderWidth: 1.5, borderColor: '#16A34A', justifyContent: 'center', alignItems: 'center', marginBottom: 6 },
-  nonVegIndicator: { borderColor: '#dc2626' },
-  vegDot:          { width: 8, height: 8, borderRadius: 4, backgroundColor: '#16A34A' },
-  nonVegDot:       { backgroundColor: '#dc2626' },
-  productName:     { fontSize: 15, fontWeight: '600', color: '#111', marginBottom: 4 },
-  productDesc:     { fontSize: 12, color: '#888', marginBottom: 6, lineHeight: 16 },
+  gridDiscountBadge:  { position: 'absolute', top: 8, left: 8, backgroundColor: '#16A34A', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 3 },
+  gridDiscountText:   { fontSize: 10, color: '#fff', fontWeight: '800' },
+  gridOOSOverlay:     { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' },
+  gridOOSOverlayText: { color: '#fff', fontSize: 12, fontWeight: '800', textAlign: 'center', lineHeight: 16 },
+  gridVegDot:         { position: 'absolute', top: 8, right: 8, width: 18, height: 18, borderRadius: 3, borderWidth: 1.5, borderColor: '#16A34A', backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' },
+  gridNonVegDot:      { borderColor: '#dc2626' },
+  gridVegInner:       { width: 10, height: 10, borderRadius: 5, backgroundColor: '#16A34A' },
+  gridNonVegInner:    { backgroundColor: '#dc2626' },
 
-  // ── OOS styles ──
-  textOOS:        { color: '#9CA3AF' },
-  variantTextOOS: { color: '#9CA3AF', textDecorationLine: 'line-through' },
-  variantPillOOS: { backgroundColor: '#F3F4F6', borderColor: '#E5E7EB', opacity: 0.7 },
-  variantOOSText: { fontSize: 9, color: '#EF4444', fontWeight: '600', marginTop: 2 },
-  oosOverlay: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: 12,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  oosOverlayText:    { color: '#fff', fontSize: 11, fontWeight: '800', textAlign: 'center', lineHeight: 15 },
-  oosBtn:            { borderWidth: 1.5, borderRadius: 8, borderColor: '#E5E7EB', paddingHorizontal: 10, paddingVertical: 7, backgroundColor: '#F3F4F6', alignItems: 'center' },
-  oosBtnText:        { fontSize: 11, color: '#9CA3AF', fontWeight: '600' },
-  variantOptionOOS:  { opacity: 0.6, backgroundColor: '#F9FAFB' },
-  modalOOSBadge:     { backgroundColor: '#FEE2E2', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
-  modalOOSText:      { fontSize: 10, color: '#EF4444', fontWeight: '700' },
+  gridInfo:     { padding: 10 },
+  gridName:     { fontSize: 13, fontWeight: '700', color: '#111', marginBottom: 2, lineHeight: 18 },
+  gridDesc:     { fontSize: 11, color: '#888', marginBottom: 6 },
+  gridPriceRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 8 },
+  gridPrice:    { fontSize: 15, fontWeight: '800', color: '#111' },
+  gridMrp:      { fontSize: 11, color: '#9CA3AF', textDecorationLine: 'line-through' },
 
-  // ── Variant Pills ──
-  variantScroll:       { marginBottom: 8 },
-  variantPill:         { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: '#E5E7EB', backgroundColor: '#F9FAFB', alignItems: 'center', marginRight: 6, minWidth: 60 },
-  variantPillName:     { fontSize: 11, fontWeight: '700', color: '#374151', marginBottom: 2 },
-  variantPillPriceRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  variantPillPrice:    { fontSize: 11, fontWeight: '600', color: '#111' },
-  variantPillMrp:      { fontSize: 10, color: '#9CA3AF', textDecorationLine: 'line-through' },
-  variantDiscountBadge:{ marginTop: 3, backgroundColor: '#DCFCE7', borderRadius: 4, paddingHorizontal: 4, paddingVertical: 1 },
-  variantDiscountText: { fontSize: 9, color: '#16A34A', fontWeight: '700' },
+  gridVariantPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, borderWidth: 1, borderColor: '#E5E7EB', backgroundColor: '#F9FAFB' },
+  gridVariantText: { fontSize: 10, fontWeight: '600', color: '#374151' },
 
-  // ── Price Row ──
-  priceRow:          { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 4, marginTop: 4 },
-  productPrice:      { fontSize: 15, fontWeight: 'bold', color: '#111' },
-  mrpPrice:          { fontSize: 12, color: '#9CA3AF', textDecorationLine: 'line-through' },
-  discountBadge:     { backgroundColor: '#DCFCE7', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
-  discountBadgeText: { fontSize: 11, color: '#16A34A', fontWeight: '700' },
-  selectedVariantLabel: { fontSize: 11, color: '#888', marginBottom: 4 },
-
-  productRight:    { alignItems: 'center', gap: 10 },
-  productImageBox: { width: 90, height: 90, borderRadius: 12, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
-  productImage:    { width: 90, height: 90, borderRadius: 12 },
-  productEmoji:    { fontSize: 40 },
-  addBtn:          { borderWidth: 1.5, borderRadius: 8, paddingHorizontal: 20, paddingVertical: 7, backgroundColor: '#fff', alignItems: 'center' },
-  addBtnText:      { fontWeight: 'bold', fontSize: 14 },
-  addBtnSub:       { fontSize: 10, marginTop: 1 },
-  qtyControl:      { flexDirection: 'row', alignItems: 'center', borderRadius: 8, minWidth: 100, justifyContent: 'space-between' },
-  qtyBtn:          { paddingHorizontal: 12, paddingVertical: 8 },
-  qtyBtnText:      { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  qtyText:         { color: '#fff', fontSize: 16, fontWeight: 'bold', minWidth: 24, textAlign: 'center' },
+  gridAddBtn:     { borderRadius: 10, paddingVertical: 9, alignItems: 'center', justifyContent: 'center' },
+  gridAddBtnText: { color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 0.5 },
+  gridQtyControl: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderRadius: 10, justifyContent: 'space-between' },
+  gridQtyBtn:     { paddingHorizontal: 12, paddingVertical: 6 },
+  gridQtyBtnText: { fontSize: 18, fontWeight: 'bold' },
+  gridQtyText:    { fontSize: 14, fontWeight: 'bold', minWidth: 20, textAlign: 'center' },
+  gridOOSBtn:     { borderRadius: 10, paddingVertical: 8, alignItems: 'center', backgroundColor: '#F3F4F6' },
+  gridOOSBtnText: { fontSize: 11, color: '#9CA3AF', fontWeight: '600' },
 
   emptyState:    { alignItems: 'center', marginTop: 60, paddingHorizontal: 32 },
   emptyIconBox:  { width: 84, height: 84, borderRadius: 42, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
@@ -697,6 +645,8 @@ const styles = StyleSheet.create({
   variantOptionDesc:  { fontSize: 12, color: '#888' },
   variantOptionPrice: { fontSize: 16, fontWeight: 'bold' },
   variantOptionMrp:   { fontSize: 12, color: '#9CA3AF', textDecorationLine: 'line-through' },
+  modalOOSBadge:      { backgroundColor: '#FEE2E2', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  modalOOSText:       { fontSize: 10, color: '#EF4444', fontWeight: '700' },
   modalDiscountBadge: { backgroundColor: '#DCFCE7', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
   modalDiscountText:  { fontSize: 11, color: '#16A34A', fontWeight: '700' },
 
