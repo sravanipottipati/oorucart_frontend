@@ -9,13 +9,9 @@ import client from '../../api/client';
 
 export default function EditProfileScreen({ navigation }) {
   const { user, setUser } = useAuth();
-
   const [fullName, setFullName] = useState(user?.full_name || '');
   const [email, setEmail]       = useState(user?.email || '');
-  const [gender, setGender]     = useState('');
   const [loading, setLoading]   = useState(false);
-
-  const GENDERS = ['Male', 'Female', 'Other'];
 
   const initials = fullName
     ? fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -44,7 +40,6 @@ export default function EditProfileScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -55,7 +50,6 @@ export default function EditProfileScreen({ navigation }) {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-
         {/* Avatar */}
         <View style={styles.avatarSection}>
           <View style={styles.avatar}>
@@ -67,7 +61,6 @@ export default function EditProfileScreen({ navigation }) {
 
         {/* Form */}
         <View style={styles.formCard}>
-
           <Text style={styles.fieldLabel}>Full Name *</Text>
           <TextInput
             style={styles.input}
@@ -105,25 +98,6 @@ export default function EditProfileScreen({ navigation }) {
             </Text>
             <Text style={styles.townBtnArrow}>›</Text>
           </TouchableOpacity>
-
-          <Text style={styles.fieldLabel}>Gender</Text>
-          <View style={styles.genderRow}>
-            {GENDERS.map(g => (
-              <TouchableOpacity
-                key={g}
-                style={[styles.genderBtn, gender === g && styles.genderBtnActive]}
-                onPress={() => setGender(g)}
-              >
-                <Text style={[
-                  styles.genderBtnText,
-                  gender === g && styles.genderBtnTextActive,
-                ]}>
-                  {g}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
         </View>
 
         {/* Save Button */}
@@ -146,17 +120,18 @@ export default function EditProfileScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9FA' },
-
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12,
     backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
-  backBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
-  backText: { fontSize: 24, color: '#111' },
+  backBtn:     { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
+  backText:    { fontSize: 24, color: '#111' },
   headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
-
-  avatarSection: { alignItems: 'center', paddingVertical: 28, backgroundColor: '#fff', marginBottom: 16 },
+  avatarSection: {
+    alignItems: 'center', paddingVertical: 28,
+    backgroundColor: '#fff', marginBottom: 16,
+  },
   avatar: {
     width: 84, height: 84, borderRadius: 42,
     backgroundColor: '#1669ef', justifyContent: 'center',
@@ -165,7 +140,6 @@ const styles = StyleSheet.create({
   avatarText:  { color: '#fff', fontSize: 30, fontWeight: 'bold' },
   avatarName:  { fontSize: 16, fontWeight: 'bold', color: '#111', marginBottom: 4 },
   avatarPhone: { fontSize: 13, color: '#888' },
-
   formCard: {
     backgroundColor: '#fff', borderRadius: 16,
     marginHorizontal: 16, padding: 16, marginBottom: 16,
@@ -186,7 +160,6 @@ const styles = StyleSheet.create({
   inputDisabledText: { fontSize: 14, color: '#9CA3AF' },
   lockedIcon:  { fontSize: 14 },
   fieldHint:   { fontSize: 11, color: '#9CA3AF', marginTop: 4 },
-
   townBtn: {
     borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12,
     padding: 12, backgroundColor: '#F9FAFB',
@@ -194,17 +167,6 @@ const styles = StyleSheet.create({
   },
   townBtnText:  { fontSize: 14, color: '#111' },
   townBtnArrow: { fontSize: 18, color: '#888' },
-
-  genderRow: { flexDirection: 'row', gap: 10 },
-  genderBtn: {
-    flex: 1, paddingVertical: 10, borderRadius: 12,
-    borderWidth: 1.5, borderColor: '#E5E7EB',
-    alignItems: 'center', backgroundColor: '#F9FAFB',
-  },
-  genderBtnActive:     { borderColor: '#1669ef', backgroundColor: '#eff6ff' },
-  genderBtnText:       { fontSize: 13, color: '#555', fontWeight: '500' },
-  genderBtnTextActive: { color: '#1669ef', fontWeight: 'bold' },
-
   saveBtn: {
     backgroundColor: '#1669ef', borderRadius: 14,
     marginHorizontal: 16, padding: 16, alignItems: 'center',

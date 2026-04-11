@@ -192,7 +192,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
           {/* ── GST ── */}
           <Text style={styles.fieldLabel}>GST %  <Text style={styles.optional}>(0 if not applicable)</Text></Text>
           <View style={styles.gstRow}>
-            {['0', '5', '12', '18', '28'].map(g => (
+            {['0', '5', '12', '18', '28', '40'].map(g => (
               <TouchableOpacity
                 key={g}
                 style={[styles.gstChip, gst === g && styles.gstChipActive]}
