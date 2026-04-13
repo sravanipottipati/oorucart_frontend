@@ -182,11 +182,10 @@ export default function VendorOrderDetailScreen({ navigation, route }) {
           <View style={styles.divider} />
           <View style={styles.billRow}><Text style={styles.billLabel}>Items Total</Text><Text style={styles.billValue}>Rs.{subtotal.toFixed(0)}</Text></View>
           <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Delivery Fee</Text>
-            {deliveryFee === 0 ? <Text style={[styles.billValue, { color: '#16A34A' }]}>FREE</Text> : <Text style={styles.billValue}>Rs.{deliveryFee.toFixed(0)}</Text>}
+            <Text style={styles.billLabel}></Text>
           </View>
           <View style={[styles.billRow, styles.billTotal]}>
-            <Text style={styles.billTotalLabel}>Total to Collect</Text>
+            <Text style={styles.billTotalLabel}>Order Amount</Text>
             <Text style={styles.billTotalValue}>Rs.{total.toFixed(0)}</Text>
           </View>
         </View>

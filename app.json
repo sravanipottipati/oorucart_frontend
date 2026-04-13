@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/app-splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1669ef"
     },
     "ios": {
       "supportsTablet": true,
@@ -18,7 +18,7 @@
     "android": {
       "package": "com.univerin.app",
       "adaptiveIcon": {
-        "backgroundColor": "#ffffff",
+        "backgroundColor": "#1669ef",
         "foregroundImage": "./assets/app-icon.png"
       }
     },
