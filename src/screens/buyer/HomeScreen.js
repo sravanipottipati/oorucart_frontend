@@ -149,6 +149,12 @@ export default function HomeScreen({ navigation }) {
 
   const { user }                                 = useAuth();
   const { shop: cartShop, cartCount, cartTotal, fetchCartFromDb } = useCart();
+  const [wishlistCount, setWishlistCount] = useState(0);
+  useFocusEffect(
+    React.useCallback(() => {
+      client.get('/vendors/wishlist/').then(res => setWishlistCount((res.data.wishlist || []).length)).catch(() => {});
+    }, [])
+  );
   const [town, setTown]                          = useState(user?.town || 'Nellore');
 
   useEffect(() => {

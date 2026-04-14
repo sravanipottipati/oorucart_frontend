@@ -157,7 +157,7 @@ const formatPrice = (price) => {
 };
 
 // ─── GRID PRODUCT CARD ────────────────────────────────────────────────────────
-const ProductCard = ({ product, qty, onAdd, onRemove, shopColor }) => {
+const ProductCard = ({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, handleWishlist }) => {
   const [showVariants, setShowVariants]       = useState(false);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const hasVariants = product.variants && product.variants.length > 0;
@@ -528,7 +528,7 @@ export default function ShopDetailScreen({ navigation, route }) {
               {row.map(product => (
                 <ProductCard key={product.id} product={product}
                   qty={cart[product.id] || 0}
-                  onAdd={handleAddToCart} onRemove={removeFromCart} shopColor={shopColor} />
+                  onAdd={handleAddToCart} onRemove={removeFromCart} shopColor={shopColor} wishlistedIds={wishlistedIds} handleWishlist={handleWishlist} />
               ))}
               {row.length === 1 && <View style={{ width: CARD_WIDTH }} />}
             </View>
