@@ -217,6 +217,17 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor }) => {
             <View style={[styles.gridVegInner, product.category === 'non_vegetarian' && styles.gridNonVegInner]} />
           </View>
         )}
+        {/* Heart/Wishlist button */}
+        <TouchableOpacity
+          style={styles.gridHeartBtn}
+          onPress={() => handleWishlist(product)}
+        >
+          <Ionicons
+            name={wishlistedIds.includes(product.id) ? 'heart' : 'heart-outline'}
+            size={16}
+            color={wishlistedIds.includes(product.id) ? '#EF4444' : '#fff'}
+          />
+        </TouchableOpacity>
       </View>
 
       {/* ── Info ── */}
@@ -357,6 +368,28 @@ export default function ShopDetailScreen({ navigation, route }) {
   const [products, setProducts]             = useState([]);
   const [loading, setLoading]               = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
+  const [wishlistedIds, setWishlistedIds] = useState([]);
+
+  useEffect(() => {
+    client.get('/vendors/wishlist/').then(res => {
+      const ids = (res.data.wishlist || []).map(i => i.product_id);
+      setWishlistedIds(ids);
+    }).catch(() => {});
+  }, []);
+
+  const handleWishlist = async (product) => {
+    try {
+      await client.post('/vendors/wishlist/', { product_id: product.id });
+      const isWishlisted = wishlistedIds.includes(product.id);
+      if (isWishlisted) {
+        setWishlistedIds(wishlistedIds.filter(id => id !== product.id));
+      } else {
+        setWishlistedIds([...wishlistedIds, product.id]);
+      }
+    } catch (e) {
+      console.log('Wishlist error:', e.message);
+    }
+  };
   const { carts, addToCart, removeFromCart, cartCount } = useCart();
   const cart          = carts[vendorId]?.items || {};
   const shopCartCount = Object.values(cart).reduce((a, b) => a + b, 0);
@@ -597,6 +630,12 @@ const styles = StyleSheet.create({
   gridImage:    { width: '100%', height: '100%' },
   gridEmoji:    { fontSize: 52 },
 
+  gridHeartBtn: {
+    position: 'absolute', top: 6, right: 6,
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center', alignItems: 'center',
+  },
   gridDiscountBadge:  { position: 'absolute', top: 8, left: 8, backgroundColor: '#16A34A', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 3 },
   gridDiscountText:   { fontSize: 10, color: '#fff', fontWeight: '800' },
   gridOOSOverlay:     { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' },

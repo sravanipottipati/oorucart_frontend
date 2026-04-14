@@ -365,6 +365,9 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Wishlist')}>
             <Ionicons name="heart-outline" size={22} color="#444" />
+            {wishlistCount > 0 && (
+              <View style={styles.wishlistDot} />
+            )}
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Notifications')}>
             <Ionicons name="notifications-outline" size={22} color="#444" />
@@ -543,7 +546,12 @@ const styles = StyleSheet.create({
   locationRow:  { flexDirection: 'row', alignItems: 'center', gap: 3 },
   locationText: { fontSize: 16, fontWeight: '800', color: DARK },
   headerRight:  { flexDirection: 'row', gap: 8 },
-  iconBtn: {
+  wishlistDot: {
+    position: 'absolute', top: 0, right: 0,
+    backgroundColor: '#EF4444', borderRadius: 5,
+    width: 10, height: 10,
+  },
+  iconBtn: { position: 'relative',
     width: 40, height: 40, borderRadius: 20,
     backgroundColor: '#F8F9FA', justifyContent: 'center', alignItems: 'center',
     borderWidth: 1, borderColor: '#EFEFEF',
