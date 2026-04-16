@@ -141,7 +141,7 @@ export default function WishlistScreen({ navigation }) {
                   </View>
                 </TouchableOpacity>
 
-                {/* Add to Cart Button — Walmart style */}
+                {/* Add to Cart Button */}
                 <TouchableOpacity
                   style={[
                     styles.addToCartBtn,

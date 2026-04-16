@@ -204,6 +204,16 @@ export default function VendorAddProductScreen({ navigation, route }) {
                 </Text>
                 <Ionicons name="chevron-down" size={16} color="#888" />
               </TouchableOpacity>
+              {showCatPicker && (
+                <View style={styles.pickerDropdown}>
+                  {CATEGORIES.map(cat => (
+                    <TouchableOpacity key={cat.key} style={[styles.pickerItem, category === cat.key && styles.pickerItemActive]} onPress={() => { setCategory(cat.key); setSubcat(''); setShowCatPicker(false); }}>
+                      <Text style={[styles.pickerItemText, category === cat.key && { color: '#1669ef', fontWeight: '700' }]}>{cat.emoji} {cat.label}</Text>
+                      {category === cat.key && <Ionicons name="checkmark" size={16} color="#1669ef" />}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.fieldLabel}>Subcategory <Text style={styles.optional}>(optional)</Text></Text>
@@ -211,30 +221,18 @@ export default function VendorAddProductScreen({ navigation, route }) {
                 <Text style={[styles.dropdownText, !subcategory && { color: '#9CA3AF' }]}>{subcategory || 'Select'}</Text>
                 <Ionicons name="chevron-down" size={16} color="#888" />
               </TouchableOpacity>
+              {showSubPicker && subcats.length > 0 && (
+                <View style={styles.pickerDropdown}>
+                  {subcats.map(sub => (
+                    <TouchableOpacity key={sub} style={[styles.pickerItem, subcategory === sub && styles.pickerItemActive]} onPress={() => { setSubcat(sub); setShowSubPicker(false); }}>
+                      <Text style={[styles.pickerItemText, subcategory === sub && { color: '#1669ef', fontWeight: '700' }]}>{sub}</Text>
+                      {subcategory === sub && <Ionicons name="checkmark" size={16} color="#1669ef" />}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
           </View>
-
-          {showCatPicker && (
-            <View style={styles.pickerDropdown}>
-              {CATEGORIES.map(cat => (
-                <TouchableOpacity key={cat.key} style={[styles.pickerItem, category === cat.key && styles.pickerItemActive]} onPress={() => { setCategory(cat.key); setSubcat(''); setShowCatPicker(false); }}>
-                  <Text style={[styles.pickerItemText, category === cat.key && { color: '#1669ef', fontWeight: '700' }]}>{cat.emoji} {cat.label}</Text>
-                  {category === cat.key && <Ionicons name="checkmark" size={16} color="#1669ef" />}
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-
-          {showSubPicker && subcats.length > 0 && (
-            <View style={styles.pickerDropdown}>
-              {subcats.map(sub => (
-                <TouchableOpacity key={sub} style={[styles.pickerItem, subcategory === sub && styles.pickerItemActive]} onPress={() => { setSubcat(sub); setShowSubPicker(false); }}>
-                  <Text style={[styles.pickerItemText, subcategory === sub && { color: '#1669ef', fontWeight: '700' }]}>{sub}</Text>
-                  {subcategory === sub && <Ionicons name="checkmark" size={16} color="#1669ef" />}
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
 
           {category && (
             <View style={styles.catBreadcrumb}>
@@ -340,7 +338,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
         </TouchableOpacity>
         <TouchableOpacity style={styles.addBtn} onPress={() => handleSave(false)} disabled={loading}>
           {loading ? <ActivityIndicator color="#fff" /> : (
-            <><Ionicons name="add-circle-outline" size={18} color="#fff" /><Text style={styles.addBtnText}>+ Add Product</Text></>
+            <><Ionicons name="add-circle-outline" size={18} color="#fff" /><Text style={styles.addBtnText}>Add Product</Text></>
           )}
         </TouchableOpacity>
       </View>
