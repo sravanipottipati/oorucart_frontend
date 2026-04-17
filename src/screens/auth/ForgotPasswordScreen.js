@@ -1,57 +1,108 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image,
+  ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image,
 } from 'react-native';
 import client from '../../api/client';
 
 export default function ForgotPasswordScreen({ navigation }) {
   const [step, setStep]                       = useState(1);
   const [phone, setPhone]                     = useState('');
-  const [otp, setOtp]                         = useState('');
+  const [otp, setOtp]                         = useState(['', '', '', '', '', '']);
   const [newPassword, setNewPassword]         = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword]       = useState(false);
   const [showConfirm, setShowConfirm]         = useState(false);
   const [loading, setLoading]                 = useState(false);
-  const [resetToken, setResetToken]           = useState('');
+  const [resendTimer, setResendTimer]         = useState(30);
+  const [canResend, setCanResend]             = useState(false);
+  const otpRefs = useRef([]);
 
-  const handleRequestReset = async () => {
-    if (!phone.trim() || phone.length !== 10)
-      return Alert.alert('Error', 'Please enter a valid 10-digit phone number');
+  // Resend timer
+  useEffect(() => {
+    if (step === 2) {
+      setResendTimer(30);
+      setCanResend(false);
+      const interval = setInterval(() => {
+        setResendTimer(prev => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            setCanResend(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [step]);
+
+  const handleSendOTP = async () => {
+    if (!phone.trim() || phone.length !== 10) {
+      return alert('Please enter a valid 10-digit phone number');
+    }
     setLoading(true);
     try {
-      const response = await client.post('/users/forgot-password/', { phone_number: phone });
-      setResetToken(response.data?.reset_token || '');
-      Alert.alert('Reset Link Sent', 'A password reset OTP has been sent to your phone number.',
-        [{ text: 'OK', onPress: () => setStep(2) }]
-      );
+      await client.post('/users/forgot-password/', { phone_number: phone });
+      setStep(2);
+      setTimeout(() => otpRefs.current[0]?.focus(), 300);
     } catch (e) {
-      const msg = e.response?.data?.error || e.response?.data?.detail
-        || e.response?.data?.phone_number?.[0]
-        || 'Phone number not found. Please check and try again.';
-      Alert.alert('Error', msg);
+      const msg = e.response?.data?.error || 'Phone number not found. Please check and try again.';
+      alert(msg);
+    } finally { setLoading(false); }
+  };
+
+  const handleOtpChange = (val, index) => {
+    const newOtp = [...otp];
+    newOtp[index] = val;
+    setOtp(newOtp);
+    if (val && index < 5) {
+      otpRefs.current[index + 1]?.focus();
+    }
+    // Auto submit when all 6 digits filled
+    if (val && index === 5) {
+      const fullOtp = [...newOtp].join('');
+      if (fullOtp.length === 6) {
+        setStep(3);
+      }
+    }
+  };
+
+  const handleOtpKeyPress = (e, index) => {
+    if (e.nativeEvent.key === 'Backspace' && !otp[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleResendOTP = async () => {
+    if (!canResend) return;
+    setLoading(true);
+    try {
+      await client.post('/users/forgot-password/', { phone_number: phone });
+      setOtp(['', '', '', '', '', '']);
+      setResendTimer(30);
+      setCanResend(false);
+      setTimeout(() => otpRefs.current[0]?.focus(), 300);
+    } catch (e) {
+      alert('Could not resend OTP. Please try again.');
     } finally { setLoading(false); }
   };
 
   const handleResetPassword = async () => {
-    if (!otp.trim()) return Alert.alert('Error', 'Please enter the OTP');
-    if (!newPassword.trim() || newPassword.length < 6)
-      return Alert.alert('Error', 'Password must be at least 6 characters');
-    if (newPassword !== confirmPassword)
-      return Alert.alert('Error', 'Passwords do not match');
+    const otpCode = otp.join('');
+    if (otpCode.length !== 6) return alert('Please enter the complete OTP');
+    if (!newPassword.trim() || newPassword.length < 6) return alert('Password must be at least 6 characters');
+    if (newPassword !== confirmPassword) return alert('Passwords do not match');
     setLoading(true);
     try {
       await client.post('/users/reset-password/', {
-        phone_number: phone, otp, new_password: newPassword,
+        phone_number: phone, otp: otpCode, new_password: newPassword,
       });
-      Alert.alert('Password Reset Successful! ✅',
-        'Your password has been updated. Please login with your new password.',
-        [{ text: 'Login Now', onPress: () => navigation.replace('Login') }]
-      );
+      alert('Password Reset Successful! Please login with your new password.');
+      navigation.replace('Login');
     } catch (e) {
-      const msg = e.response?.data?.error || e.response?.data?.detail || 'Reset failed. Please try again.';
-      Alert.alert('Error', msg);
+      const msg = e.response?.data?.error || 'Reset failed. Please try again.';
+      alert(msg);
     } finally { setLoading(false); }
   };
 
@@ -59,19 +110,16 @@ export default function ForgotPasswordScreen({ navigation }) {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={styles.inner} showsVerticalScrollIndicator={false}>
 
+        {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => step === 1 ? navigation.goBack() : setStep(step - 1)} style={styles.backBtn}>
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
         </View>
 
-        {/* ── LOGO — white background so Univerin name shows clearly ── */}
+        {/* Logo */}
         <View style={styles.logoSection}>
-          <Image
-            source={require('../../../assets/app-logo-full.png')}
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
+          <Image source={require('../../../assets/app-logo-full.png')} style={styles.logoImage} resizeMode="contain" />
         </View>
 
         {/* Step Indicator */}
@@ -83,30 +131,37 @@ export default function ForgotPasswordScreen({ navigation }) {
           <View style={[styles.stepDot, step >= 2 && styles.stepDotActive]}>
             <Text style={[styles.stepNum, step >= 2 && styles.stepNumActive]}>2</Text>
           </View>
+          <View style={[styles.stepLine, step >= 3 && styles.stepLineActive]} />
+          <View style={[styles.stepDot, step >= 3 && styles.stepDotActive]}>
+            <Text style={[styles.stepNum, step >= 3 && styles.stepNumActive]}>3</Text>
+          </View>
         </View>
         <View style={styles.stepLabels}>
-          <Text style={styles.stepLabel}>Enter Phone</Text>
-          <Text style={styles.stepLabel}>New Password</Text>
+          <Text style={styles.stepLabel}>Phone</Text>
+          <Text style={styles.stepLabel}>OTP</Text>
+          <Text style={styles.stepLabel}>Password</Text>
         </View>
 
-        {/* Step 1 */}
+        {/* ── Step 1 — Phone Number ── */}
         {step === 1 && (
           <View style={styles.card}>
             <Text style={styles.title}>Forgot Password?</Text>
-            <Text style={styles.subtitle}>Enter your registered phone number and we will send you a reset OTP.</Text>
+            <Text style={styles.subtitle}>Enter your registered phone number to receive an OTP.</Text>
             <Text style={styles.label}>Phone Number</Text>
             <View style={styles.inputWrapper}>
               <Text style={styles.inputPrefix}>+91</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter registered phone number"
+                placeholder="Enter 10-digit phone number"
                 placeholderTextColor="#9CA3AF"
-                value={phone} onChangeText={setPhone}
-                keyboardType="phone-pad" maxLength={10}
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+                maxLength={10}
               />
             </View>
-            <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleRequestReset} disabled={loading}>
-              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Send Reset OTP</Text>}
+            <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleSendOTP} disabled={loading}>
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Send OTP</Text>}
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
               <Text style={styles.link}>Remember password? <Text style={styles.linkBold}>Login</Text></Text>
@@ -114,50 +169,93 @@ export default function ForgotPasswordScreen({ navigation }) {
           </View>
         )}
 
-        {/* Step 2 */}
+        {/* ── Step 2 — OTP Input ── */}
         {step === 2 && (
           <View style={styles.card}>
+            <Text style={styles.title}>Enter OTP</Text>
+            <Text style={styles.subtitle}>We sent a 6-digit OTP to{'\n'}+91 {phone}</Text>
+
+            {/* 6 Box OTP Input */}
+            <View style={styles.otpRow}>
+              {otp.map((digit, index) => (
+                <TextInput
+                  key={index}
+                  ref={ref => otpRefs.current[index] = ref}
+                  style={[styles.otpBox, digit && styles.otpBoxFilled]}
+                  value={digit}
+                  onChangeText={val => handleOtpChange(val.slice(-1), index)}
+                  onKeyPress={e => handleOtpKeyPress(e, index)}
+                  keyboardType="numeric"
+                  maxLength={1}
+                  textAlign="center"
+                />
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={[styles.button, loading && styles.buttonDisabled]}
+              onPress={() => setStep(3)}
+              disabled={loading || otp.join('').length !== 6}
+            >
+              <Text style={styles.buttonText}>Verify OTP</Text>
+            </TouchableOpacity>
+
+            {/* Resend Timer */}
+            <View style={styles.resendRow}>
+              <Text style={styles.resendText}>Didn't receive OTP? </Text>
+              {canResend ? (
+                <TouchableOpacity onPress={handleResendOTP}>
+                  <Text style={styles.resendLink}>Resend OTP</Text>
+                </TouchableOpacity>
+              ) : (
+                <Text style={styles.resendTimer}>Resend in {resendTimer}s</Text>
+              )}
+            </View>
+
+            <TouchableOpacity onPress={() => setStep(1)}>
+              <Text style={styles.link}>Wrong number? <Text style={styles.linkBold}>Go Back</Text></Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* ── Step 3 — New Password ── */}
+        {step === 3 && (
+          <View style={styles.card}>
             <Text style={styles.title}>Set New Password</Text>
-            <Text style={styles.subtitle}>Enter the OTP sent to +91 {phone} and set your new password.</Text>
-            <Text style={styles.label}>OTP</Text>
-            <TextInput
-              style={styles.inputFull}
-              placeholder="Enter OTP received on phone"
-              placeholderTextColor="#9CA3AF"
-              value={otp} onChangeText={setOtp}
-              keyboardType="numeric" maxLength={6}
-            />
+            <Text style={styles.subtitle}>Create a strong password for your account.</Text>
+
             <Text style={styles.label}>New Password</Text>
             <View style={styles.passwordWrapper}>
               <TextInput
                 style={styles.passwordInput}
                 placeholder="Min 6 characters"
                 placeholderTextColor="#9CA3AF"
-                value={newPassword} onChangeText={setNewPassword}
+                value={newPassword}
+                onChangeText={setNewPassword}
                 secureTextEntry={!showPassword}
               />
               <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword(!showPassword)}>
                 <Text style={styles.eyeText}>{showPassword ? 'Hide' : 'Show'}</Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.label}>Confirm New Password</Text>
+
+            <Text style={styles.label}>Confirm Password</Text>
             <View style={styles.passwordWrapper}>
               <TextInput
                 style={styles.passwordInput}
                 placeholder="Re-enter new password"
                 placeholderTextColor="#9CA3AF"
-                value={confirmPassword} onChangeText={setConfirmPassword}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
                 secureTextEntry={!showConfirm}
               />
               <TouchableOpacity style={styles.eyeButton} onPress={() => setShowConfirm(!showConfirm)}>
                 <Text style={styles.eyeText}>{showConfirm ? 'Hide' : 'Show'}</Text>
               </TouchableOpacity>
             </View>
+
             <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleResetPassword} disabled={loading}>
               {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Reset Password</Text>}
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setStep(1)}>
-              <Text style={styles.link}>Wrong number? <Text style={styles.linkBold}>Go Back</Text></Text>
             </TouchableOpacity>
           </View>
         )}
@@ -175,10 +273,8 @@ const styles = StyleSheet.create({
   header:    { width: '100%', marginBottom: 16 },
   backBtn:   { padding: 4 },
   backText:  { color: '#1669ef', fontSize: 15, fontWeight: '600' },
-
-    logoSection: {
-    backgroundColor: '#ffffff',
-    borderRadius: 24, padding: 24,
+  logoSection: {
+    backgroundColor: '#ffffff', borderRadius: 24, padding: 24,
     alignItems: 'center', justifyContent: 'center',
     width: '100%', marginBottom: 24,
     borderWidth: 1.5, borderColor: '#dbeafe',
@@ -186,32 +282,38 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1, shadowRadius: 12, elevation: 4,
   },
   logoImage: { width: 220, height: 70 },
-
-  stepRow:       { flexDirection: 'row', alignItems: 'center', width: '60%', marginBottom: 6 },
+  stepRow:       { flexDirection: 'row', alignItems: 'center', width: '70%', marginBottom: 6 },
   stepDot:       { width: 32, height: 32, borderRadius: 16, backgroundColor: '#E5E7EB', justifyContent: 'center', alignItems: 'center' },
   stepDotActive: { backgroundColor: '#1669ef' },
   stepNum:       { fontSize: 14, fontWeight: '700', color: '#9CA3AF' },
   stepNumActive: { color: 'white' },
   stepLine:      { flex: 1, height: 3, backgroundColor: '#E5E7EB', marginHorizontal: 6 },
   stepLineActive:{ backgroundColor: '#1669ef' },
-  stepLabels:    { flexDirection: 'row', justifyContent: 'space-between', width: '60%', marginBottom: 20 },
+  stepLabels:    { flexDirection: 'row', justifyContent: 'space-between', width: '70%', marginBottom: 20 },
   stepLabel:     { fontSize: 11, color: '#9CA3AF' },
-
   card:     { backgroundColor: '#fff', borderRadius: 24, padding: 24, width: '100%', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 3 },
   title:    { fontSize: 22, fontWeight: '700', color: '#111', marginBottom: 6 },
   subtitle: { fontSize: 13, color: '#888', marginBottom: 22, lineHeight: 20 },
   label:    { fontSize: 13, fontWeight: '600', color: '#444', marginBottom: 8 },
-
   inputWrapper: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12, backgroundColor: '#F9FAFB', marginBottom: 20, overflow: 'hidden' },
   inputPrefix:  { paddingHorizontal: 12, fontSize: 14, color: '#555', borderRightWidth: 1, borderRightColor: '#E5E7EB', paddingVertical: 14 },
   input:        { flex: 1, padding: 14, fontSize: 15, color: '#111' },
-  inputFull:    { borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12, padding: 14, fontSize: 15, marginBottom: 16, backgroundColor: '#F9FAFB', color: '#111' },
+
+  // OTP boxes
+  otpRow:     { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24, gap: 8 },
+  otpBox:     { width: 46, height: 56, borderRadius: 12, borderWidth: 1.5, borderColor: '#E5E7EB', backgroundColor: '#F9FAFB', fontSize: 22, fontWeight: '700', color: '#111', textAlign: 'center' },
+  otpBoxFilled: { borderColor: '#1669ef', backgroundColor: '#eff6ff' },
+
+  // Resend
+  resendRow:   { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 16, marginTop: 4 },
+  resendText:  { fontSize: 13, color: '#888' },
+  resendLink:  { fontSize: 13, color: '#1669ef', fontWeight: '700' },
+  resendTimer: { fontSize: 13, color: '#9CA3AF' },
 
   passwordWrapper: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12, backgroundColor: '#F9FAFB', marginBottom: 16, overflow: 'hidden' },
   passwordInput:   { flex: 1, padding: 14, fontSize: 15, color: '#111' },
   eyeButton:       { paddingHorizontal: 14, paddingVertical: 14 },
   eyeText:         { fontSize: 13, color: '#1669ef', fontWeight: '600' },
-
   button:         { backgroundColor: '#1669ef', padding: 16, borderRadius: 14, alignItems: 'center', marginBottom: 16 },
   buttonDisabled: { backgroundColor: '#bfdbfe' },
   buttonText:     { color: '#fff', fontSize: 16, fontWeight: '700' },
