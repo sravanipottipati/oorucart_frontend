@@ -4,12 +4,44 @@ import {
   ScrollView, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import client from '../../api/client';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 
 export default function VendorWalletScreen({ navigation }) {
   const [wallet, setWallet]         = useState(null);
   const [transactions, setTrans]    = useState([]);
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+  const downloadExcel = async () => {
+    try {
+      setDownloading(true);
+      const token = await client.defaults.headers.common['Authorization'];
+      const month = selectedMonth;
+      const year = selectedYear;
+      const url = `${client.defaults.baseURL}/invoices/export/seller/?month=${month}&year=${year}`;
+      const fileUri = FileSystem.documentDirectory + `univerin_earnings_${month}_${year}.xlsx`;
+      const downloadRes = await FileSystem.downloadAsync(url, fileUri, {
+        headers: { Authorization: token }
+      });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(downloadRes.uri, {
+          mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          dialogTitle: 'Save Earnings Report',
+        });
+      }
+    } catch (e) {
+      console.log('Download error:', e.message);
+      alert('Download failed. Please try again!');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   const fetchData = async () => {
     try {
@@ -97,6 +129,40 @@ export default function VendorWalletScreen({ navigation }) {
               ₹{wallet?.settled_amount?.toFixed(0) || '0'}
             </Text>
           </View>
+        </View>
+
+        {/* Download Report */}
+        <View style={styles.downloadCard}>
+          <View style={styles.downloadHeader}>
+            <Text style={styles.downloadTitle}>📊 Monthly Earnings Report</Text>
+            <Text style={styles.downloadSubtitle}>Download Excel for GST filing</Text>
+          </View>
+          <View style={styles.monthSelector}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {months.map((m, i) => (
+                <TouchableOpacity
+                  key={i}
+                  onPress={() => setSelectedMonth(i + 1)}
+                  style={[styles.monthBtn, selectedMonth === i + 1 && styles.monthBtnActive]}
+                >
+                  <Text style={[styles.monthBtnText, selectedMonth === i + 1 && styles.monthBtnTextActive]}>
+                    {m}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+          <TouchableOpacity
+            style={[styles.downloadBtn, downloading && styles.downloadBtnDisabled]}
+            onPress={downloadExcel}
+            disabled={downloading}
+          >
+            {downloading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={styles.downloadBtnText}>⬇ Download {months[selectedMonth-1]} {selectedYear} Report</Text>
+            )}
+          </TouchableOpacity>
         </View>
 
         {/* Settlement History */}
@@ -212,4 +278,27 @@ const styles = StyleSheet.create({
   emptyEmoji: { fontSize: 50, marginBottom: 12 },
   emptyTitle: { fontSize: 16, fontWeight: 'bold', color: '#111', marginBottom: 6 },
   emptySubtitle: { fontSize: 13, color: '#888' },
+  downloadCard: {
+    backgroundColor: '#fff', margin: 16, borderRadius: 16, padding: 16,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
+    marginBottom: 8,
+  },
+  downloadHeader: { marginBottom: 12 },
+  downloadTitle: { fontSize: 15, fontWeight: 'bold', color: '#111', marginBottom: 4 },
+  downloadSubtitle: { fontSize: 12, color: '#888' },
+  monthSelector: { marginBottom: 12 },
+  monthBtn: {
+    paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20,
+    backgroundColor: '#F3F4F6', marginRight: 8,
+  },
+  monthBtnActive: { backgroundColor: '#1669ef' },
+  monthBtnText: { fontSize: 13, color: '#666', fontWeight: '600' },
+  monthBtnTextActive: { color: '#fff' },
+  downloadBtn: {
+    backgroundColor: '#1669ef', padding: 14, borderRadius: 12,
+    alignItems: 'center',
+  },
+  downloadBtnDisabled: { backgroundColor: '#93c5fd' },
+  downloadBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
 });

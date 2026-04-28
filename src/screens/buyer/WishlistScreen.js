@@ -111,7 +111,18 @@ export default function WishlistScreen({ navigation }) {
                   {/* Image or emoji */}
                   <View style={styles.productImageBox}>
                     {item.image_url ? (
-                      <Image source={{ uri: item.image_url }} style={styles.productImage} resizeMode="cover" />
+                      {item.image_url ? (
+                        <Image 
+                          source={{ uri: item.image_url }} 
+                          style={styles.productImage} 
+                          resizeMode="cover"
+                          onError={(e) => console.log('Image load error:', e.nativeEvent.error)}
+                        />
+                      ) : (
+                        <View style={[styles.productImage, {backgroundColor:'#f3f4f6', justifyContent:'center', alignItems:'center'}]}>
+                          <Text style={{fontSize:28}}>🛍️</Text>
+                        </View>
+                      )}
                     ) : (
                       <Text style={styles.productEmoji}>🛍</Text>
                     )}

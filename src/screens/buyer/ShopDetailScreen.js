@@ -189,7 +189,7 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, 
       {/* ── Large Image ── */}
       <View style={[styles.gridImageBox, { backgroundColor: shopColor + '15' }]}>
         {product.image_url ? (
-          <Image source={{ uri: product.image_url }}
+          <Image source={{ uri: product.image_url }} onError={(e) => console.log('Image error:', e.nativeEvent.error)}
             style={[styles.gridImage, isOutOfStock && { opacity: 0.4 }]}
             resizeMode="cover" />
         ) : (
