@@ -107,11 +107,13 @@ const SUBCATEGORIES = {
 const SHOP_COLORS = ['#4CAF50', '#FF7043', '#FFA726', '#42A5F5', '#AB47BC', '#26A69A'];
 
 const OFFERS = [
-  { id: '1', tag: 'LOCAL SHOPPING', title: 'Your Town',     title2: 'Your Shops',     subtitle: 'Real local shops delivering to your door',      icon: 'storefront-outline',       bg: '#1254c4' },
-  { id: '2', tag: 'ZERO RISK',      title: 'No Card',       title2: 'No Tension',     subtitle: 'Pay cash when your order reaches you',          icon: 'shield-checkmark-outline', bg: '#1e3a8a' },
-  { id: '3', tag: 'FARM FRESH',     title: 'Straight From', title2: 'Local Farms',    subtitle: 'Fresh vegetables and fruits every single day',  icon: 'leaf-outline',             bg: '#14532d' },
-  { id: '4', tag: 'SUPER FAST',     title: 'Order Now',     title2: 'Get It Soon',    subtitle: 'Local shops deliver faster than anyone else',   icon: 'flash-outline',            bg: '#7c2d12' },
-  { id: '5', tag: 'SUPPORT LOCAL',  title: 'Every Order',   title2: 'Helps a Family', subtitle: 'Your purchase directly supports local vendors', icon: 'heart-outline',            bg: '#581c87' },
+  { id: '1', tag: 'SUMMER SPECIAL',  title: 'Ice Cream',     title2: 'Every Day!',     subtitle: 'Summer Holidays = Ice Cream Delivered Daily',        icon: 'snow-outline',             bg: '#0284c7' },
+  { id: '2', tag: 'BEAT THE HEAT',   title: 'Cold Drinks',   title2: 'Delivered Fast', subtitle: 'Fresh Juices & Cold Drinks from Local Shops',         icon: 'water-outline',            bg: '#0369a1' },
+  { id: '3', tag: 'FARM FRESH',      title: 'Straight From', title2: 'Local Farms',    subtitle: 'Fresh Vegetables and Fruits Every Single Day',        icon: 'leaf-outline',             bg: '#14532d' },
+  { id: '4', tag: 'TOO HOT TO COOK', title: 'Order Food',    title2: 'Stay Cool',      subtitle: 'Fresh Meals from Local Restaurants in Minutes',       icon: 'restaurant-outline',       bg: '#7c2d12' },
+  { id: '5', tag: 'SUMMER STOCK UP', title: 'Groceries',     title2: 'Delivered Now',  subtitle: 'No More Market Trips in the Heat — Order Online',     icon: 'cart-outline',             bg: '#1254c4' },
+  { id: '6', tag: 'DAILY FRESH',     title: 'Milk & Dairy',  title2: 'Every Morning',  subtitle: 'Fresh Milk, Curd & Paneer Delivered to Your Door',    icon: 'cafe-outline',             bg: '#16a34a' },
+  { id: '7', tag: 'SUPPORT LOCAL',   title: 'Every Order',   title2: 'Helps a Family', subtitle: 'Your Purchase Directly Supports Local Vendors',       icon: 'heart-outline',            bg: '#581c87' },
 ];
 
 const TOWN_COORDS = {
@@ -461,12 +463,20 @@ export default function HomeScreen({ navigation }) {
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 12, paddingBottom: 8 }}>
       {popularProducts.map(product => (
         <TouchableOpacity key={product.id} style={styles.popularCard} onPress={() => { setSelectedProduct(product); setShowProductModal(true); }}>
+          <View style={styles.trendingBadge}>
+            <Text style={styles.trendingBadgeText}>🔥 Trending</Text>
+          </View>
           <View style={styles.popularImgBox}>
-            {product.image_url ? <Image source={{ uri: product.image_url }} style={styles.popularImg} resizeMode="contain" /> : <Text style={{ fontSize: 32 }}>🛍</Text>}
+            {product.image_url ? <Image source={{ uri: product.image_url }} style={styles.popularImg} resizeMode="cover" /> : <Text style={{ fontSize: 36 }}>🛍️</Text>}
           </View>
           <Text style={styles.popularName} numberOfLines={2}>{product.name}</Text>
-          <Text style={styles.popularShop} numberOfLines={1}>{product.shop_name}</Text>
-          <Text style={styles.popularPrice}>Rs.{parseFloat(product.price).toFixed(0)}</Text>
+          <Text style={styles.popularShop} numberOfLines={1}>🏪 {product.shop_name}</Text>
+          <View style={styles.popularBottom}>
+            <Text style={styles.popularPrice}>₹{parseFloat(product.price).toFixed(0)}</Text>
+            <View style={styles.popularAddBtn}>
+              <Text style={styles.popularAddBtnText}>+</Text>
+            </View>
+          </View>
         </TouchableOpacity>
       ))}
     </ScrollView>
@@ -722,10 +732,15 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: '#fff',
   },
   tabBadgeText: { color: '#fff', fontSize: 9, fontWeight: '800' },
-  popularCard: { width: 130, backgroundColor: '#fff', borderRadius: 14, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E5E7EB', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
-  popularImgBox: { width: 80, height: 80, justifyContent: 'center', alignItems: 'center', marginBottom: 8, backgroundColor: '#F8F9FA', borderRadius: 10 },
-  popularImg: { width: 75, height: 75 },
-  popularName: { fontSize: 12, fontWeight: '600', color: '#111', textAlign: 'center', marginBottom: 3, lineHeight: 16 },
-  popularShop: { fontSize: 10, color: '#888', textAlign: 'center', marginBottom: 4 },
+  popularCard: { width: 140, backgroundColor: '#fff', borderRadius: 14, padding: 10, borderWidth: 1, borderColor: '#E5E7EB', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
+  trendingBadge: { backgroundColor: '#ff6b35', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 3, alignSelf: 'flex-start', marginBottom: 6 },
+  trendingBadgeText: { fontSize: 10, color: '#fff', fontWeight: '700' },
+  popularImgBox: { width: '100%', height: 90, justifyContent: 'center', alignItems: 'center', marginBottom: 8, backgroundColor: '#F8F9FA', borderRadius: 10, overflow: 'hidden' },
+  popularImg: { width: '100%', height: '100%' },
+  popularName: { fontSize: 12, fontWeight: '600', color: '#111', marginBottom: 3, lineHeight: 16 },
+  popularShop: { fontSize: 10, color: '#888', marginBottom: 6 },
+  popularBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   popularPrice: { fontSize: 14, fontWeight: '800', color: '#1669ef' },
+  popularAddBtn: { width: 26, height: 26, backgroundColor: '#1669ef', borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
+  popularAddBtnText: { color: '#fff', fontSize: 18, fontWeight: '700', lineHeight: 22 },
 });

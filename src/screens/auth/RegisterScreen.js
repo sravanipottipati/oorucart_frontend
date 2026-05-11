@@ -4,6 +4,7 @@ import {
   Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function RegisterScreen({ navigation }) {
   const [fullName, setFullName]               = useState('');
@@ -14,6 +15,7 @@ export default function RegisterScreen({ navigation }) {
   const [showConfirm, setShowConfirm]         = useState(false);
   const [userType, setUserType]               = useState('buyer');
   const [loading, setLoading]                 = useState(false);
+  const [agreedToTerms, setAgreedToTerms]     = useState(false); // ← NEW
   const { register }                          = useAuth();
 
   const handleRegister = async () => {
@@ -25,6 +27,8 @@ export default function RegisterScreen({ navigation }) {
       return Alert.alert('Error', 'Password must be at least 6 characters');
     if (password !== confirmPassword)
       return Alert.alert('Error', 'Passwords do not match');
+    if (!agreedToTerms)
+      return Alert.alert('Error', 'Please agree to Terms & Conditions and Privacy Policy');
     setLoading(true);
     try {
       await register(fullName, phone, password, 'buyer');
@@ -47,8 +51,7 @@ export default function RegisterScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-
-                {/* ── LOGO — white background so Univerin name shows clearly ── */}
+        {/* Logo */}
         <View style={styles.logoSection}>
           <Image
             source={require('../../../assets/app-logo-full.png')}
@@ -57,27 +60,29 @@ export default function RegisterScreen({ navigation }) {
           />
         </View>
 
-        {/* ── BUYER / SELLER TOGGLE ── */}
+        {/* Buyer / Seller Toggle */}
         <View style={styles.toggleContainer}>
           <TouchableOpacity
             style={[styles.toggleBtn, userType === 'buyer' && styles.toggleBtnActiveBuyer]}
             onPress={() => setUserType('buyer')}
           >
-            <Text style={[styles.toggleText, userType === 'buyer' && styles.toggleTextActiveBuyer]}>
-              🛒  Buyer
-            </Text>
+            <View style={{flexDirection:'row',alignItems:'center',gap:6}}>
+              <Ionicons name="cart-outline" size={16} color={userType === 'buyer' ? '#1669ef' : '#6B7280'} />
+              <Text style={[styles.toggleText, userType === 'buyer' && styles.toggleTextActiveBuyer]}>Buyer</Text>
+            </View>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.toggleBtn, userType === 'seller' && styles.toggleBtnActiveSeller]}
             onPress={() => navigation.navigate('VendorRegister')}
           >
-            <Text style={[styles.toggleText, userType === 'seller' && styles.toggleTextActiveSeller]}>
-              🏪  Seller
-            </Text>
+            <View style={{flexDirection:'row',alignItems:'center',gap:6}}>
+              <Ionicons name="storefront-outline" size={16} color={userType === 'seller' ? '#16A34A' : '#6B7280'} />
+              <Text style={[styles.toggleText, userType === 'seller' && styles.toggleTextActiveSeller]}>Seller</Text>
+            </View>
           </TouchableOpacity>
         </View>
 
-        {/* ── REGISTER FORM ── */}
+        {/* Register Form */}
         <View style={styles.card}>
           <Text style={styles.title}>Create Buyer Account 🛒</Text>
           <Text style={styles.subtitle}>Order from local shops near you</Text>
@@ -135,10 +140,37 @@ export default function RegisterScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
+          {/* ── T&C Checkbox ── */}
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={styles.checkboxRow}
+            onPress={() => setAgreedToTerms(!agreedToTerms)}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
+              {agreedToTerms && <Text style={styles.checkmark}>✓</Text>}
+            </View>
+            <Text style={styles.checkboxText}>
+              I agree to Univerin's{' '}
+              <Text
+                style={styles.checkboxLink}
+                onPress={() => navigation.navigate('TermsAndConditions')}
+              >
+                Terms & Conditions
+              </Text>
+              {' '}and{' '}
+              <Text
+                style={styles.checkboxLink}
+                onPress={() => navigation.navigate('PrivacyPolicy')}
+              >
+                Privacy Policy
+              </Text>
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, (loading || !agreedToTerms) && styles.buttonDisabled]}
             onPress={handleRegister}
-            disabled={loading}
+            disabled={loading || !agreedToTerms}
           >
             {loading
               ? <ActivityIndicator color="#fff" />
@@ -152,27 +184,20 @@ export default function RegisterScreen({ navigation }) {
               <Text style={styles.linkBold}>Login</Text>
             </Text>
           </TouchableOpacity>
-
         </View>
 
-        <Text style={styles.footer}>
-          By signing up, you agree to Univerin's Terms of Service
-        </Text>
         <View style={{ height: 40 }} />
-
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-
   container: { flex: 1, backgroundColor: '#eff6ff' },
-  inner: { flexGrow: 1, alignItems: 'center', padding: 24, paddingTop: 60 },
+  inner:     { flexGrow: 1, alignItems: 'center', padding: 24, paddingTop: 60 },
 
   logoSection: {
-    backgroundColor: '#ffffff',
-    borderRadius: 24, padding: 24,
+    backgroundColor: '#ffffff', borderRadius: 24, padding: 24,
     alignItems: 'center', justifyContent: 'center',
     width: '100%', marginBottom: 24,
     borderWidth: 1.5, borderColor: '#dbeafe',
@@ -186,7 +211,7 @@ const styles = StyleSheet.create({
     borderRadius: 14, padding: 4,
     width: '100%', marginBottom: 20,
   },
-  toggleBtn: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  toggleBtn:              { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   toggleBtnActiveBuyer:   { backgroundColor: '#fff', elevation: 2, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4 },
   toggleBtnActiveSeller:  { backgroundColor: '#fff', elevation: 2, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4 },
   toggleText:             { fontSize: 15, fontWeight: '600', color: '#6B7280' },
@@ -213,13 +238,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, fontSize: 14, color: '#555',
     borderRightWidth: 1, borderRightColor: '#E5E7EB', paddingVertical: 14,
   },
-  input: { flex: 1, padding: 14, fontSize: 15, color: '#111' },
+  input:     { flex: 1, padding: 14, fontSize: 15, color: '#111' },
   inputFull: {
     borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12,
     padding: 14, fontSize: 15, marginBottom: 14,
     backgroundColor: '#F9FAFB', color: '#111',
   },
-
   passwordWrapper: {
     flexDirection: 'row', alignItems: 'center',
     borderWidth: 1.5, borderColor: '#E5E7EB',
@@ -230,18 +254,28 @@ const styles = StyleSheet.create({
   eyeButton:     { paddingHorizontal: 14, paddingVertical: 14 },
   eyeText:       { fontSize: 13, color: '#1669ef', fontWeight: '600' },
 
+  // Checkbox
+  checkboxRow: {
+    flexDirection: 'row', alignItems: 'flex-start',
+    marginBottom: 16, gap: 10,
+  },
+  checkbox: {
+    width: 22, height: 22, borderRadius: 6,
+    borderWidth: 2, borderColor: '#D1D5DB',
+    justifyContent: 'center', alignItems: 'center',
+    marginTop: 1, flexShrink: 0,
+  },
+  checkboxChecked: { backgroundColor: '#1669ef', borderColor: '#1669ef' },
+  checkmark:       { color: '#fff', fontSize: 13, fontWeight: 'bold' },
+  checkboxText:    { flex: 1, fontSize: 13, color: '#555', lineHeight: 20 },
+  checkboxLink:    { color: '#1669ef', fontWeight: '600' },
+
   button: {
     backgroundColor: '#1669ef', padding: 16,
     borderRadius: 14, alignItems: 'center', marginBottom: 16, marginTop: 4,
   },
   buttonDisabled: { backgroundColor: '#bfdbfe' },
   buttonText:     { color: '#fff', fontSize: 16, fontWeight: '700' },
-
-  link:     { textAlign: 'center', color: '#555', fontSize: 14 },
-  linkBold: { color: '#1669ef', fontWeight: '700' },
-
-  footer: {
-    fontSize: 11, color: '#9CA3AF',
-    marginTop: 8, textAlign: 'center', paddingHorizontal: 32,
-  },
+  link:           { textAlign: 'center', color: '#555', fontSize: 14 },
+  linkBold:       { color: '#1669ef', fontWeight: '700' },
 });

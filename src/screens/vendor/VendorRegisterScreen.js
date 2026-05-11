@@ -4,16 +4,21 @@ import {
   Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import * as Location from 'expo-location';
+import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { Image } from 'react-native';
 
 const CATEGORIES = [
-  { id: 'restaurant',  label: 'Restaurant',  emoji: '🍽' },
-  { id: 'supermarket', label: 'Supermarket', emoji: '🛒' },
-  { id: 'bakery',      label: 'Bakery',      emoji: '🍞' },
-  { id: 'vegetables',  label: 'Vegetables',  emoji: '🥦' },
-  { id: 'fruits',      label: 'Fruits',      emoji: '🍎' },
+  { id: 'restaurant',  label: 'Restaurant',  icon: 'restaurant',  color: '#dc2626', bg: '#FEF2F2' },
+  { id: 'supermarket', label: 'Supermarket', icon: 'storefront',  color: '#7c3aed', bg: '#F5F3FF' },
+  { id: 'fast_food',   label: 'Fast Food',   icon: 'fast-food',   color: '#ea580c', bg: '#FFF7ED' },
+  { id: 'chinese',     label: 'Chinese',     icon: 'fish',        color: '#b45309', bg: '#FFFBEB' },
+  { id: 'bakery',      label: 'Bakery',      icon: 'cafe',        color: '#d97706', bg: '#FFFBEB' },
+  { id: 'vegetables',  label: 'Vegetables',  icon: 'leaf',        color: '#16a34a', bg: '#F0FDF4' },
+  { id: 'fruits',      label: 'Fruits',      icon: 'nutrition',   color: '#ea580c', bg: '#FFF7ED' },
+  { id: 'dairy',       label: 'Dairy',       icon: 'water',       color: '#0369a1', bg: '#F0F9FF' },
+  { id: 'ice_cream',   label: 'Ice Cream',   icon: 'snow',        color: '#0284c7', bg: '#F0F9FF' },
 ];
 
 const WEEKLY_OFF = ['None','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
@@ -279,7 +284,9 @@ export default function VendorRegisterScreen({ navigation }) {
           <TouchableOpacity key={cat.id}
             style={[styles.categoryCard, category === cat.id && styles.categoryCardActive]}
             onPress={() => setCategory(cat.id)}>
-            <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
+            <View style={[styles.categoryIconBox, { backgroundColor: category === cat.id ? cat.color : cat.bg }]}>
+              <Ionicons name={cat.icon} size={24} color={category === cat.id ? '#fff' : cat.color} />
+            </View>
             <Text style={[styles.categoryLabel, category === cat.id && styles.categoryLabelActive]}>
               {cat.label}
             </Text>
@@ -490,10 +497,10 @@ export default function VendorRegisterScreen({ navigation }) {
 
       <View style={styles.tabRow}>
         <TouchableOpacity style={styles.tabInactive} onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.tabInactiveText}>🛒 Buyer</Text>
+          <View style={{flexDirection:'row',alignItems:'center',gap:6}}><Ionicons name="cart-outline" size={16} color="#888" /><Text style={styles.tabInactiveText}>Buyer</Text></View>
         </TouchableOpacity>
         <View style={styles.tabActive}>
-          <Text style={styles.tabActiveText}>🏪 Seller</Text>
+          <View style={{flexDirection:'row',alignItems:'center',gap:6}}><Ionicons name="storefront" size={16} color="#1669ef" /><Text style={styles.tabActiveText}>Seller</Text></View>
         </View>
       </View>
 
@@ -585,14 +592,14 @@ const styles = StyleSheet.create({
     marginBottom: 12, borderWidth: 1, borderColor: '#FED7AA',
   },
   townManualText:  { fontSize: 13, color: '#EA580C', fontWeight: '500' },
-  categoryGrid:    { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 12 },
+  categoryGrid:    { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
   categoryCard: {
-    width: '47%', borderWidth: 1.5, borderColor: '#E5E7EB',
-    borderRadius: 14, padding: 14, alignItems: 'center', backgroundColor: '#F9FAFB',
+    width: '30%', borderWidth: 1.5, borderColor: '#E5E7EB',
+    borderRadius: 12, padding: 10, alignItems: 'center', backgroundColor: '#F9FAFB',
   },
   categoryCardActive:  { borderColor: '#1669ef', backgroundColor: '#eff6ff' },
-  categoryEmoji:       { fontSize: 28, marginBottom: 6 },
-  categoryLabel:       { fontSize: 13, color: '#555', fontWeight: '600' },
+  categoryIconBox:     { width: 40, height: 40, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginBottom: 6 },
+  categoryLabel:       { fontSize: 11, color: '#555', fontWeight: '600', textAlign: 'center' },
   categoryLabelActive: { color: '#1669ef' },
   feeInfo: {
     backgroundColor: '#eff6ff', borderRadius: 10, padding: 10,

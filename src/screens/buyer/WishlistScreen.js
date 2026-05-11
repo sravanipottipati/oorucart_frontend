@@ -26,6 +26,7 @@ export default function WishlistScreen({ navigation }) {
   };
 
   useEffect(() => { fetchWishlist(); }, []);
+
   const onRefresh = () => { setRefreshing(true); fetchWishlist(); };
 
   const handleRemove = async (productId, name) => {
@@ -51,11 +52,11 @@ export default function WishlistScreen({ navigation }) {
       return;
     }
     const product = {
-      id:    item.product_id,
-      name:  item.name,
-      price: item.price,
+      id:        item.product_id,
+      name:      item.name,
+      price:     item.price,
       image_url: item.image_url || null,
-      category: item.category || 'other',
+      category:  item.category || 'other',
     };
     const shop = {
       id:        item.shop_id,
@@ -103,28 +104,25 @@ export default function WishlistScreen({ navigation }) {
           ) : (
             wishlist.map(item => (
               <View key={item.id} style={styles.productCard}>
+
                 {/* Top row */}
                 <TouchableOpacity
                   style={styles.productTop}
                   onPress={() => navigation.navigate('ShopDetail', { vendorId: item.shop_id })}
                 >
-                  {/* Image or emoji */}
+                  {/* Image */}
                   <View style={styles.productImageBox}>
                     {item.image_url ? (
-                      {item.image_url ? (
-                        <Image 
-                          source={{ uri: item.image_url }} 
-                          style={styles.productImage} 
-                          resizeMode="cover"
-                          onError={(e) => console.log('Image load error:', e.nativeEvent.error)}
-                        />
-                      ) : (
-                        <View style={[styles.productImage, {backgroundColor:'#f3f4f6', justifyContent:'center', alignItems:'center'}]}>
-                          <Text style={{fontSize:28}}>🛍️</Text>
-                        </View>
-                      )}
+                      <Image
+                        source={{ uri: item.image_url }}
+                        style={styles.productImage}
+                        resizeMode="cover"
+                        onError={(e) => console.log('Image load error:', e.nativeEvent.error)}
+                      />
                     ) : (
-                      <Text style={styles.productEmoji}>🛍</Text>
+                      <View style={[styles.productImage, { backgroundColor: '#f3f4f6', justifyContent: 'center', alignItems: 'center' }]}>
+                        <Text style={{ fontSize: 28 }}>🛍️</Text>
+                      </View>
                     )}
                   </View>
 
@@ -156,7 +154,7 @@ export default function WishlistScreen({ navigation }) {
                 <TouchableOpacity
                   style={[
                     styles.addToCartBtn,
-                    !item.is_available && styles.addToCartBtnDisabled
+                    !item.is_available && styles.addToCartBtnDisabled,
                   ]}
                   onPress={() => handleAddToCart(item)}
                   disabled={!item.is_available}
@@ -168,11 +166,12 @@ export default function WishlistScreen({ navigation }) {
                   />
                   <Text style={[
                     styles.addToCartBtnText,
-                    !item.is_available && { color: '#9CA3AF' }
+                    !item.is_available && { color: '#9CA3AF' },
                   ]}>
                     {item.is_available ? 'Add to Cart' : 'Out of Stock'}
                   </Text>
                 </TouchableOpacity>
+
               </View>
             ))
           )}
@@ -209,20 +208,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06, shadowRadius: 6, elevation: 2,
   },
   productTop:      { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
-  productImageBox: { width: 60, height: 60, borderRadius: 12, backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
-  productImage:    { width: 60, height: 60 },
-  productEmoji:    { fontSize: 28 },
-  productInfo:     { flex: 1 },
-  productName:     { fontSize: 14, fontWeight: 'bold', color: '#111', marginBottom: 3 },
-  shopName:        { fontSize: 12, color: '#555', marginBottom: 2 },
-  townName:        { fontSize: 11, color: '#888', marginBottom: 6 },
-  availBadge:      { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
-  availText:       { fontSize: 11, fontWeight: '600' },
-  productRight:    { alignItems: 'flex-end', gap: 10 },
-  productPrice:    { fontSize: 16, fontWeight: 'bold', color: '#1669ef' },
-  removeBtn:       { width: 32, height: 32, borderRadius: 8, backgroundColor: '#FEF2F2', justifyContent: 'center', alignItems: 'center' },
+  productImageBox: {
+    width: 60, height: 60, borderRadius: 12,
+    backgroundColor: '#eff6ff', justifyContent: 'center',
+    alignItems: 'center', overflow: 'hidden',
+  },
+  productImage:  { width: 60, height: 60 },
+  productInfo:   { flex: 1 },
+  productName:   { fontSize: 14, fontWeight: 'bold', color: '#111', marginBottom: 3 },
+  shopName:      { fontSize: 12, color: '#555', marginBottom: 2 },
+  townName:      { fontSize: 11, color: '#888', marginBottom: 6 },
+  availBadge:    { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
+  availText:     { fontSize: 11, fontWeight: '600' },
+  productRight:  { alignItems: 'flex-end', gap: 10 },
+  productPrice:  { fontSize: 16, fontWeight: 'bold', color: '#1669ef' },
+  removeBtn:     { width: 32, height: 32, borderRadius: 8, backgroundColor: '#FEF2F2', justifyContent: 'center', alignItems: 'center' },
 
-  // Add to Cart button
   addToCartBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, paddingVertical: 12,

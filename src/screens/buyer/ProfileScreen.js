@@ -151,7 +151,10 @@ export default function ProfileScreen({ navigation }) {
     { icon: '📦', label: 'My Orders',      screen: 'MyOrders'    },
     { icon: '❤️',  label: 'Wishlist',       screen: 'Wishlist'    },
     { icon: '❓', label: 'Help & Support', screen: 'HelpSupport' },
-    { icon: '📄', label: 'Privacy Policy', screen: null          },
+    { icon: '🔒', label: 'Privacy Policy', screen: 'PrivacyPolicy' },
+    { icon: '📋', label: 'Terms & Conditions', screen: 'TermsAndConditions' },
+    { icon: '↩️', label: 'Refund Policy', screen: 'RefundPolicy' },
+    { icon: '📞', label: 'Contact Us', screen: 'ContactUs' },
   ];
 
   return (
@@ -260,17 +263,17 @@ export default function ProfileScreen({ navigation }) {
 
       {/* Bottom Tab */}
       <View style={styles.bottomTab}>
-        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Cart')}>
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Home')}>
           <Ionicons name="home-outline" size={25} color="#9CA3AF" />
           <Text style={styles.tabLabel}>Home</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Cart')}>
+          <Ionicons name="cart-outline" size={25} color="#9CA3AF" />
+          <Text style={styles.tabLabel}>Cart</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('MyOrders')}>
           <Ionicons name="receipt-outline" size={25} color="#9CA3AF" />
           <Text style={styles.tabLabel}>Orders</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Home')}>
-          <Ionicons name="cart-outline" size={25} color="#9CA3AF" />
-          <Text style={styles.tabLabel}>Cart</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem}>
           <Ionicons name="person" size={25} color="#1669ef" />

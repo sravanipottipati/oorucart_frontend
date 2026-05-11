@@ -144,12 +144,19 @@ export default function VendorProfileScreen({ navigation }) {
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('PrivacyPolicy')}>
             <View style={styles.menuLeft}>
               <View style={[styles.menuIconBox, { backgroundColor: '#F3F4F6' }]}>
                 <Text style={styles.menuIcon}>📄</Text>
               </View>
               <Text style={styles.menuLabel}>Privacy Policy</Text>
+            </View>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('TermsAndConditions')}>
+            <View style={styles.menuLeft}>
+              <Text style={styles.menuIcon}>📋</Text>
+              <Text style={styles.menuLabel}>Terms & Conditions</Text>
             </View>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>

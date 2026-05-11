@@ -4,41 +4,29 @@ import {
   ScrollView, TextInput, ActivityIndicator, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { WebView } from 'react-native-webview';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import client from '../../api/client';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 
-// ── Delivery Fee Logic — Distance + Minimum Order ─────────────────────────────
+// ── Delivery Fee Logic ─────────────────────────────────────────────────────────
 const getDeliveryInfo = (distanceKm, subtotal) => {
   const dist = parseFloat(distanceKm) || 0;
-
-  let fee        = 0;
-  let minOrder   = 0;
-  let slab       = '';
-
-  if (dist <= 2) {
-    fee      = 10;
-    minOrder = 99;
-    slab     = '0–2 km';
-  } else if (dist <= 5) {
-    fee      = 20;
-    minOrder = 149;
-    slab     = '2–5 km';
-  } else {
-    fee      = 30;
-    minOrder = 199;
-    slab     = '5–10 km';
-  }
-
+  let fee = 0, minOrder = 0, slab = '';
+  if (dist <= 2)      { fee = 10; minOrder = 99;  slab = '0–2 km'; }
+  else if (dist <= 5) { fee = 20; minOrder = 149; slab = '2–5 km'; }
+  else                { fee = 30; minOrder = 199; slab = '5–10 km'; }
   const isFree      = subtotal >= minOrder;
   const deliveryFee = isFree ? 0 : fee;
   const amountLeft  = isFree ? 0 : minOrder - subtotal;
-
   return { fee, minOrder, slab, isFree, deliveryFee, amountLeft };
 };
 
 export default function CheckoutScreen({ navigation, route }) {
   const { cart, products, shop, cartTotal, distance } = route.params;
   const { clearCart, clearShopCart } = useCart();
+  const { user } = useAuth();
 
   const [address, setAddress]           = useState('');
   const [note, setNote]                 = useState('');
@@ -46,20 +34,19 @@ export default function CheckoutScreen({ navigation, route }) {
   const [payment, setPayment]           = useState('cod');
   const [addresses, setAddresses]       = useState([]);
   const [selectedAddr, setSelectedAddr] = useState(null);
+  const [showRazorpay, setShowRazorpay] = useState(false);
+  const [razorpayData, setRazorpayData] = useState(null);
+  const [placedOrder, setPlacedOrder]   = useState(null);
 
   const cartItems = products.filter(p => cart[p.id] > 0).map(p => ({
-    ...p,
-    qty:   cart[p.id],
-    total: cart[p.id] * parseFloat(p.price),
+    ...p, qty: cart[p.id], total: cart[p.id] * parseFloat(p.price),
   }));
 
   const subtotal     = cartItems.reduce((sum, item) => sum + item.total, 0);
-  const gstTotal = cartItems.reduce((sum, item) => {
-    const gstPct = parseFloat(item.gst_percentage || 0);
-    return sum + (item.total * gstPct / 100);
-  }, 0);
   const deliveryInfo = getDeliveryInfo(distance, subtotal);
-  const total        = subtotal + deliveryInfo.deliveryFee;
+  const platformFee  = 10;
+  const gstOnPlatform = Math.round((platformFee + deliveryInfo.deliveryFee) * 18) / 100;
+  const total        = subtotal + deliveryInfo.deliveryFee + platformFee + gstOnPlatform;
 
   useEffect(() => {
     const fetchAddresses = async () => {
@@ -68,13 +55,8 @@ export default function CheckoutScreen({ navigation, route }) {
         const data = Array.isArray(res.data) ? res.data : [];
         setAddresses(data);
         const defaultAddr = data.find(a => a.is_default);
-        if (defaultAddr) {
-          setSelectedAddr(defaultAddr);
-          setAddress(defaultAddr.full_address);
-        }
-      } catch (e) {
-        console.log('Address fetch error:', e.message);
-      }
+        if (defaultAddr) { setSelectedAddr(defaultAddr); setAddress(defaultAddr.full_address); }
+      } catch (e) { console.log('Address fetch error:', e.message); }
     };
     fetchAddresses();
   }, []);
@@ -100,8 +82,22 @@ export default function CheckoutScreen({ navigation, route }) {
         notes:            note,
         delivery_fee:     deliveryInfo.deliveryFee,
       });
-      clearShopCart(shop.id);
-      navigation.replace('OrderSuccess', { order: res.data.order });
+
+      const order = res.data.order;
+
+      if (payment === 'online') {
+        // Create Razorpay order
+        const payRes = await client.post('/orders/payment/create/', {
+          order_id: order.id,
+        });
+        setPlacedOrder(order);
+        setRazorpayData(payRes.data);
+        setShowRazorpay(true);
+        clearShopCart(shop.id);
+      } else {
+        clearShopCart(shop.id);
+        navigation.replace('OrderSuccess', { order });
+      }
     } catch (e) {
       const msg = e.response?.data?.error || 'Failed to place order. Please try again.';
       Alert.alert('Error', msg);
@@ -110,9 +106,119 @@ export default function CheckoutScreen({ navigation, route }) {
     }
   };
 
+  // ── Handle Razorpay Payment Response ──────────────────────────────────────
+  const handleRazorpayResponse = async (data) => {
+    try {
+      if (data.razorpay_payment_id) {
+        // Payment success — verify
+        await client.post('/orders/payment/verify/', {
+          razorpay_order_id:   data.razorpay_order_id,
+          razorpay_payment_id: data.razorpay_payment_id,
+          razorpay_signature:  data.razorpay_signature,
+          order_id:            placedOrder.id,
+        });
+        setShowRazorpay(false);
+        navigation.replace('OrderSuccess', { order: placedOrder });
+      } else {
+        // Payment failed
+        await client.post('/orders/payment/failed/', { order_id: placedOrder.id });
+        setShowRazorpay(false);
+        Alert.alert('Payment Failed', 'Your payment failed. Order placed as Cash on Delivery.', [
+          { text: 'OK', onPress: () => navigation.replace('OrderSuccess', { order: placedOrder }) }
+        ]);
+      }
+    } catch (e) {
+      console.log('Payment verify error:', e.message);
+      setShowRazorpay(false);
+      navigation.replace('OrderSuccess', { order: placedOrder });
+    }
+  };
+
+  // ── Razorpay WebView HTML ──────────────────────────────────────────────────
+  const getRazorpayHTML = () => {
+    if (!razorpayData) return '';
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body style="margin:0;background:#fff;display:flex;align-items:center;justify-content:center;height:100vh;">
+  <div style="text-align:center;font-family:sans-serif;">
+    <p style="color:#666;font-size:16px;">Opening payment...</p>
+  </div>
+  <script>
+    var options = {
+      key:         '${razorpayData.key_id}',
+      amount:      ${razorpayData.amount},
+      currency:    '${razorpayData.currency}',
+      name:        'Univerin',
+      description: 'Order from ${razorpayData.shop_name}',
+      order_id:    '${razorpayData.razorpay_order_id}',
+      prefill: { contact: user?.phone_number || '' },
+      theme: { color: '#1669ef' },
+      handler: function(response) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_order_id:   response.razorpay_order_id,
+          razorpay_signature:  response.razorpay_signature,
+        }));
+      },
+      modal: {
+        ondismiss: function() {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ cancelled: true }));
+        }
+      }
+    };
+    var rzp = new Razorpay(options);
+    rzp.on('payment.failed', function(response) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ failed: true, error: response.error.description }));
+    });
+    rzp.open();
+  </script>
+</body>
+</html>`;
+  };
+
+  // ── Razorpay WebView ───────────────────────────────────────────────────────
+  if (showRazorpay && razorpayData) {
+    return (
+      <View style={{ flex: 1 }}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => setShowRazorpay(false)} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={22} color="#111" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Pay ₹{total.toFixed(0)}</Text>
+          <View style={{ width: 36 }} />
+        </View>
+        <WebView
+          source={{ html: getRazorpayHTML() }}
+          onMessage={(event) => {
+            const data = JSON.parse(event.nativeEvent.data);
+            if (data.cancelled) {
+              setShowRazorpay(false);
+              Alert.alert('Payment Cancelled', 'Your payment was cancelled.');
+            } else {
+              handleRazorpayResponse(data);
+            }
+          }}
+          javaScriptEnabled
+          domStorageEnabled
+          startInLoadingState
+          renderLoading={() => (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <ActivityIndicator size="large" color="#1669ef" />
+              <Text style={{ marginTop: 12, color: '#888' }}>Loading payment...</Text>
+            </View>
+          )}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -124,7 +230,7 @@ export default function CheckoutScreen({ navigation, route }) {
 
       <ScrollView showsVerticalScrollIndicator={false}>
 
-        {/* ── Free Delivery Progress Banner ── */}
+        {/* Free Delivery Banner */}
         {!deliveryInfo.isFree && (
           <View style={styles.freeDeliveryBanner}>
             <Ionicons name="bicycle-outline" size={18} color="#1669ef" />
@@ -136,9 +242,7 @@ export default function CheckoutScreen({ navigation, route }) {
         {deliveryInfo.isFree && (
           <View style={styles.freeDeliveryBannerGreen}>
             <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
-            <Text style={styles.freeDeliveryTextGreen}>
-              You have FREE delivery on this order! 🎉
-            </Text>
+            <Text style={styles.freeDeliveryTextGreen}>You have FREE delivery on this order! 🎉</Text>
           </View>
         )}
 
@@ -200,12 +304,10 @@ export default function CheckoutScreen({ navigation, route }) {
         {/* Bill Details */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Bill Details</Text>
-
           <View style={styles.billRow}>
             <Text style={styles.billLabel}>Items Total (incl. GST)</Text>
             <Text style={styles.billValue}>₹{subtotal.toFixed(0)}</Text>
           </View>
-
           <View style={styles.billRow}>
             <View>
               <Text style={styles.billLabel}>Delivery Fee</Text>
@@ -213,32 +315,35 @@ export default function CheckoutScreen({ navigation, route }) {
                 {distance ? `📍 ${distance} km away` : ''} • Free above ₹{deliveryInfo.minOrder}
               </Text>
             </View>
-            {deliveryInfo.isFree ? (
-              <Text style={styles.billValueFree}>FREE ✅</Text>
-            ) : (
-              <Text style={styles.billValue}>₹{deliveryInfo.deliveryFee}</Text>
-            )}
+            {deliveryInfo.isFree
+              ? <Text style={styles.billValueFree}>FREE ✅</Text>
+              : <Text style={styles.billValue}>₹{deliveryInfo.deliveryFee}</Text>
+            }
           </View>
-
+          <View style={styles.billRow}>
+            <Text style={styles.billLabel}>Platform Fee</Text>
+            <Text style={styles.billValue}>₹{platformFee.toFixed(0)}</Text>
+          </View>
+          <View style={styles.billRow}>
+            <Text style={styles.billLabel}>GST on Platform & Delivery (18%)</Text>
+            <Text style={styles.billValue}>₹{gstOnPlatform.toFixed(2)}</Text>
+          </View>
           <View style={styles.divider} />
-
           <View style={styles.billRow}>
             <Text style={styles.billTotalLabel}>Total Amount</Text>
             <Text style={styles.billTotalValue}>₹{total.toFixed(0)}</Text>
           </View>
-
-          {/* Delivery slab info */}
           <View style={styles.slabInfo}>
             <Ionicons name="information-circle-outline" size={14} color="#888" />
-            <Text style={styles.slabInfoText}>
-              Delivery fee based on distance ({deliveryInfo.slab})
-            </Text>
+            <Text style={styles.slabInfoText}>Delivery fee based on distance ({deliveryInfo.slab})</Text>
           </View>
         </View>
 
         {/* Payment Method */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Payment Method</Text>
+
+          {/* COD */}
           <TouchableOpacity
             style={[styles.paymentOption, payment === 'cod' && styles.paymentOptionActive]}
             onPress={() => setPayment('cod')}
@@ -254,6 +359,31 @@ export default function CheckoutScreen({ navigation, route }) {
               {payment === 'cod' && <View style={styles.radioDot} />}
             </View>
           </TouchableOpacity>
+
+          <View style={{ height: 10 }} />
+
+          {/* Online Payment */}
+          <TouchableOpacity
+            style={[styles.paymentOption, payment === 'online' && styles.paymentOptionOnline]}
+            onPress={() => setPayment('online')}
+          >
+            <View style={styles.paymentLeft}>
+              <Text style={styles.paymentEmoji}>💳</Text>
+              <View>
+                <Text style={styles.paymentName}>Online Payment</Text>
+                <Text style={styles.paymentDesc}>UPI, Cards, Net Banking</Text>
+              </View>
+            </View>
+            <View style={[styles.radio, payment === 'online' && styles.radioActiveOnline]}>
+              {payment === 'online' && <View style={styles.radioDotOnline} />}
+            </View>
+          </TouchableOpacity>
+
+          {payment === 'online' && (
+            <View style={styles.onlineBadge}>
+              <Text style={styles.onlineBadgeText}>⚡ Powered by Razorpay — Safe & Secure</Text>
+            </View>
+          )}
         </View>
 
         {/* Special Instructions */}
@@ -287,24 +417,24 @@ export default function CheckoutScreen({ navigation, route }) {
           )}
         </View>
         <TouchableOpacity
-          style={styles.placeOrderBtn}
+          style={[styles.placeOrderBtn, payment === 'online' && styles.placeOrderBtnOnline]}
           onPress={handlePlaceOrder}
           disabled={loading}
         >
           {loading
             ? <ActivityIndicator color="#fff" />
-            : <Text style={styles.placeOrderText}>Place Order • ₹{total.toFixed(0)}</Text>
+            : <Text style={styles.placeOrderText}>
+                {payment === 'online' ? '💳 Pay ₹' : 'Place Order • ₹'}{total.toFixed(0)}
+              </Text>
           }
         </TouchableOpacity>
       </View>
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9FA' },
-
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12,
@@ -320,7 +450,6 @@ const styles = StyleSheet.create({
   },
   freeDeliveryText:   { fontSize: 13, color: '#1254c4', flex: 1 },
   freeDeliveryAmount: { fontWeight: '800', color: '#1669ef' },
-
   freeDeliveryBannerGreen: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: '#f0fdf4', marginHorizontal: 16, marginTop: 16,
@@ -328,38 +457,22 @@ const styles = StyleSheet.create({
   },
   freeDeliveryTextGreen: { fontSize: 13, color: '#166534', flex: 1, fontWeight: '600' },
 
-  card: {
-    backgroundColor: '#fff', borderRadius: 16,
-    margin: 16, marginBottom: 0, padding: 16,
-  },
-  cardHeader: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', marginBottom: 12,
-  },
+  card: { backgroundColor: '#fff', borderRadius: 16, margin: 16, marginBottom: 0, padding: 16 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   cardTitle:  { fontSize: 15, fontWeight: 'bold', color: '#111', marginBottom: 12 },
   changeBtn:  { fontSize: 13, color: '#1669ef', fontWeight: '600' },
 
-  addrRow: { marginBottom: 12 },
-  addrChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 20,
-    paddingHorizontal: 14, paddingVertical: 8, marginRight: 8,
-    backgroundColor: '#F9FAFB',
-  },
+  addrRow:            { marginBottom: 12 },
+  addrChip:           { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, marginRight: 8, backgroundColor: '#F9FAFB' },
   addrChipActive:     { borderColor: '#1669ef', backgroundColor: '#eff6ff' },
   addrChipIcon:       { fontSize: 14 },
   addrChipText:       { fontSize: 13, color: '#555', fontWeight: '500' },
   addrChipTextActive: { color: '#1669ef', fontWeight: 'bold' },
 
-  addressInput: {
-    borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12,
-    padding: 12, fontSize: 14, color: '#111', minHeight: 80,
-    textAlignVertical: 'top', backgroundColor: '#F9FAFB',
-  },
+  addressInput: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12, padding: 12, fontSize: 14, color: '#111', minHeight: 80, textAlignVertical: 'top', backgroundColor: '#F9FAFB' },
 
-  shopName: { fontSize: 14, fontWeight: '600', color: '#555', marginBottom: 12 },
-  divider:  { height: 1, backgroundColor: '#F0F0F0', marginVertical: 12 },
-
+  shopName:       { fontSize: 14, fontWeight: '600', color: '#555', marginBottom: 12 },
+  divider:        { height: 1, backgroundColor: '#F0F0F0', marginVertical: 12 },
   orderItem:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   orderItemLeft:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
   qtyBadge:       { width: 24, height: 24, borderRadius: 6, backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center' },
@@ -367,66 +480,44 @@ const styles = StyleSheet.create({
   orderItemName:  { fontSize: 14, color: '#555', flex: 1 },
   orderItemPrice: { fontSize: 14, fontWeight: '600', color: '#111' },
 
-  billRow:         { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 },
-  billLabel:       { fontSize: 14, color: '#888' },
-  billLabelSub:    { fontSize: 11, color: '#aaa', marginTop: 2 },
-  billValue:       { fontSize: 14, color: '#111' },
-  billValueFree:   { fontSize: 14, color: '#16A34A', fontWeight: '700' },
-  billTotalLabel:  { fontSize: 15, fontWeight: 'bold', color: '#111' },
-  billTotalValue:  { fontSize: 15, fontWeight: 'bold', color: '#1669ef' },
+  billRow:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 },
+  billLabel:      { fontSize: 14, color: '#888' },
+  billLabelSub:   { fontSize: 11, color: '#aaa', marginTop: 2 },
+  billValue:      { fontSize: 14, color: '#111' },
+  billValueFree:  { fontSize: 14, color: '#16A34A', fontWeight: '700' },
+  billTotalLabel: { fontSize: 15, fontWeight: 'bold', color: '#111' },
+  billTotalValue: { fontSize: 15, fontWeight: 'bold', color: '#1669ef' },
+  slabInfo:       { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4, backgroundColor: '#F9FAFB', padding: 8, borderRadius: 8 },
+  slabInfoText:   { fontSize: 11, color: '#888' },
 
-  slabInfo: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    marginTop: 4, backgroundColor: '#F9FAFB',
-    padding: 8, borderRadius: 8,
-  },
-  slabInfoText: { fontSize: 11, color: '#888' },
-
-  paymentOption: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12, padding: 14,
-  },
+  paymentOption:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12, padding: 14 },
   paymentOptionActive: { borderColor: '#1669ef', backgroundColor: '#eff6ff' },
+  paymentOptionOnline: { borderColor: '#1669ef', backgroundColor: '#eff6ff' },
   paymentLeft:         { flexDirection: 'row', alignItems: 'center', gap: 12 },
   paymentEmoji:        { fontSize: 24 },
   paymentName:         { fontSize: 14, fontWeight: '600', color: '#111' },
   paymentDesc:         { fontSize: 12, color: '#888' },
 
-  radio: {
-    width: 20, height: 20, borderRadius: 10,
-    borderWidth: 2, borderColor: '#D1D5DB',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  radioActive: { borderColor: '#1669ef' },
-  radioDot:    { width: 10, height: 10, borderRadius: 5, backgroundColor: '#1669ef' },
+  radio:            { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#D1D5DB', justifyContent: 'center', alignItems: 'center' },
+  radioActive:      { borderColor: '#1669ef' },
+  radioDot:         { width: 10, height: 10, borderRadius: 5, backgroundColor: '#1669ef' },
+  radioActiveOnline:{ borderColor: '#1669ef' },
+  radioDotOnline:   { width: 10, height: 10, borderRadius: 5, backgroundColor: '#1669ef' },
+
+  onlineBadge:     { backgroundColor: '#f5f3ff', borderRadius: 8, padding: 10, marginTop: 10, alignItems: 'center' },
+  onlineBadgeText: { fontSize: 12, color: '#1669ef', fontWeight: '600' },
 
   optional:  { fontSize: 12, color: '#9CA3AF', fontWeight: 'normal' },
-  noteInput: {
-    borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12,
-    padding: 12, fontSize: 14, color: '#111', minHeight: 60,
-    textAlignVertical: 'top', backgroundColor: '#F9FAFB',
-  },
+  noteInput: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12, padding: 12, fontSize: 14, color: '#111', minHeight: 60, textAlignVertical: 'top', backgroundColor: '#F9FAFB' },
 
-  footer: {
-    padding: 16, paddingBottom: 30, backgroundColor: '#fff',
-    borderTopWidth: 1, borderTopColor: '#F0F0F0',
-  },
-  footerTop: {
-    flexDirection: 'row', alignItems: 'center',
-    gap: 8, marginBottom: 10,
-  },
-  footerTotal:      { fontSize: 20, fontWeight: 'bold', color: '#111' },
-  footerTotalLabel: { fontSize: 12, color: '#888' },
-  footerFreeTag: {
-    backgroundColor: '#f0fdf4', borderRadius: 20,
-    paddingHorizontal: 10, paddingVertical: 3,
-    borderWidth: 1, borderColor: '#bbf7d0',
-  },
-  footerFreeTagText: { fontSize: 11, color: '#16A34A', fontWeight: '700' },
+  footer:          { padding: 16, paddingBottom: 30, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F0F0F0' },
+  footerTop:       { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  footerTotal:     { fontSize: 20, fontWeight: 'bold', color: '#111' },
+  footerTotalLabel:{ fontSize: 12, color: '#888' },
+  footerFreeTag:   { backgroundColor: '#f0fdf4', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3, borderWidth: 1, borderColor: '#bbf7d0' },
+  footerFreeTagText:{ fontSize: 11, color: '#16A34A', fontWeight: '700' },
 
-  placeOrderBtn: {
-    backgroundColor: '#1669ef', borderRadius: 14,
-    padding: 16, alignItems: 'center',
-  },
-  placeOrderText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  placeOrderBtn:       { backgroundColor: '#1669ef', borderRadius: 14, padding: 16, alignItems: 'center' },
+  placeOrderBtnOnline: { backgroundColor: '#1669ef' },
+  placeOrderText:      { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });

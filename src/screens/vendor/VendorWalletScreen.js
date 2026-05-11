@@ -4,8 +4,9 @@ import {
   ScrollView, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import client from '../../api/client';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function VendorWalletScreen({ navigation }) {
   const [wallet, setWallet]         = useState(null);
@@ -19,7 +20,7 @@ export default function VendorWalletScreen({ navigation }) {
   const downloadExcel = async () => {
     try {
       setDownloading(true);
-      const token = await client.defaults.headers.common['Authorization'];
+      const token = `Bearer ${await AsyncStorage.getItem('access_token')}`;
       const month = selectedMonth;
       const year = selectedYear;
       const url = `${client.defaults.baseURL}/invoices/export/seller/?month=${month}&year=${year}`;

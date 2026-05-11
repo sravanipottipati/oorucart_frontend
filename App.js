@@ -24,6 +24,11 @@ import SearchScreen from './src/screens/buyer/SearchScreen';
 import OrderDetailScreen from './src/screens/buyer/OrderDetailScreen';
 import TownSelectionScreen from './src/screens/buyer/TownSelectionScreen';
 import CartScreen from './src/screens/buyer/CartScreen';
+import PrivacyPolicyScreen from './src/screens/buyer/PrivacyPolicyScreen';
+import AdminScreen from './src/screens/buyer/AdminScreen';
+import TermsAndConditionsScreen from './src/screens/buyer/TermsAndConditionsScreen';
+import RefundPolicyScreen from './src/screens/buyer/RefundPolicyScreen';
+import ContactUsScreen from './src/screens/buyer/ContactUsScreen';
 
 import VendorHomeScreen from './src/screens/vendor/VendorHomeScreen';
 import VendorOrdersScreen from './src/screens/vendor/VendorOrdersScreen';
@@ -84,6 +89,11 @@ function AppNavigator() {
       <Stack.Screen name="Search"        component={SearchScreen} />
         <Stack.Screen name="OrderDetail"   component={OrderDetailScreen} />
         <Stack.Screen name="TownSelection" component={TownSelectionScreen} />
+        <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+        <Stack.Screen name="Admin" component={AdminScreen} />
+        <Stack.Screen name="TermsAndConditions" component={TermsAndConditionsScreen} />
+        <Stack.Screen name="RefundPolicy" component={RefundPolicyScreen} />
+        <Stack.Screen name="ContactUs" component={ContactUsScreen} />
 
         {/* ── Vendor ── */}
         <Stack.Screen name="VendorHome"          component={VendorHomeScreen} />
