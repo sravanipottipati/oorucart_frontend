@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, RefreshControl,
@@ -207,8 +208,27 @@ export default function VendorWalletScreen({ navigation }) {
           ))
         )}
 
-        <View style={{ height: 40 }} />
+        <View style={{ height: 80 }} />
       </ScrollView>
+      {/* Bottom Tab */}
+      <View style={{ flexDirection: 'row', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F0F0F0', paddingBottom: 20, paddingTop: 10 }}>
+        <TouchableOpacity style={{ flex: 1, alignItems: 'center' }} onPress={() => navigation.navigate('VendorHome')}>
+          <Ionicons name="home-outline" size={25} color="#9CA3AF" />
+          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>Home</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={{ flex: 1, alignItems: 'center' }} onPress={() => navigation.navigate('VendorOrders')}>
+          <Ionicons name="receipt-outline" size={25} color="#9CA3AF" />
+          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>Orders</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={{ flex: 1, alignItems: 'center' }} onPress={() => navigation.navigate('VendorProducts')}>
+          <Ionicons name="cube-outline" size={25} color="#9CA3AF" />
+          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>Products</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={{ flex: 1, alignItems: 'center' }} onPress={() => navigation.navigate('VendorProfile')}>
+          <Ionicons name="person-outline" size={25} color="#9CA3AF" />
+          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>Profile</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

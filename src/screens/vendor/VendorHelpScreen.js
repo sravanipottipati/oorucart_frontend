@@ -92,19 +92,7 @@ export default function VendorHelpScreen({ navigation }) {
 
       <ScrollView showsVerticalScrollIndicator={false}>
 
-        {/* WhatsApp Banner */}
-        <TouchableOpacity style={styles.whatsappBanner} onPress={() => openWhatsApp()}>
-          <View style={styles.whatsappLeft}>
-            <Text style={styles.whatsappIcon}>💬</Text>
-            <View>
-              <Text style={styles.whatsappTitle}>Chat on WhatsApp</Text>
-              <Text style={styles.whatsappSub}>Vendor support — reply in minutes</Text>
-            </View>
-          </View>
-          <View style={styles.whatsappBadge}>
-            <Text style={styles.whatsappBadgeText}>Online</Text>
-          </View>
-        </TouchableOpacity>
+
 
         {/* Search */}
         <View style={styles.searchBar}>
@@ -125,7 +113,7 @@ export default function VendorHelpScreen({ navigation }) {
             <TouchableOpacity
               key={index}
               style={[styles.quickItem, index < QUICK_HELP.length - 1 && styles.quickItemBorder]}
-              onPress={() => openWhatsApp(item.msg)}
+              onPress={() => Alert.alert("Help", item.msg || "Please contact us via email or call.")}
             >
               <View style={[styles.quickIconBox, { backgroundColor: item.bg }]}>
                 <Text style={styles.quickIcon}>{item.icon}</Text>
@@ -142,9 +130,7 @@ export default function VendorHelpScreen({ navigation }) {
           {filteredFaqs.length === 0 ? (
             <View style={styles.noResult}>
               <Text style={styles.noResultText}>No results found</Text>
-              <TouchableOpacity onPress={() => openWhatsApp()}>
-                <Text style={styles.noResultLink}>Ask us on WhatsApp →</Text>
-              </TouchableOpacity>
+
             </View>
           ) : (
             filteredFaqs.map((faq, index) => (
@@ -174,17 +160,6 @@ export default function VendorHelpScreen({ navigation }) {
         <Text style={styles.sectionTitle}>Contact Us</Text>
         <View style={styles.contactCard}>
 
-          {/* WhatsApp */}
-          <TouchableOpacity style={[styles.contactItem, styles.contactItemBorder]} onPress={() => openWhatsApp()}>
-            <View style={[styles.contactIconBox, { backgroundColor: '#dcfce7' }]}>
-              <Text style={styles.contactIcon}>💬</Text>
-            </View>
-            <View style={styles.contactInfo}>
-              <Text style={styles.contactTitle}>WhatsApp</Text>
-              <Text style={styles.contactSub}>+91 {SUPPORT_PHONE}</Text>
-            </View>
-            <Text style={styles.contactArrow}>›</Text>
-          </TouchableOpacity>
 
           {/* Email */}
           <TouchableOpacity style={[styles.contactItem, styles.contactItemBorder]} onPress={openEmail}>
@@ -222,8 +197,27 @@ export default function VendorHelpScreen({ navigation }) {
           <Text style={styles.addressText}>GSTIN: 37AADCU8846J1ZP</Text>
         </View>
 
-        <View style={{ height: 40 }} />
+        <View style={{ height: 80 }} />
       </ScrollView>
+      {/* Bottom Tab */}
+      <View style={{ flexDirection: 'row', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F0F0F0', paddingBottom: 20, paddingTop: 10 }}>
+        <TouchableOpacity style={{ flex: 1, alignItems: 'center' }} onPress={() => navigation.navigate('VendorHome')}>
+          <Ionicons name="home-outline" size={25} color="#9CA3AF" />
+          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>Home</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={{ flex: 1, alignItems: 'center' }} onPress={() => navigation.navigate('VendorOrders')}>
+          <Ionicons name="receipt-outline" size={25} color="#9CA3AF" />
+          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>Orders</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={{ flex: 1, alignItems: 'center' }} onPress={() => navigation.navigate('VendorProducts')}>
+          <Ionicons name="cube-outline" size={25} color="#9CA3AF" />
+          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>Products</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={{ flex: 1, alignItems: 'center' }} onPress={() => navigation.navigate('VendorProfile')}>
+          <Ionicons name="person-outline" size={25} color="#9CA3AF" />
+          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>Profile</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
