@@ -99,7 +99,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
       const token = await AsyncStorage.getItem('access_token');
       const deliveryMins = parseInt(deliveryTime) || 30;
       const productData = {
-        name: name.trim(), price: parseFloat(price),
+        name: name.trim(), price: variants.length > 0 ? 0 : parseFloat(price),
         description: description.trim(), category,
         subcategory: subcategory || '', hsn_code: hsnCode.trim(),
         mrp: mrp ? parseFloat(mrp) : null,
