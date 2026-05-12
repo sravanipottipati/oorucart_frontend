@@ -85,14 +85,14 @@ export default function VendorAddProductScreen({ navigation, route }) {
       }
       const result = source === 'camera'
         ? await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1,1], quality: 0.7 })
-        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaType.IMAGE, allowsEditing: true, aspect: [1,1], quality: 0.7 });
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1,1], quality: 0.7 });
       if (!result.canceled) setImage(result.assets[0]);
     } catch (err) { Alert.alert('Error', 'Could not pick image'); }
   };
 
   const handleSave = async (saveAsDraft = false) => {
     if (!name.trim())  { Alert.alert('Error', 'Please enter product name'); return; }
-    if (!price.trim()) { Alert.alert('Error', 'Please enter price'); return; }
+    if (!price.trim() && variants.length === 0) { Alert.alert('Error', 'Please enter price or add variants'); return; }
     if (!category)     { Alert.alert('Error', 'Please select category'); return; }
     setLoading(true);
     try {
