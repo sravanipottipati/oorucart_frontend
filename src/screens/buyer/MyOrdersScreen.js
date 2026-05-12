@@ -287,13 +287,13 @@ export default function MyOrdersScreen({ navigation }) {
           <Ionicons name="home-outline" size={25} color="#9CA3AF" />
           <Text style={styles.tabLabel}>Home</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Cart')}>
+          <Ionicons name="cart-outline" size={25} color="#9CA3AF" />
+          <Text style={styles.tabLabel}>Cart</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem}>
           <Ionicons name="receipt" size={25} color="#1669ef" />
           <Text style={styles.tabLabelActive}>Orders</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Home')}>
-          <Ionicons name="cart-outline" size={25} color="#9CA3AF" />
-          <Text style={styles.tabLabel}>Cart</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Profile')}>
           <Ionicons name="person-outline" size={25} color="#9CA3AF" />
