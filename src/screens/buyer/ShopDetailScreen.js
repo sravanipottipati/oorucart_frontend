@@ -419,7 +419,7 @@ export default function ShopDetailScreen({ navigation, route }) {
   };
 
   const productCategories = ['all', ...new Set(products.map(p => p.category))];
-  const visibleProducts   = products.filter(p => p.is_available !== false);
+  const visibleProducts   = products.filter(p => p.is_available !== false).sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
   const filteredProducts  = activeCategory === 'all'
     ? visibleProducts
     : visibleProducts.filter(p => p.category === activeCategory);

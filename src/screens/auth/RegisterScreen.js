@@ -31,7 +31,7 @@ export default function RegisterScreen({ navigation }) {
       return Alert.alert('Error', 'Please agree to Terms & Conditions and Privacy Policy');
     setLoading(true);
     try {
-      await register(fullName, phone, password, 'buyer');
+      await register(fullName, phone, password, userType === 'seller' ? 'vendor' : 'buyer');
       navigation.replace('TownSelection');
     } catch (e) {
       const msg = e.response?.data?.phone_number?.[0] || 'Registration failed';
