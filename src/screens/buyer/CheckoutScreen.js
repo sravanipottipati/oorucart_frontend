@@ -46,7 +46,7 @@ export default function CheckoutScreen({ navigation, route }) {
   const deliveryInfo = getDeliveryInfo(distance, subtotal);
   const platformFee  = 10;
   const gstOnPlatform = Math.round((platformFee + deliveryInfo.deliveryFee) * 18) / 100;
-  const total        = subtotal + deliveryInfo.deliveryFee + platformFee + gstOnPlatform;
+  const total        = subtotal + deliveryInfo.deliveryFee + platformFee;
 
   useEffect(() => {
     const fetchAddresses = async () => {
@@ -324,10 +324,7 @@ export default function CheckoutScreen({ navigation, route }) {
             <Text style={styles.billLabel}>Platform Fee</Text>
             <Text style={styles.billValue}>₹{platformFee.toFixed(0)}</Text>
           </View>
-          <View style={styles.billRow}>
-            <Text style={styles.billLabel}>GST on Platform & Delivery (18%)</Text>
-            <Text style={styles.billValue}>₹{gstOnPlatform.toFixed(2)}</Text>
-          </View>
+
           <View style={styles.divider} />
           <View style={styles.billRow}>
             <Text style={styles.billTotalLabel}>Total Amount</Text>

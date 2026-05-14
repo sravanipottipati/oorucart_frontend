@@ -20,7 +20,13 @@
       "adaptiveIcon": {
         "backgroundColor": "#1669ef",
         "foregroundImage": "./assets/app-icon.png"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES"
+      ]
     },
     "web": {
       "favicon": "./assets/app-icon.png"

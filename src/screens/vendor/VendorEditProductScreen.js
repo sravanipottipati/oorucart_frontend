@@ -57,6 +57,7 @@ export default function VendorEditProductScreen({ navigation, route }) {
   const [isCod, setCod]             = useState(product?.is_cod ?? true);
   const [image, setImage]           = useState(null);
   const [loading, setLoading]       = useState(false);
+  const [deletedVariantIds, setDeletedVariantIds] = useState([]);
   const [variants, setVariants]     = useState(product?.variants?.map(v => ({
     id: v.id, name: v.name,
     mrp: v.mrp?.toString() || '',
@@ -69,7 +70,11 @@ export default function VendorEditProductScreen({ navigation, route }) {
 
   const addVariant = () => setVariants([...variants, { name: '', mrp: '', price: '', available: true }]);
   const updateVariant = (i, field, val) => { const u = [...variants]; u[i] = { ...u[i], [field]: val }; setVariants(u); };
-  const removeVariant = (i) => setVariants(variants.filter((_, idx) => idx !== i));
+  const removeVariant = (i) => {
+    const v = variants[i];
+    if (v.id) setDeletedVariantIds(prev => [...prev, v.id]);
+    setVariants(variants.filter((_, idx) => idx !== i));
+  };
 
   const handlePickImage = async () => {
     Alert.alert('Product Image', 'Choose image source', [
@@ -123,6 +128,10 @@ export default function VendorEditProductScreen({ navigation, route }) {
         await client.patch(`/vendors/products/${product.id}/`, productData, { headers: { Authorization: `Bearer ${token}` } });
       }
 
+      // Delete removed variants
+      for (const vid of deletedVariantIds) {
+        await client.delete(`/vendors/variants/${vid}/`, { headers: { Authorization: `Bearer ${token}` } });
+      }
       // Update variants
       for (const v of variants) {
         if (v.id) {

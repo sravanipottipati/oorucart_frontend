@@ -38,7 +38,7 @@ export default function VendorProfileScreen({ navigation }) {
           style: 'destructive',
           onPress: async () => {
             await logout();
-            navigation.replace('Login');
+            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
           },
         },
       ]
@@ -69,7 +69,7 @@ export default function VendorProfileScreen({ navigation }) {
         <View style={styles.profileCard}>
           <TouchableOpacity
             style={styles.editIconBtn}
-            onPress={() => navigation.navigate('EditProfile')}
+            onPress={() => navigation.navigate('VendorEditShop', { shop })}
           >
             <Text style={styles.editIcon}>✏️</Text>
           </TouchableOpacity>
@@ -107,7 +107,7 @@ export default function VendorProfileScreen({ navigation }) {
 
           <TouchableOpacity
             style={[styles.menuItem, styles.menuItemBorder]}
-            onPress={() => navigation.navigate('EditProfile')}
+            onPress={() => navigation.navigate('VendorEditShop', { shop })}
           >
             <View style={styles.menuLeft}>
               <View style={[styles.menuIconBox, { backgroundColor: '#eff6ff' }]}>

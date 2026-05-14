@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, Alert, Modal, TextInput,
+  ScrollView, ActivityIndicator, Alert, Modal, TextInput, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import client from '../../api/client';
 
@@ -30,7 +31,7 @@ export default function AddressScreen({ navigation }) {
     }
   };
 
-  useEffect(() => { fetchAddresses(); }, []);
+  useFocusEffect(useCallback(() => { fetchAddresses(); }, []));
 
   const openAdd = () => {
     setEdit(null);
@@ -170,6 +171,7 @@ export default function AddressScreen({ navigation }) {
 
       {/* Add/Edit Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{flex:1}}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <View style={styles.modalHeader}>
@@ -247,8 +249,8 @@ export default function AddressScreen({ navigation }) {
             </TouchableOpacity>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
-
       {/* Bottom Tab */}
       <View style={{ flexDirection: 'row', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F0F0F0', paddingBottom: 20, paddingTop: 10 }}>
         <TouchableOpacity style={{ flex: 1, alignItems: 'center' }} onPress={() => navigation.navigate('Home')}>
@@ -268,7 +270,8 @@ export default function AddressScreen({ navigation }) {
           <Text style={{ fontSize: 11, color: '#9CA3AF' }}>Profile</Text>
         </TouchableOpacity>
       </View>
-    </View>
+
+          </View>
   );
 }
 
