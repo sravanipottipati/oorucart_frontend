@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, TextInput, ActivityIndicator, Alert,
+  ScrollView, KeyboardAvoidingView, Platform, TextInput, ActivityIndicator, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
@@ -218,6 +218,7 @@ export default function CheckoutScreen({ navigation, route }) {
   }
 
   return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{flex:1}}>
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
@@ -427,6 +428,7 @@ export default function CheckoutScreen({ navigation, route }) {
         </TouchableOpacity>
       </View>
     </View>
+    </KeyboardAvoidingView>
   );
 }
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, TextInput, ActivityIndicator, Alert, Image, Switch,
+  ScrollView, KeyboardAvoidingView, Platform, TextInput, ActivityIndicator, Alert, Image, Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -103,13 +103,13 @@ export default function VendorEditProductScreen({ navigation, route }) {
 
   const handleSave = async () => {
     if (!name.trim())  { Alert.alert('Error', 'Please enter product name'); return; }
-    if (!price.trim()) { Alert.alert('Error', 'Please enter price'); return; }
+    if (!price.trim() && variants.length === 0) { Alert.alert('Error', 'Please enter price or add variants'); return; }
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem('access_token');
       const deliveryMins = parseInt(deliveryTime) || 30;
       const productData = {
-        name: name.trim(), price: parseFloat(price),
+        name: name.trim(), price: variants.length > 0 ? 0 : parseFloat(price),
         description: description.trim(), category,
         subcategory: subcategory || '', hsn_code: hsnCode.trim(),
         mrp: mrp ? parseFloat(mrp) : null,
@@ -175,6 +175,7 @@ export default function VendorEditProductScreen({ navigation, route }) {
   const currentImageUrl = product?.image_url || null;
 
   return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{flex:1}}>
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -376,6 +377,7 @@ export default function VendorEditProductScreen({ navigation, route }) {
         </TouchableOpacity>
       </View>
     </View>
+    </KeyboardAvoidingView>
   );
 }
 

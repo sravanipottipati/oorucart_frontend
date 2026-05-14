@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, TextInput, Alert, ActivityIndicator,
+  ScrollView, KeyboardAvoidingView, Platform, TextInput, Alert, ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
@@ -40,6 +40,7 @@ export default function EditProfileScreen({ navigation }) {
   };
 
   return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{flex:1}}>
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
@@ -135,6 +136,7 @@ export default function EditProfileScreen({ navigation }) {
         </TouchableOpacity>
       </View>
     </View>
+    </KeyboardAvoidingView>
   );
 }
 

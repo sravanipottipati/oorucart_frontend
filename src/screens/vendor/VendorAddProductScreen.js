@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, TextInput, ActivityIndicator, Alert, Image, Switch,
+  ScrollView, KeyboardAvoidingView, Platform, TextInput, ActivityIndicator, Alert, Image, Switch,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -143,6 +143,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
   const subcats = SUBCATEGORIES[category] || [];
 
   return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{flex:1}}>
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -343,6 +344,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
         </TouchableOpacity>
       </View>
     </View>
+    </KeyboardAvoidingView>
   );
 }
 
