@@ -234,6 +234,15 @@ export default function VendorOrdersScreen({ navigation }) {
                     </Text>
                   )}
 
+                  {/* Special Instructions */}
+                  {order.instructions && (
+                    <View style={{flexDirection:'row', alignItems:'center', gap:4, marginTop:4}}>
+                      <Ionicons name="chatbubble-outline" size={11} color="#888" />
+                      <Text style={[styles.orderMeta, {color:'#f59e0b', fontStyle:'italic'}]} numberOfLines={1}>
+                        {order.instructions}
+                      </Text>
+                    </View>
+                  )}
                   {/* Bottom row — status + arrow */}
                   <View style={styles.orderBottomRow}>
                     <View style={[styles.statusBadge, { backgroundColor: statusColor.bg, borderColor: statusColor.border }]}>

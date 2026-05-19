@@ -209,14 +209,16 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, 
             <Text style={styles.gridOOSOverlayText}>Out of{'\n'}Stock</Text>
           </View>
         )}
-        {/* Veg/Non-veg dot — top right */}
-        {['restaurant','fast_food','chinese','breakfast','lunch','dinner',
-          'vegetarian','non_vegetarian','tiffins_snacks','main_course',
-          'biryani','starters','combos'].includes(product.category) && (
-          <View style={[styles.gridVegDot, product.category === 'non_vegetarian' && styles.gridNonVegDot]}>
-            <View style={[styles.gridVegInner, product.category === 'non_vegetarian' && styles.gridNonVegInner]} />
-          </View>
-        )}
+        {/* Veg/Non-veg dot — top left */}
+        {(() => {
+          const nonVeg = ['non_vegetarian','biryani','chicken','mutton','fish','seafood','eggs'];
+          const isNonVeg = nonVeg.includes(product.category);
+          return (
+            <View style={[styles.gridVegDot, isNonVeg && styles.gridNonVegDot]}>
+              <View style={[styles.gridVegInner, isNonVeg && styles.gridNonVegInner]} />
+            </View>
+          );
+        })()}
         {/* Heart/Wishlist button */}
         <TouchableOpacity
           style={styles.gridHeartBtn}
@@ -631,16 +633,16 @@ const styles = StyleSheet.create({
   gridEmoji:    { fontSize: 52 },
 
   gridHeartBtn: {
-    position: 'absolute', top: 6, right: 6,
-    width: 28, height: 28, borderRadius: 14,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    position: 'absolute', top: 8, right: 8,
+    width: 30, height: 30, borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.9)',
     justifyContent: 'center', alignItems: 'center',
   },
   gridDiscountBadge:  { position: 'absolute', top: 8, left: 8, backgroundColor: '#16A34A', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 3 },
   gridDiscountText:   { fontSize: 10, color: '#fff', fontWeight: '800' },
   gridOOSOverlay:     { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' },
   gridOOSOverlayText: { color: '#fff', fontSize: 12, fontWeight: '800', textAlign: 'center', lineHeight: 16 },
-  gridVegDot:         { position: 'absolute', top: 8, right: 8, width: 18, height: 18, borderRadius: 3, borderWidth: 1.5, borderColor: '#16A34A', backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' },
+  gridVegDot:         { position: 'absolute', bottom: 8, left: 8, width: 18, height: 18, borderRadius: 3, borderWidth: 1.5, borderColor: '#16A34A', backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' },
   gridNonVegDot:      { borderColor: '#dc2626' },
   gridVegInner:       { width: 10, height: 10, borderRadius: 5, backgroundColor: '#16A34A' },
   gridNonVegInner:    { backgroundColor: '#dc2626' },

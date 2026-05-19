@@ -97,8 +97,8 @@ export default function MyOrdersScreen({ navigation }) {
     }
   };
 
-  const doReorder = (order) => {
-    clearCart();
+  const doReorder = async (order) => {
+    await clearCart();
     // Fetch shop details and add items to cart
     const shopData = {
       id:        order.vendor_id,
@@ -106,24 +106,23 @@ export default function MyOrdersScreen({ navigation }) {
       town:      order.vendor_town || '',
       platform_fee: order.platform_fee || 5,
     };
-    order.items?.forEach(item => {
+    console.log('ORDER ITEMS:', JSON.stringify(order.items));
+    console.log('ORDER VENDOR:', order.vendor_id, order.vendor, order.shop_name);
+    for (const item of (order.items || [])) {
       const product = {
-        id:    item.product_id || item.id,
+        id:    item.product || item.product_id || item.id,
         name:  item.product_name || item.name,
         price: item.price,
       };
-      addToCart(product, shopData);
-    });
+      await addToCart(product, shopData);
+    }
     Alert.alert(
       'Cart Ready! 🛒',
       `${order.items?.length} items added from ${order.shop_name || order.vendor_name}`,
       [
         {
           text: 'View Cart',
-          onPress: () => navigation.navigate('ShopDetail', {
-            vendorId: order.vendor_id,
-            shopName: order.shop_name || order.vendor_name,
-          }),
+          onPress: () => setTimeout(() => navigation.navigate('Cart'), 1500),
         },
         { text: 'OK', style: 'cancel' },
       ]

@@ -6,10 +6,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 const QUICK_HELP = [
-  { icon: '📦', label: 'Track Order',     msg: 'Hi, I need help tracking my order.' },
-  { icon: '↩️', label: 'Return & Refund', msg: 'Hi, I want to request a return or refund.' },
-  { icon: '💳', label: 'Payment Issue',   msg: 'Hi, I am facing a payment issue.' },
-  { icon: '🏪', label: 'Shop Issue',      msg: 'Hi, I want to report an issue with a shop.' },
+  { icon: 'location-outline', label: 'Track Order', msg: 'Hi, I need help tracking my order.', useIonicon: true },
+  { icon: 'refresh-outline', label: 'Return & Refund', msg: 'Hi, I want to request a return or refund.', useIonicon: true },
+  { icon: 'card-outline', label: 'Payment Issue', msg: 'Hi, I am facing a payment issue.', useIonicon: true },
+  { icon: 'storefront-outline', label: 'Shop Issue', msg: 'Hi, I want to report an issue with a shop.', useIonicon: true },
 ];
 
 const FAQS = [
@@ -118,7 +118,7 @@ export default function HelpSupportScreen({ navigation }) {
               style={styles.quickCard}
               onPress={() => openEmail(item.label)}
             >
-              <Text style={styles.quickIcon}>{item.icon}</Text>
+              {item.useIonicon ? <Ionicons name={item.icon} size={22} color="#555" style={{marginBottom: 8}} /> : <Text style={styles.quickIcon}>{item.icon}</Text>}
               <Text style={styles.quickLabel}>{item.label}</Text>
             </TouchableOpacity>
           ))}

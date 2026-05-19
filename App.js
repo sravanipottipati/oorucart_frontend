@@ -67,7 +67,7 @@ function AppNavigator() {
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName={getInitialRoute()}
-        screenOptions={{ headerShown: false }}
+        screenOptions={{ headerShown: false, animation: 'fade' }}
       >
         {/* ── Auth ── */}
         <Stack.Screen name="Login"          component={LoginScreen} />

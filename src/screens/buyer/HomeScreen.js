@@ -2,11 +2,13 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, RefreshControl, Image,
-  Dimensions, FlatList,
+  Dimensions, FlatList, Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import client from '../../api/client';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
@@ -26,12 +28,12 @@ const CATEGORIES = [
   { id: 'restaurant',  label: 'Restaurant',  icon: 'restaurant',          color: '#dc2626', bg: '#FEF2F2' },
   { id: 'supermarket', label: 'Supermarket', icon: 'storefront',          color: '#7c3aed', bg: '#F5F3FF' },
   { id: 'fast_food',   label: 'Fast Food',   icon: 'fast-food',           color: '#ea580c', bg: '#FFF7ED' },
-  { id: 'chinese',     label: 'Chinese',     icon: 'fish',                color: '#b45309', bg: '#FFFBEB' },
+  { id: 'chinese',     label: 'Chinese',     icon: 'restaurant',        color: '#b45309', bg: '#FFFBEB' },
   { id: 'bakery',      label: 'Bakery',      icon: 'cafe',                color: '#d97706', bg: '#FFFBEB' },
   { id: 'vegetables',  label: 'Vegetables',  icon: 'leaf',                color: '#16a34a', bg: '#F0FDF4' },
   { id: 'fruits',      label: 'Fruits',      icon: 'nutrition',           color: '#ea580c', bg: '#FFF7ED' },
   { id: 'dairy',       label: 'Dairy',       icon: 'water',               color: '#0369a1', bg: '#F0F9FF' },
-  { id: 'ice_cream',   label: 'Ice Cream',   icon: 'snow',                color: '#0284c7', bg: '#F0F9FF' },
+  { id: 'ice_cream',   label: 'Ice Cream',   icon: 'ice-cream',           color: '#0284c7', bg: '#F0F9FF' },
 ];
 
 // ── Subcategories shown below main categories ─────────────────────────────────
@@ -78,7 +80,7 @@ const SUBCATEGORIES = {
   fast_food: [
     { id: 'all',         label: 'All Items',         emoji: '🍔' },
     { id: 'burgers',     label: 'Burgers',           emoji: '🍔' },
-    { id: 'pizza',       label: 'Pizza',             emoji: '🍕' },
+    { id: 'wine-outline',       label: 'Pizza',             emoji: '🍕' },
     { id: 'wraps_rolls', label: 'Wraps & Rolls',     emoji: '🌯' },
     { id: 'fries_sides', label: 'Fries & Sides',     emoji: '🍟' },
     { id: 'fried_chicken',label: 'Fried Chicken',   emoji: '🍗' },
@@ -112,7 +114,7 @@ const OFFERS = [
   { id: '3', tag: 'FARM FRESH',      title: 'Straight From', title2: 'Local Farms',    subtitle: 'Fresh Vegetables and Fruits Every Single Day',        icon: 'leaf-outline',             bg: '#14532d' },
   { id: '4', tag: 'TOO HOT TO COOK', title: 'Order Food',    title2: 'Stay Cool',      subtitle: 'Fresh Meals from Local Restaurants in Minutes',       icon: 'restaurant-outline',       bg: '#7c2d12' },
   { id: '5', tag: 'SUMMER STOCK UP', title: 'Groceries',     title2: 'Delivered Now',  subtitle: 'No More Market Trips in the Heat — Order Online',     icon: 'cart-outline',             bg: '#1254c4' },
-  { id: '6', tag: 'DAILY FRESH',     title: 'Milk & Dairy',  title2: 'Every Morning',  subtitle: 'Fresh Milk, Curd & Paneer Delivered to Your Door',    icon: 'cafe-outline',             bg: '#16a34a' },
+  { id: '6', tag: 'DAILY FRESH',     title: 'Milk & Dairy',  title2: 'Every Morning',  subtitle: 'Fresh Milk, Curd & Paneer Delivered to Your Door',    icon: 'wine-outline',             bg: '#16a34a' },
   { id: '7', tag: 'SUPPORT LOCAL',   title: 'Every Order',   title2: 'Helps a Family', subtitle: 'Your Purchase Directly Supports Local Vendors',       icon: 'heart-outline',            bg: '#581c87' },
 ];
 
@@ -150,7 +152,7 @@ export default function HomeScreen({ navigation }) {
   const isFetchingRef                 = useRef(false);
 
   const { user }                                 = useAuth();
-  const { shop: cartShop, cartCount, cartTotal, fetchCartFromDb } = useCart();
+  const { shop: cartShop, cartCount, cartTotal, fetchCartFromDb, carts, addToCart, removeFromCart } = useCart();
   const [wishlistCount, setWishlistCount] = useState(0);
   useFocusEffect(
     React.useCallback(() => {
@@ -264,10 +266,10 @@ export default function HomeScreen({ navigation }) {
     return (
       <View style={styles.emptyState}>
         <View style={styles.emptyIconCircle}>
-          <Ionicons name="storefront-outline" size={40} color="#9CA3AF" />
+          <Ionicons name="storefront-outline" size={40} color="#1669ef" />
         </View>
-        <Text style={styles.emptyTitle}>No 🏪 Order from Local Shops</Text>
-        <Text style={styles.emptySubtitle}>We could not find any shops in this category near your location</Text>
+        <Text style={styles.emptyTitle}>No Shops Found</Text>
+        <Text style={styles.emptySubtitle}>Change Location to find shops near you</Text>
         <TouchableOpacity style={styles.emptyBtn} onPress={() => navigation.navigate('TownSelection')}>
           <Ionicons name="location-outline" size={16} color="#fff" />
           <Text style={styles.emptyBtnText}>Change Location</Text>
@@ -401,7 +403,7 @@ export default function HomeScreen({ navigation }) {
           showsHorizontalScrollIndicator={false}
           keyExtractor={item => item.id}
           onMomentumScrollEnd={e => {
-            const index = Math.round(e.nativeEvent.contentOffset.x / (SCREEN_WIDTH - 32));
+            const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
             setBannerIndex(index);
           }}
           renderItem={({ item }) => (
@@ -420,8 +422,8 @@ export default function HomeScreen({ navigation }) {
             </View>
           )}
           style={styles.bannerList}
-          contentContainerStyle={{ paddingHorizontal: 16 }}
-          snapToInterval={SCREEN_WIDTH - 32 + 12}
+          contentContainerStyle={{ paddingHorizontal: 0 }}
+          snapToInterval={SCREEN_WIDTH}
           decelerationRate="fast"
         />
 
@@ -441,11 +443,7 @@ export default function HomeScreen({ navigation }) {
                 { backgroundColor: category === cat.id ? cat.color : cat.bg },
                 category === cat.id && styles.categoryCardActive,
               ]}>
-                <Ionicons
-                  name={cat.icon}
-                  size={28}
-                  color={category === cat.id ? '#fff' : cat.color}
-                />
+                <Ionicons name={cat.icon} size={28} color={category === cat.id ? '#fff' : cat.color} />
               </View>
               <Text style={[styles.categoryLabel, { color: category === cat.id ? cat.color : '#555' }, category === cat.id && { fontWeight: '700' }]}>
                 {cat.label}
@@ -462,7 +460,7 @@ export default function HomeScreen({ navigation }) {
     </View>
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 12, paddingBottom: 8 }}>
       {popularProducts.map(product => (
-        <TouchableOpacity key={product.id} style={styles.popularCard} onPress={() => { setSelectedProduct(product); setShowProductModal(true); }}>
+        <TouchableOpacity key={product.id} style={styles.popularCard} onPress={() => navigation.navigate('ShopDetail', { vendorId: product.vendor_id })}>
           <View style={styles.trendingBadge}>
             <Text style={styles.trendingBadgeText}>🔥 Trending</Text>
           </View>
@@ -473,9 +471,31 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.popularShop} numberOfLines={1}>🏪 {product.shop_name}</Text>
           <View style={styles.popularBottom}>
             <Text style={styles.popularPrice}>₹{parseFloat(product.price).toFixed(0)}</Text>
-            <View style={styles.popularAddBtn}>
-              <Text style={styles.popularAddBtnText}>+</Text>
-            </View>
+            {(() => {
+              const vendorId = product.vendor_id;
+              const qty = carts[vendorId]?.items?.[product.id] || 0;
+              if (qty > 0) {
+                return (
+                  <View style={{flexDirection:'row', alignItems:'center', backgroundColor:'#1669ef', borderRadius:20, paddingHorizontal:8, paddingVertical:6, gap:8}}>
+                    <TouchableOpacity hitSlop={{top:10,bottom:10,left:10,right:10}} onPress={() => removeFromCart(product, vendorId)}>
+                      <Text style={{color:'#fff', fontSize:18, fontWeight:'bold'}}>−</Text>
+                    </TouchableOpacity>
+                    <Text style={{color:'#fff', fontSize:14, fontWeight:'bold', minWidth:16, textAlign:'center'}}>{qty}</Text>
+                    <TouchableOpacity hitSlop={{top:10,bottom:10,left:10,right:10}} onPress={() => addToCart(product, { id: vendorId, shop_name: product.shop_name })}>
+                      <Text style={{color:'#fff', fontSize:18, fontWeight:'bold'}}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              }
+              return (
+                <TouchableOpacity 
+                  style={styles.popularAddBtn}
+                  onPress={() => addToCart(product, { id: product.vendor_id, shop_name: product.shop_name })}
+                >
+                  <Text style={styles.popularAddBtnText}>+</Text>
+                </TouchableOpacity>
+              );
+            })()}
           </View>
         </TouchableOpacity>
       ))}
@@ -485,7 +505,10 @@ export default function HomeScreen({ navigation }) {
 
 {/* ── Shops Section ── */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>🏪 Order from Local Shops</Text>
+          <View style={{flexDirection:'row', alignItems:'center', gap:6, marginLeft:16}}>
+            <Ionicons name="storefront-outline" size={18} color="#111" />
+            <Text style={{fontSize:17, fontWeight:'bold', color:'#111'}}>Order from Local Shops</Text>
+          </View>
           <Text style={styles.shopCount}>{filteredShops.length} shops</Text>
         </View>
 
@@ -583,7 +606,7 @@ const styles = StyleSheet.create({
 
   bannerList: { marginBottom: 8 },
   bannerCard: {
-    width: SCREEN_WIDTH - 44, borderRadius: 16, padding: 20,
+    width: SCREEN_WIDTH - 32, borderRadius: 16, padding: 20, marginHorizontal: 16,
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', marginRight: 12, height: 110,
   },

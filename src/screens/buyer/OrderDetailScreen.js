@@ -174,22 +174,16 @@ export default function OrderDetailScreen({ navigation, route }) {
             <Text style={styles.billValue}>₹{subtotal.toFixed(0)}</Text>
           </View>
           <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Delivery Fee</Text>
+            <Text style={styles.billLabel}>Delivery Fee (incl. GST)</Text>
             {deliveryFee === 0
               ? <Text style={[styles.billValue, { color: '#16A34A' }]}>FREE</Text>
               : <Text style={styles.billValue}>₹{deliveryFee.toFixed(0)}</Text>
             }
           </View>
           <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Platform Fee</Text>
+            <Text style={styles.billLabel}>Platform Fee (incl. GST)</Text>
             <Text style={styles.billValue}>₹{platformFee.toFixed(0)}</Text>
           </View>
-          {gstOnPlatform > 0 && (
-            <View style={styles.billRow}>
-              <Text style={styles.billLabel}>GST on Platform & Delivery (18%)</Text>
-              <Text style={styles.billValue}>₹{gstOnPlatform.toFixed(2)}</Text>
-            </View>
-          )}
           <View style={[styles.billRow, styles.billTotal]}>
             <Text style={styles.billTotalLabel}>Total Amount</Text>
             <Text style={styles.billTotalValue}>₹{total.toFixed(0)}</Text>
@@ -202,6 +196,14 @@ export default function OrderDetailScreen({ navigation, route }) {
             <Ionicons name="location-outline" size={18} color="#1669ef" />
             <Text style={styles.addressText}>{order.delivery_address}</Text>
           </View>
+          {order.instructions ? (
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 10 }}>
+              <Ionicons name="chatbubble-outline" size={18} color="#f59e0b" />
+              <Text style={[styles.addressText, {color:'#f59e0b', fontStyle:'italic'}]}>
+                {order.instructions}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.card}>

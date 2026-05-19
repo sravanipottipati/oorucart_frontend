@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, RefreshControl,
@@ -58,7 +59,7 @@ export default function NotificationsScreen({ navigation }) {
     try {
       await client.post(`/orders/notifications/${id}/read/`);
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
-      if (orderId) navigation.navigate('OrderDetail', { orderId });
+      if (orderId) navigation.navigate('OrderDetail', { orderId: orderId.toString() });
     } catch (e) {
       console.log('Error:', e.message);
     }
@@ -98,7 +99,7 @@ export default function NotificationsScreen({ navigation }) {
         >
           {notifications.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyEmoji}>🔔</Text>
+              <Ionicons name="notifications-outline" size={60} color="#1669ef" />
               <Text style={styles.emptyTitle}>No notifications yet</Text>
               <Text style={styles.emptySubtitle}>
                 Order updates will appear here

@@ -311,7 +311,7 @@ export default function CheckoutScreen({ navigation, route }) {
           </View>
           <View style={styles.billRow}>
             <View>
-              <Text style={styles.billLabel}>Delivery Fee</Text>
+              <Text style={styles.billLabel}>Delivery Fee (incl. GST)</Text>
               <Text style={styles.billLabelSub}>
                 {distance ? `📍 ${distance} km away` : ''} • Free above ₹{deliveryInfo.minOrder}
               </Text>
@@ -322,7 +322,7 @@ export default function CheckoutScreen({ navigation, route }) {
             }
           </View>
           <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Platform Fee</Text>
+            <Text style={styles.billLabel}>Platform Fee (incl. GST)</Text>
             <Text style={styles.billValue}>₹{platformFee.toFixed(0)}</Text>
           </View>
 

@@ -167,7 +167,7 @@ export default function ProfileScreen({ navigation }) {
           style={styles.bellBtn}
           onPress={() => navigation.navigate('Notifications')}
         >
-          <Text style={styles.bellIcon}>🔔</Text>
+          <Ionicons name="notifications-outline" size={24} color="#111" />
         </TouchableOpacity>
       </View>
 
