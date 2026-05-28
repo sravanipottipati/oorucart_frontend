@@ -159,7 +159,7 @@ export default function OrderDetailScreen({ navigation, route }) {
   <div class="totals">
     <div class="total-row"><span>Items Total</span><span>₹${parseFloat(order.subtotal || 0).toFixed(2)}</span></div>
     <div class="total-row"><span>Delivery Fee</span><span>₹${parseFloat(order.delivery_fee || 0).toFixed(2)}</span></div>
-    <div class="total-row"><span>Platform Fee</span><span>₹${parseFloat(order.platform_fee || 0).toFixed(2)}</span></div>
+    <div class="total-row"><span>Platform Fee (incl. GST)</span><span>₹${Math.round(parseFloat(order.platform_fee || 0) * 1.18).toFixed(2)}</span></div>
     <div class="total-final"><span>Total Amount</span><span>₹${parseFloat(order.total_amount || 0).toFixed(2)}</span></div>
   </div>
   <div class="footer">
