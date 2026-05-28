@@ -93,7 +93,7 @@ export default function VendorOrderDetailScreen({ navigation, route }) {
   const isCancelled = ['cancelled', 'rejected'].includes(order.status);
   const isDelivered = order.status === 'delivered';
   const isNew       = order.status === 'placed';
-  const subtotal    = order.items?.reduce((sum, item) => sum + item.quantity * parseFloat(item.price), 0) || 0;
+  const subtotal    = parseFloat(order.total_amount || 0) - parseFloat(order.delivery_fee || 0) - Math.round(parseFloat(order.platform_fee || 0) * 1.18);
   const deliveryFee = parseFloat(order.delivery_fee || 0);
   const total       = parseFloat(order.total_amount || 0);
   const date        = new Date(order.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -181,14 +181,11 @@ export default function VendorOrderDetailScreen({ navigation, route }) {
             </View>
           ))}
           <View style={styles.divider} />
-          <View style={styles.billRow}><Text style={styles.billLabel}>Items Total</Text><Text style={styles.billValue}>Rs.{subtotal.toFixed(0)}</Text></View>
+          <View style={styles.billRow}><Text style={styles.billTotalLabel}>Items Total (incl. GST)</Text><Text style={styles.billTotalValue}>Rs.{subtotal.toFixed(0)}</Text></View>
           <View style={styles.billRow}>
             <Text style={styles.billLabel}></Text>
           </View>
-          <View style={[styles.billRow, styles.billTotal]}>
-            <Text style={styles.billTotalLabel}>Order Amount</Text>
-            <Text style={styles.billTotalValue}>Rs.{total.toFixed(0)}</Text>
-          </View>
+
         </View>
 
         <View style={styles.card}>
