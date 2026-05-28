@@ -116,6 +116,24 @@ export default function CheckoutScreen({ navigation, route }) {
     } catch (e) { Alert.alert('Error', 'Could not get location'); }
   };
 
+  // ── Geocode address and recalculate distance ──────────────────────────────
+  const geocodeAndSetDistance = async (addressText) => {
+    try {
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=AIzaSyCS_YRu6O61LCZn_QlypzjcjSdeRqbQaDI`
+      );
+      const data = await res.json();
+      if (data.results?.[0]) {
+        const { lat, lng } = data.results[0].geometry.location;
+        if (shop?.latitude && shop?.longitude) {
+          const dist = calculateDistance(lat, lng, parseFloat(shop.latitude), parseFloat(shop.longitude));
+          setCalcDistance(dist);
+        }
+      }
+    } catch (e) {
+      console.log('Geocode error:', e.message);
+    }
+  };
   const handlePlaceOrder = async () => {
     if (deliveryInfo.outOfRange) {
       Alert.alert('Outside Delivery Area', 'Sorry, this shop does not deliver to your location. Maximum delivery range is 6 km.');
@@ -308,7 +326,7 @@ export default function CheckoutScreen({ navigation, route }) {
                 <TouchableOpacity
                   key={addr.id}
                   style={[styles.addrChip, selectedAddr?.id === addr.id && styles.addrChipActive]}
-                  onPress={() => { setSelectedAddr(addr); setAddress(addr.full_address); }}
+                  onPress={() => { setSelectedAddr(addr); setAddress(addr.full_address); geocodeAndSetDistance(addr.full_address); }}
                 >
                   <Text style={styles.addrChipIcon}>
                     {addr.label === 'Home' ? '🏠' : addr.label === 'Work' ? '💼' : '📍'}
