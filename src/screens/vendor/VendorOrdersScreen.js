@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
     paddingTop: 52, paddingHorizontal: 16, paddingBottom: 14,
     backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
-  headerTitle: { fontSize: 22, fontWeight: '900', color: '#111' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center' },
   headerSub:   { fontSize: 12, color: '#888', marginTop: 2 },
   bellBtn:     { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
 

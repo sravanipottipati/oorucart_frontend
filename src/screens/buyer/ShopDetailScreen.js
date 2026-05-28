@@ -159,7 +159,10 @@ const formatPrice = (price) => {
 // ─── GRID PRODUCT CARD ────────────────────────────────────────────────────────
 const ProductCard = ({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, handleWishlist }) => {
   const [showVariants, setShowVariants]       = useState(false);
-  const [selectedVariant, setSelectedVariant] = useState(null);
+  const lowestVariantDefault = product.variants && product.variants.length > 0
+    ? product.variants.filter(v => v.stock_quantity > 0).reduce((a, b) => parseFloat(a.price) < parseFloat(b.price) ? a : b, product.variants.find(v => v.stock_quantity > 0) || product.variants[0])
+    : null;
+  const [selectedVariant, setSelectedVariant] = useState(lowestVariantDefault);
   const hasVariants = product.variants && product.variants.length > 0;
 
   const productOutOfStock     = !hasVariants && product.stock_quantity === 0;
@@ -179,8 +182,11 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, 
     onAdd(product, variant);
   };
 
-  const activePrice = selectedVariant ? selectedVariant.price : product.price;
-  const activeMrp   = selectedVariant ? selectedVariant.mrp   : product.mrp;
+  const lowestVariant = hasVariants && !selectedVariant
+    ? product.variants.reduce((a, b) => parseFloat(a.price) < parseFloat(b.price) ? a : b, product.variants[0])
+    : null;
+  const activePrice = selectedVariant ? selectedVariant.price : (lowestVariant ? lowestVariant.price : product.price);
+  const activeMrp   = selectedVariant ? selectedVariant.mrp   : (lowestVariant ? lowestVariant.mrp : product.mrp);
   const discount    = getDiscount(activePrice, activeMrp);
 
   return (
@@ -210,15 +216,9 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, 
           </View>
         )}
         {/* Veg/Non-veg dot — top left */}
-        {(() => {
-          const nonVeg = ['non_vegetarian','biryani','chicken','mutton','fish','seafood','eggs'];
-          const isNonVeg = nonVeg.includes(product.category);
-          return (
-            <View style={[styles.gridVegDot, isNonVeg && styles.gridNonVegDot]}>
-              <View style={[styles.gridVegInner, isNonVeg && styles.gridNonVegInner]} />
-            </View>
-          );
-        })()}
+        <View style={[styles.gridVegDot, product.is_veg === false && styles.gridNonVegDot]}>
+          <View style={[styles.gridVegInner, product.is_veg === false && styles.gridNonVegInner]} />
+        </View>
         {/* Heart/Wishlist button */}
         <TouchableOpacity
           style={styles.gridHeartBtn}
@@ -227,7 +227,7 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, 
           <Ionicons
             name={wishlistedIds.includes(product.id) ? 'heart' : 'heart-outline'}
             size={16}
-            color={wishlistedIds.includes(product.id) ? '#EF4444' : '#fff'}
+            color={wishlistedIds.includes(product.id) ? '#EF4444' : '#111'}
           />
         </TouchableOpacity>
       </View>
@@ -255,7 +255,11 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, 
                     isActive && { backgroundColor: shopColor, borderColor: shopColor },
                     isVarOOS && { opacity: 0.5 },
                   ]}
-                  onPress={() => !isVarOOS && setSelectedVariant(isActive ? null : v)}
+                  onPress={() => {
+                    if (isVarOOS) return;
+                    const newVariant = isActive ? null : v;
+                    setSelectedVariant(newVariant);
+                  }}
                   disabled={isVarOOS}>
                   <Text style={[
                     styles.gridVariantText,
@@ -273,12 +277,15 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, 
         {/* Price */}
         <View style={styles.gridPriceRow}>
           <Text style={[styles.gridPrice, isOutOfStock && { color: '#9CA3AF' }]}>
-            {formatPrice(activePrice)}
+            {lowestVariant ? `From ${formatPrice(activePrice)}` : formatPrice(activePrice)}
           </Text>
           {!isOutOfStock && activeMrp && parseFloat(activeMrp) > parseFloat(activePrice) && (
             <Text style={styles.gridMrp}>{formatPrice(activeMrp)}</Text>
           )}
         </View>
+        {!isOutOfStock && discount && (
+          <Text style={styles.gridOffText}>{discount}% OFF on MRP</Text>
+        )}
 
         {/* Button */}
         {isOutOfStock ? (
@@ -315,20 +322,6 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, 
             </TouchableOpacity>
           </View>
           <Text style={styles.variantModalSub}>Select size / weight</Text>
-          <TouchableOpacity
-            style={[styles.variantOption, !selectedVariant && styles.variantOptionActive]}
-            onPress={() => { setSelectedVariant(null); setShowVariants(false); onAdd(product, null); }}>
-            <View style={styles.variantOptionLeft}>
-              <Text style={styles.variantOptionName}>Standard</Text>
-              <Text style={styles.variantOptionDesc}>Default size</Text>
-            </View>
-            <View style={styles.variantOptionRight}>
-              <Text style={[styles.variantOptionPrice, { color: shopColor }]}>{formatPrice(product.price)}</Text>
-              {product.mrp && parseFloat(product.mrp) > parseFloat(product.price) && (
-                <Text style={styles.variantOptionMrp}>{formatPrice(product.mrp)}</Text>
-              )}
-            </View>
-          </TouchableOpacity>
           {product.variants.map(v => {
             const vDiscount = getDiscount(v.price, v.mrp);
             const isVarOOS  = v.stock_quantity === 0;
@@ -415,7 +408,7 @@ export default function ShopDetailScreen({ navigation, route }) {
 
   const handleAddToCart = (product, variant = null) => {
     const productToAdd = variant
-      ? { ...product, price: variant.price, name: `${product.name} (${variant.name})` }
+      ? { ...product, id: `${product.id}_${variant.id}`, price: variant.price, mrp: variant.mrp, name: `${product.name} (${variant.name})`, variant_id: variant.id, base_product_id: product.id }
       : product;
     addToCart(productToAdd, shop);
   };
@@ -445,10 +438,10 @@ export default function ShopDetailScreen({ navigation, route }) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={20} color="#fff" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.notifBtn} onPress={() => navigation.navigate('Notifications')}>
-          <Ionicons name="notifications-outline" size={20} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.bannerEmoji}>{CATEGORY_EMOJIS[shop?.category] || '🏪'}</Text>
+
+        <View style={styles.shopLogoCircle}>
+          <Ionicons name="storefront-outline" size={40} color="#fff" />
+        </View>
       </View>
 
       {/* Shop Info Card */}
@@ -593,6 +586,8 @@ const styles = StyleSheet.create({
   backBtn:  { position: 'absolute', top: 52, left: 16, width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(0,0,0,0.25)', justifyContent: 'center', alignItems: 'center' },
   notifBtn: { position: 'absolute', top: 52, right: 16, width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(0,0,0,0.25)', justifyContent: 'center', alignItems: 'center' },
   bannerEmoji: { fontSize: 64 },
+  shopLogoCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.25)', justifyContent: 'center', alignItems: 'center' },
+  shopLogoText: { fontSize: 36, fontWeight: '800', color: '#fff' },
   shopInfoCard: { backgroundColor: '#fff', marginHorizontal: 16, marginTop: -20, borderRadius: 16, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 4, marginBottom: 8 },
   shopInfoTop:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
   shopInfoLeft:     { flex: 1 },
@@ -653,6 +648,7 @@ const styles = StyleSheet.create({
   gridPriceRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 8 },
   gridPrice:    { fontSize: 15, fontWeight: '800', color: '#111' },
   gridMrp:      { fontSize: 11, color: '#9CA3AF', textDecorationLine: 'line-through' },
+  gridOffText:  { fontSize: 11, color: '#16A34A', fontWeight: '700', marginBottom: 4 },
 
   gridVariantPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, borderWidth: 1, borderColor: '#E5E7EB', backgroundColor: '#F9FAFB' },
   gridVariantText: { fontSize: 10, fontWeight: '600', color: '#374151' },

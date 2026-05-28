@@ -57,6 +57,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
   const [image, setImage]           = useState(null);
   const [loading, setLoading]       = useState(false);
   const [variants, setVariants]     = useState([]);
+  const [isVeg, setIsVeg]           = useState(true);
   const [showCatPicker, setShowCatPicker]   = useState(false);
   const [showSubPicker, setShowSubPicker]   = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -100,6 +101,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
       const deliveryMins = parseInt(deliveryTime) || 30;
       const productData = {
         name: name.trim(), price: variants.length > 0 ? 0 : parseFloat(price),
+        is_veg: isVeg,
         description: description.trim(), category,
         subcategory: subcategory || '', hsn_code: hsnCode.trim(),
         mrp: mrp ? parseFloat(mrp) : null,
@@ -201,15 +203,16 @@ export default function VendorAddProductScreen({ navigation, route }) {
               <Text style={styles.fieldLabel}>Category <Text style={styles.required}>*</Text></Text>
               <TouchableOpacity style={styles.dropdown} onPress={() => { setShowCatPicker(!showCatPicker); setShowSubPicker(false); }}>
                 <Text style={[styles.dropdownText, !category && { color: '#9CA3AF' }]}>
-                  {selectedCat ? `${selectedCat.emoji} ${selectedCat.label}` : 'Select category'}
+                  {selectedCat ? selectedCat.label : 'Select category'}
                 </Text>
                 <Ionicons name="chevron-down" size={16} color="#888" />
               </TouchableOpacity>
               {showCatPicker && (
                 <View style={styles.pickerDropdown}>
                   {CATEGORIES.map(cat => (
-                    <TouchableOpacity key={cat.key} style={[styles.pickerItem, category === cat.key && styles.pickerItemActive]} onPress={() => { setCategory(cat.key); setSubcat(''); setShowCatPicker(false); }}>
-                      <Text style={[styles.pickerItemText, category === cat.key && { color: '#1669ef', fontWeight: '700' }]}>{cat.emoji} {cat.label}</Text>
+                    <TouchableOpacity key={cat.key} style={[styles.pickerItem, { flexDirection: 'row', alignItems: 'center' }, category === cat.key && styles.pickerItemActive]} onPress={() => { setCategory(cat.key); setSubcat(''); setShowCatPicker(false); }}>
+                      <Ionicons name={cat.icon} size={18} color={category === cat.key ? '#1669ef' : cat.color} style={{ marginRight: 8 }} />
+                      <Text style={[styles.pickerItemText, category === cat.key && { color: '#1669ef', fontWeight: '700' }]}>{cat.label}</Text>
                       {category === cat.key && <Ionicons name="checkmark" size={16} color="#1669ef" />}
                     </TouchableOpacity>
                   ))}
@@ -247,7 +250,26 @@ export default function VendorAddProductScreen({ navigation, route }) {
             </View>
           )}
 
-          {/* Variants */}
+          {/* Veg / Non-veg */}
+          <Text style={styles.fieldLabel}>Food Type <Text style={styles.required}>*</Text></Text>
+          <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
+            <TouchableOpacity
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 10, borderWidth: 2, borderColor: isVeg ? '#16A34A' : '#E5E7EB', backgroundColor: isVeg ? '#F0FDF4' : '#fff', gap: 8 }}
+              onPress={() => setIsVeg(true)}>
+              <View style={{ width: 16, height: 16, borderRadius: 2, borderWidth: 2, borderColor: '#16A34A', backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ width: 8, height: 8, borderRadius: 1, backgroundColor: '#16A34A' }} />
+              </View>
+              <Text style={{ fontWeight: '700', color: isVeg ? '#16A34A' : '#888' }}>🟢 Veg</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 10, borderWidth: 2, borderColor: !isVeg ? '#DC2626' : '#E5E7EB', backgroundColor: !isVeg ? '#FEF2F2' : '#fff', gap: 8 }}
+              onPress={() => setIsVeg(false)}>
+              <View style={{ width: 16, height: 16, borderRadius: 2, borderWidth: 2, borderColor: '#DC2626', backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ width: 8, height: 8, borderRadius: 1, backgroundColor: '#DC2626' }} />
+              </View>
+              <Text style={{ fontWeight: '700', color: !isVeg ? '#DC2626' : '#888' }}>🔴 Non-Veg</Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.fieldLabel}>Variants <Text style={styles.optional}>(Optional)</Text></Text>
           {variants.length > 0 && (
             <View style={styles.variantTable}>
@@ -352,7 +374,7 @@ const styles = StyleSheet.create({
   container:   { flex: 1, backgroundColor: '#F8F9FA' },
   header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
   backBtn:     { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center' },
   bellBtn:     { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   formCard:    { backgroundColor: '#fff', borderRadius: 16, margin: 16, padding: 16 },
   fieldLabel:  { fontSize: 13, fontWeight: '600', color: '#555', marginBottom: 8, marginTop: 16 },

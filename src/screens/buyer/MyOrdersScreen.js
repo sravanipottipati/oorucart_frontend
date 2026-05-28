@@ -147,7 +147,7 @@ export default function MyOrdersScreen({ navigation }) {
         {/* Shop row */}
         <View style={styles.orderTop}>
           <View style={styles.shopIconBox}>
-            <Text style={styles.shopIconText}>🏪</Text>
+            <Ionicons name="storefront-outline" size={22} color="#1669ef" />
           </View>
           <View style={styles.orderInfo}>
             <Text style={styles.shopName}>{order.shop_name || order.vendor_name || 'Shop'}</Text>
@@ -167,7 +167,7 @@ export default function MyOrdersScreen({ navigation }) {
           <View key={i} style={styles.itemRow}>
             <View style={styles.itemDot} />
             <Text style={styles.itemText}>
-              {item.quantity}x {item.product_name || item.name}
+              {item.quantity}x {item.product_name || item.name}{item.variant_name ? ` (${item.variant_name})` : ''}
             </Text>
             <Text style={styles.itemPrice}>
               ₹{(item.quantity * parseFloat(item.price)).toFixed(0)}
@@ -185,17 +185,8 @@ export default function MyOrdersScreen({ navigation }) {
             <Text style={styles.itemCount}>{order.items?.length} item{order.items?.length !== 1 ? 's' : ''}</Text>
           </View>
           <View style={styles.actionBtns}>
-            {isPast && (
-              <TouchableOpacity
-                style={styles.reorderBtn}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  handleReorder(order);
-                }}
-              >
-                <Text style={styles.reorderBtnText}>🔄 Reorder</Text>
-              </TouchableOpacity>
-            )}
+
+
             <TouchableOpacity
               style={styles.detailBtn}
               onPress={() => navigation.navigate('OrderDetail', { orderId: order.id })}
@@ -214,7 +205,7 @@ export default function MyOrdersScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+          <Ionicons name="arrow-back" size={22} color="#111" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Orders</Text>
         <View style={{ width: 36 }} />
@@ -314,7 +305,7 @@ const styles = StyleSheet.create({
   },
   backBtn:     { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   backText:    { fontSize: 24, color: '#111' },
-  headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center' },
 
   tabs: {
     flexDirection: 'row', backgroundColor: '#fff',

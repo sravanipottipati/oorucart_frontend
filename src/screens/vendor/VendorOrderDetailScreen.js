@@ -53,7 +53,8 @@ export default function VendorOrderDetailScreen({ navigation, route }) {
           await client.post(`/orders/${orderId}/status/`, { status: newStatus });
           await fetchOrder();
         } catch (e) {
-          Alert.alert('Error', e.response?.data?.error || 'Could not update status');
+          console.log('Status update error:', JSON.stringify(e.response?.data), e.message);
+          Alert.alert('Error', JSON.stringify(e.response?.data) || e.message || 'Could not update status');
         } finally { setUpdating(false); }
       }}
     ]);
@@ -261,7 +262,7 @@ const styles = StyleSheet.create({
   errorText:        { fontSize: 16, color: '#888' },
   header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 52, paddingHorizontal: 16, paddingBottom: 14, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
   backBtn:     { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: '800', color: '#111' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center' },
   headerSub:   { fontSize: 11, color: '#888', marginTop: 2 },
   callBtn:     { width: 38, height: 38, borderRadius: 19, backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center' },
   statusBanner:  { flexDirection: 'row', alignItems: 'center', gap: 12, margin: 16, borderRadius: 16, padding: 16, borderWidth: 1 },

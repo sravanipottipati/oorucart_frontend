@@ -29,6 +29,10 @@ import AdminScreen from './src/screens/buyer/AdminScreen';
 import TermsAndConditionsScreen from './src/screens/buyer/TermsAndConditionsScreen';
 import RefundPolicyScreen from './src/screens/buyer/RefundPolicyScreen';
 import ContactUsScreen from './src/screens/buyer/ContactUsScreen';
+import RateOrderScreen from './src/screens/buyer/RateOrderScreen';
+import MapPickerScreen from './src/screens/buyer/MapPickerScreen';
+import VendorMapPickerScreen from './src/screens/vendor/VendorMapPickerScreen';
+import ReturnOrderScreen from './src/screens/buyer/ReturnOrderScreen';
 
 import VendorHomeScreen from './src/screens/vendor/VendorHomeScreen';
 import VendorOrdersScreen from './src/screens/vendor/VendorOrdersScreen';
@@ -84,7 +88,7 @@ function AppNavigator() {
         <Stack.Screen name="EditProfile"   component={EditProfileScreen} />
         <Stack.Screen name="Notifications" component={NotificationsScreen} />
         <Stack.Screen name="Wishlist"      component={WishlistScreen} />
-        <Stack.Screen name="Address"       component={AddressScreen} />
+        <Stack.Screen name="Address"       component={AddressScreen} options={{ animation: "slide_from_right", tabBarVisible: false }} />
         <Stack.Screen name="HelpSupport"   component={HelpSupportScreen} />
         <Stack.Screen name="Cart" component={CartScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Search"        component={SearchScreen} />
@@ -93,6 +97,10 @@ function AppNavigator() {
         <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
         <Stack.Screen name="Admin" component={AdminScreen} />
         <Stack.Screen name="TermsAndConditions" component={TermsAndConditionsScreen} />
+        <Stack.Screen name="VendorMapPicker" component={VendorMapPickerScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="MapPicker" component={MapPickerScreen} options={{ headerShown: false, presentation: 'fullScreenModal' }} />
+        <Stack.Screen name="RateOrder"        component={RateOrderScreen} />
+        <Stack.Screen name="ReturnOrder"      component={ReturnOrderScreen} />
         <Stack.Screen name="RefundPolicy" component={RefundPolicyScreen} />
         <Stack.Screen name="ContactUs" component={ContactUsScreen} />
 

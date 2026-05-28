@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   },
   backBtn:     { width: 36, height: 36, justifyContent: 'center' },
   refreshBtn:  { width: 36, height: 36, justifyContent: 'center', alignItems: 'flex-end' },
-  headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center' },
 
   pickerCard: {
     backgroundColor: '#fff', margin: 16, borderRadius: 16, padding: 16,

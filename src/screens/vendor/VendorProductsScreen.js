@@ -74,7 +74,7 @@ export default function VendorProductsScreen({ navigation }) {
           style={styles.bellBtn}
           onPress={() => navigation.navigate('VendorNotifications')}
         >
-          <Text style={styles.bellIcon}>🔔</Text>
+          <Ionicons name="notifications-outline" size={24} color="#444" />
         </TouchableOpacity>
       </View>
 
@@ -136,7 +136,11 @@ export default function VendorProductsScreen({ navigation }) {
                   </View>
                 </View>
                 <View style={styles.productRight}>
-                  <Text style={styles.productPrice}>₹{product.price}</Text>
+                  <Text style={styles.productPrice}>
+                    ₹{product.variants && product.variants.length > 0
+                      ? Math.min(...product.variants.map(v => parseFloat(v.price))).toFixed(2)
+                      : parseFloat(product.price).toFixed(2)}
+                  </Text>
                   <View style={styles.actionBtns}>
                     <TouchableOpacity
                       style={styles.editBtn}
@@ -194,7 +198,7 @@ const styles = StyleSheet.create({
     paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12,
     backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#111' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center' },
   bellBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   bellIcon: { fontSize: 22 },
 

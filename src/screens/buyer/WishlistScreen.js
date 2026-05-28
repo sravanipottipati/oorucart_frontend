@@ -77,6 +77,7 @@ export default function WishlistScreen({ navigation }) {
           <Ionicons name="arrow-back" size={22} color="#111" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Wishlist</Text>
+        <View style={{ width: 36 }} />
         <View style={styles.countBadge}>
           <Text style={styles.countText}>{wishlist.length}</Text>
         </View>
@@ -209,7 +210,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
   backBtn:     { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center' },
   countBadge:  { backgroundColor: '#eff6ff', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
   countText:   { fontSize: 13, color: '#1669ef', fontWeight: 'bold' },
 

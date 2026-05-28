@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#eff6ff',
   },
   headerEmoji:    { fontSize: 48, marginBottom: 12 },
-  headerTitle:    { fontSize: 22, fontWeight: 'bold', color: '#111', marginBottom: 8 },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center' },
   headerSubtitle: { fontSize: 14, color: '#555', textAlign: 'center', lineHeight: 20 },
 
   detectingBanner: {

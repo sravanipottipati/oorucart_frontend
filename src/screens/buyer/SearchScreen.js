@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import client from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
+import * as Location from 'expo-location';
 import { useCart } from '../../context/CartContext';
 
 const TEAL = '#1669ef';
@@ -54,6 +55,20 @@ export default function SearchScreen({ navigation }) {
   const debounceRef = useRef(null);
   const { user }    = useAuth();
   const town        = user?.town || '';
+  const [gpsCoords, setGpsCoords] = React.useState(null);
+
+  React.useEffect(() => {
+    const getGPS = async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          setGpsCoords({ lat: loc.coords.latitude, lng: loc.coords.longitude });
+        }
+      } catch (e) {}
+    };
+    getGPS();
+  }, []);
 
   useEffect(() => {
     AsyncStorage.getItem('recent_searches').then(data => {
@@ -116,7 +131,11 @@ export default function SearchScreen({ navigation }) {
     setLoading(true);
     try {
       let url = `/vendors/search/?q=${q}`;
-      if (town)             url += `&town=${town}`;
+      if (gpsCoords) {
+        url += `&lat=${gpsCoords.lat}&lng=${gpsCoords.lng}&radius=20`;
+      } else if (town) {
+        url += `&town=${town}`;
+      }
       if (filters.sortBy)   url += `&sort_by=${filters.sortBy}`;
       if (filters.minPrice) url += `&min_price=${filters.minPrice}`;
       if (filters.maxPrice) url += `&max_price=${filters.maxPrice}`;

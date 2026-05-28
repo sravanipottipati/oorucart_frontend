@@ -75,12 +75,15 @@ export default function CartScreen({ navigation }) {
 
       {/* Header */}
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={22} color="#111" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>My Cart</Text>
-        {shopIds.length > 1 && (
+        {shopIds.length > 1 ? (
           <View style={styles.shopCountBadge}>
             <Text style={styles.shopCountText}>{shopIds.length} Shops</Text>
           </View>
-        )}
+        ) : <View style={{ width: 36 }} />}
       </View>
 
       {/* Multi-shop notice */}
@@ -102,15 +105,16 @@ export default function CartScreen({ navigation }) {
           const products  = shopCart.products;
           const itemCount = Object.values(items).reduce((a, b) => a + b, 0);
           const subtotal  = products.reduce((sum, p) => sum + (items[p.id] || 0) * parseFloat(p.price), 0);
+          const MIN_FREE_DELIVERY = 999999; // No free delivery
+          const isFreeDelivery = false;
+          const amountLeft = 0;
 
           return (
             <View key={vid} style={styles.shopCard}>
 
               {/* Shop Header */}
               <View style={styles.shopHeader}>
-                <View style={styles.shopAvatar}>
-                  <Text style={styles.shopAvatarText}>{shop.shop_name?.[0]?.toUpperCase() || 'S'}</Text>
-                </View>
+                <Ionicons name="storefront-outline" size={22} color="#1669ef" />
                 <View style={styles.shopInfo}>
                   <Text style={styles.shopName}>{shop.shop_name}</Text>
                   <Text style={styles.shopMeta}>{itemCount} item{itemCount !== 1 ? 's' : ''}</Text>
@@ -143,6 +147,9 @@ export default function CartScreen({ navigation }) {
                     {/* Info */}
                     <View style={styles.itemInfo}>
                       <Text style={styles.itemName} numberOfLines={2}>{product.name}</Text>
+                      {product.mrp && parseFloat(product.mrp) > parseFloat(product.price) && (
+                        <Text style={styles.itemMrp}>MRP: <Text style={{textDecorationLine: 'line-through'}}>₹{parseFloat(product.mrp).toFixed(0)}</Text></Text>
+                      )}
                       <Text style={styles.itemPrice}>₹{parseFloat(product.price).toFixed(0)}</Text>
                     </View>
 
@@ -166,10 +173,17 @@ export default function CartScreen({ navigation }) {
                   <Text style={styles.summaryText}>
                     {itemCount} items · Subtotal <Text style={styles.summaryAmount}>₹{subtotal.toFixed(0)}</Text>
                   </Text>
-                  <View style={styles.deliveryTag}>
-                    <Ionicons name="bicycle-outline" size={12} color="#16A34A" />
-                    <Text style={styles.deliveryTagText}>FREE delivery</Text>
-                  </View>
+                  {isFreeDelivery ? (
+                    <View style={styles.deliveryTag}>
+                      <Ionicons name="bicycle-outline" size={12} color="#16A34A" />
+                      <Text style={styles.deliveryTagText}>🎉 FREE delivery!</Text>
+                    </View>
+                  ) : (
+                    <View style={[styles.deliveryTag, {backgroundColor: '#FEF3C7'}]}>
+                      <Ionicons name="bicycle-outline" size={12} color="#92400e" />
+                      <Text style={[styles.deliveryTagText, {color: '#92400e'}]}>Add ₹{amountLeft.toFixed(0)} more for FREE delivery</Text>
+                    </View>
+                  )}
                 </View>
 
                 <TouchableOpacity
@@ -237,10 +251,11 @@ const styles = StyleSheet.create({
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingTop: 52, paddingHorizontal: 16, paddingBottom: 16,
+    paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12,
     backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
-  headerTitle:    { fontSize: 22, fontWeight: '900', color: '#111' },
+  backBtn:     { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center' },
   shopCountBadge: { backgroundColor: TEAL, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 },
   shopCountText:  { color: '#fff', fontSize: 12, fontWeight: '700' },
 
@@ -309,6 +324,7 @@ const styles = StyleSheet.create({
   itemImgImg: { width: 48, height: 48 },
   itemInfo:   { flex: 1 },
   itemName:   { fontSize: 13, fontWeight: '600', color: '#111', marginBottom: 4, lineHeight: 18 },
+  itemMrp: { fontSize: 11, color: '#9CA3AF', marginBottom: 2 },
   itemPrice:  { fontSize: 14, fontWeight: '800', color: '#111' },
 
   qtyControl: {

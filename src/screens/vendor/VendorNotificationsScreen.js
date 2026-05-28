@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   },
   backBtn:      { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headerTitle:  { fontSize: 17, fontWeight: 'bold', color: '#111' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center' },
   unreadBadge: {
     backgroundColor: '#1669ef', borderRadius: 20,
     paddingHorizontal: 8, paddingVertical: 3,

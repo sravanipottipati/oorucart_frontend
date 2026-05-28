@@ -44,8 +44,11 @@ export const CartProvider = ({ children }) => {
             id:            item.product_id,
             name:          item.product_name,
             price:         item.product_price,
+            mrp:           item.product_mrp || null,
             image:         item.product_image,
             gst_percentage: item.product_gst || 0,
+            variant_id:    item.variant_id || null,
+            base_product_id: item.base_product_id || item.product_id,
           });
         }
       });
@@ -83,7 +86,8 @@ export const CartProvider = ({ children }) => {
       const headers = await getHeaders();
       if (!headers.Authorization) return;
       await client.post('/orders/cart/add/', {
-        product_id: product.id,
+        product_id: product.base_product_id || product.id,
+        variant_id: product.variant_id || null,
         vendor_id:  vid,
         quantity:   1,
       }, { headers });

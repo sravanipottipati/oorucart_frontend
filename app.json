@@ -13,7 +13,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.univerin.app"
+      "bundleIdentifier": "com.univerin.app",
+      "config": {
+        "googleMapsApiKey": "AIzaSyCS_YRu6O61LCZn_QlypzjcjSdeRqbQaDI"
+      }
     },
     "android": {
       "package": "com.univerin.app",
@@ -26,7 +29,12 @@
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.READ_MEDIA_IMAGES"
-      ]
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyCS_YRu6O61LCZn_QlypzjcjSdeRqbQaDI"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/app-icon.png"

@@ -46,11 +46,11 @@ export default function VendorEditProductScreen({ navigation, route }) {
   const [name, setName]             = useState(product?.name || '');
   const [hsnCode, setHsnCode]       = useState(product?.hsn_code || '');
   const [price, setPrice]           = useState(product?.price?.toString() || '');
-  const [mrp, setMrp]               = useState(product?.mrp?.toString() || '');
+  const [mrp, setMrp]               = useState((product?.mrp && parseFloat(product.mrp) > 0) ? parseFloat(product.mrp).toString() : '');
   const [description, setDesc]      = useState(product?.description || '');
   const [category, setCategory]     = useState(product?.category || '');
   const [subcategory, setSubcat]    = useState(product?.subcategory || '');
-  const [gst, setGst]               = useState(product?.gst_percentage?.toString() || '0');
+  const [gst, setGst]               = useState(product?.gst_percentage ? parseInt(product.gst_percentage).toString() : '0');
   const [deliveryTime, setDelivery] = useState(product?.delivery_time ? `${product.delivery_time} mins` : '30 mins');
   const [isAvailable, setAvail]     = useState(product?.is_available ?? true);
   const [isReturnable, setReturnable] = useState(product?.is_returnable ?? true);
@@ -58,9 +58,10 @@ export default function VendorEditProductScreen({ navigation, route }) {
   const [image, setImage]           = useState(null);
   const [loading, setLoading]       = useState(false);
   const [deletedVariantIds, setDeletedVariantIds] = useState([]);
+  const [isVeg, setIsVeg]           = useState(product?.is_veg !== false);
   const [variants, setVariants]     = useState(product?.variants?.map(v => ({
     id: v.id, name: v.name,
-    mrp: v.mrp?.toString() || '',
+    mrp: (v.mrp && parseFloat(v.mrp) > 0) ? v.mrp.toString() : '',
     price: v.price?.toString() || '',
     available: v.is_available ?? true,
   })) || []);
@@ -103,13 +104,14 @@ export default function VendorEditProductScreen({ navigation, route }) {
 
   const handleSave = async () => {
     if (!name.trim())  { Alert.alert('Error', 'Please enter product name'); return; }
-    if (!price.trim() && variants.length === 0) { Alert.alert('Error', 'Please enter price or add variants'); return; }
+    if (variants.length === 0 && (!price.trim() || parseFloat(price) <= 0)) { Alert.alert('Error', 'Please enter price or add variants'); return; }
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem('access_token');
       const deliveryMins = parseInt(deliveryTime) || 30;
       const productData = {
         name: name.trim(), price: variants.length > 0 ? 0 : parseFloat(price),
+        is_veg: isVeg,
         description: description.trim(), category,
         subcategory: subcategory || '', hsn_code: hsnCode.trim(),
         mrp: mrp ? parseFloat(mrp) : null,
@@ -135,7 +137,7 @@ export default function VendorEditProductScreen({ navigation, route }) {
       // Update variants
       for (const v of variants) {
         if (v.id) {
-          await client.patch(`/vendors/products/${product.id}/variants/${v.id}/`, {
+          await client.patch(`/vendors/variants/${v.id}/`, {
             name: v.name, price: parseFloat(v.price),
             mrp: v.mrp ? parseFloat(v.mrp) : null,
             stock_quantity: v.available ? 100 : 0, is_available: v.available,
@@ -153,7 +155,8 @@ export default function VendorEditProductScreen({ navigation, route }) {
         text: 'OK', onPress: () => { if (onGoBack) onGoBack(); navigation.goBack(); },
       }]);
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.error || 'Failed to update product');
+      console.log('Edit product error:', JSON.stringify(e.response?.data));
+      Alert.alert('Error', JSON.stringify(e.response?.data) || e.message || 'Failed to update product');
     } finally { setLoading(false); }
   };
 
@@ -227,7 +230,28 @@ export default function VendorEditProductScreen({ navigation, route }) {
           <Text style={styles.fieldLabel}>Short Description</Text>
           <TextInput style={styles.input} placeholder="e.g. Fresh and juicy tomatoes" placeholderTextColor="#9CA3AF" value={description} onChangeText={setDesc} />
 
-          {/* Price + MRP */}
+          {/* Veg / Non-veg */}
+          <Text style={styles.fieldLabel}>Food Type <Text style={styles.required}>*</Text></Text>
+          <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
+            <TouchableOpacity
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 10, borderWidth: 2, borderColor: isVeg ? '#16A34A' : '#E5E7EB', backgroundColor: isVeg ? '#F0FDF4' : '#fff', gap: 8 }}
+              onPress={() => setIsVeg(true)}>
+              <View style={{ width: 16, height: 16, borderRadius: 2, borderWidth: 2, borderColor: '#16A34A', backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ width: 8, height: 8, borderRadius: 1, backgroundColor: '#16A34A' }} />
+              </View>
+              <Text style={{ fontWeight: '700', color: isVeg ? '#16A34A' : '#888' }}>🟢 Veg</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 10, borderWidth: 2, borderColor: !isVeg ? '#DC2626' : '#E5E7EB', backgroundColor: !isVeg ? '#FEF2F2' : '#fff', gap: 8 }}
+              onPress={() => setIsVeg(false)}>
+              <View style={{ width: 16, height: 16, borderRadius: 2, borderWidth: 2, borderColor: '#DC2626', backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ width: 8, height: 8, borderRadius: 1, backgroundColor: '#DC2626' }} />
+              </View>
+              <Text style={{ fontWeight: '700', color: !isVeg ? '#DC2626' : '#888' }}>🔴 Non-Veg</Text>
+            </TouchableOpacity>
+          </View>
+          {/* Price + MRP - hide when variants exist */}
+          {variants.length === 0 && (
           <View style={styles.twoCol}>
             <View style={{ flex: 1 }}>
               <Text style={styles.fieldLabel}>Price (₹) <Text style={styles.required}>*</Text></Text>
@@ -235,9 +259,10 @@ export default function VendorEditProductScreen({ navigation, route }) {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.fieldLabel}>MRP (₹) <Text style={styles.optional}>(optional)</Text></Text>
-              <TextInput style={styles.input} placeholder="0" placeholderTextColor="#9CA3AF" value={mrp} onChangeText={setMrp} keyboardType="numeric" />
+              <TextInput style={styles.input} placeholder="Optional" placeholderTextColor="#9CA3AF" value={mrp === "0" || mrp === 0 ? "" : mrp} onChangeText={setMrp} keyboardType="numeric" />
             </View>
           </View>
+          )}
 
           {/* Category */}
           <View style={styles.twoCol}>
@@ -293,7 +318,7 @@ export default function VendorEditProductScreen({ navigation, route }) {
               {variants.map((v, index) => (
                 <View key={index} style={[styles.variantRow, index % 2 === 1 && { backgroundColor: '#F9FAFB' }]}>
                   <TextInput style={[styles.variantInput, { flex: 2 }]} placeholder="e.g. 1kg" placeholderTextColor="#9CA3AF" value={v.name} onChangeText={val => updateVariant(index, 'name', val)} />
-                  <TextInput style={[styles.variantInput, { flex: 1.5 }]} placeholder="0" placeholderTextColor="#9CA3AF" value={v.mrp} onChangeText={val => updateVariant(index, 'mrp', val)} keyboardType="numeric" />
+                  <TextInput style={[styles.variantInput, { flex: 1.5 }]} placeholder="0" placeholderTextColor="#9CA3AF" value={v.mrp === '0' || v.mrp === 0 ? '' : v.mrp} onChangeText={val => updateVariant(index, 'mrp', val)} keyboardType="numeric" placeholder="Optional" />
                   <TextInput style={[styles.variantInput, { flex: 1.8 }]} placeholder="0" placeholderTextColor="#9CA3AF" value={v.price} onChangeText={val => updateVariant(index, 'price', val)} keyboardType="numeric" />
                   <View style={[{ flex: 1.5, alignItems: 'center', justifyContent: 'center' }]}>
                     <Switch value={v.available} onValueChange={val => updateVariant(index, 'available', val)} trackColor={{ false: '#E5E7EB', true: '#86efac' }} thumbColor={v.available ? '#16A34A' : '#9CA3AF'} style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }} />
@@ -385,7 +410,7 @@ const styles = StyleSheet.create({
   container:   { flex: 1, backgroundColor: '#F8F9FA' },
   header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
   backBtn:     { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center' },
   deleteBtn:   { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   formCard:    { backgroundColor: '#fff', borderRadius: 16, margin: 16, padding: 16 },
   fieldLabel:  { fontSize: 13, fontWeight: '600', color: '#555', marginBottom: 8, marginTop: 16 },

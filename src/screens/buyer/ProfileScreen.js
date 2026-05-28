@@ -7,10 +7,12 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
+import { useIsFocused } from '@react-navigation/native';
 import client from '../../api/client';
 
 export default function ProfileScreen({ navigation }) {
   const { user, logout, setUser } = useAuth();
+  const isFocused = useIsFocused();
   const [uploading, setUploading] = useState(false);
 
   const initials = user?.full_name
@@ -76,7 +78,7 @@ export default function ProfileScreen({ navigation }) {
             quality:       0.7,
           })
         : await ImagePicker.launchImageLibraryAsync({
-            mediaTypes:    ImagePicker.MediaType.IMAGE,
+            mediaTypes:    ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect:        [1, 1],
             quality:       0.7,
@@ -148,7 +150,6 @@ export default function ProfileScreen({ navigation }) {
   const menuItems = [
     { icon: '👤', label: 'Edit Profile',   screen: 'EditProfile' },
     { icon: '📍', label: 'My Addresses',   screen: 'Address'     },
-    { icon: '📦', label: 'My Orders',      screen: 'MyOrders'    },
     { icon: '❤️',  label: 'Wishlist',       screen: 'Wishlist'    },
     { icon: '❓', label: 'Help & Support', screen: 'HelpSupport' },
     { icon: '🔒', label: 'Privacy Policy', screen: 'PrivacyPolicy' },
@@ -162,7 +163,11 @@ export default function ProfileScreen({ navigation }) {
 
       {/* Header */}
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={22} color="#111" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
+        <View style={{ width: 36 }} />
         <TouchableOpacity
           style={styles.bellBtn}
           onPress={() => navigation.navigate('Notifications')}
@@ -262,7 +267,7 @@ export default function ProfileScreen({ navigation }) {
       </ScrollView>
 
       {/* Bottom Tab */}
-      <View style={styles.bottomTab}>
+      {isFocused && <View style={styles.bottomTab}>
         <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('Home')}>
           <Ionicons name="home-outline" size={25} color="#9CA3AF" />
           <Text style={styles.tabLabel}>Home</Text>
@@ -279,7 +284,7 @@ export default function ProfileScreen({ navigation }) {
           <Ionicons name="person" size={25} color="#1669ef" />
           <Text style={styles.tabLabelActive}>Profile</Text>
         </TouchableOpacity>
-      </View>
+      </View>}
 
     </View>
   );
@@ -293,7 +298,7 @@ const styles = StyleSheet.create({
     paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12,
     backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#111' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center', marginLeft: 36 },
   bellBtn:     { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   bellIcon:    { fontSize: 22 },
 
@@ -332,10 +337,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center',
   },
   editIcon:     { fontSize: 14 },
-  tapPhotoHint: { fontSize: 11, color: '#9CA3AF', marginBottom: 8 },
-  userName:     { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 4 },
-  userPhone:    { fontSize: 14, color: '#888', marginBottom: 2 },
-  userEmail:    { fontSize: 13, color: '#888', marginBottom: 6 },
+  tapPhotoHint: { fontSize: 11, color: '#9CA3AF', marginBottom: 8, textAlign: 'center' },
+  userName:     { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 4, textAlign: 'center' },
+  userPhone:    { fontSize: 14, color: '#888', marginBottom: 2, textAlign: 'center' },
+  userEmail:    { fontSize: 13, color: '#888', marginBottom: 6, textAlign: 'center' },
   townBadge: {
     backgroundColor: '#eff6ff', borderRadius: 20,
     paddingHorizontal: 12, paddingVertical: 4, marginTop: 4,

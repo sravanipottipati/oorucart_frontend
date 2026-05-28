@@ -17,7 +17,7 @@ import ProductDetailModal from '../../components/ProductDetailModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const DEFAULT_RADIUS = 10;
+const DEFAULT_RADIUS = 20;
 const TEAL       = '#1669ef';
 const TEAL_LIGHT = '#eff6ff';
 const GRAY       = '#9CA3AF';
@@ -28,7 +28,7 @@ const CATEGORIES = [
   { id: 'restaurant',  label: 'Restaurant',  icon: 'restaurant',          color: '#dc2626', bg: '#FEF2F2' },
   { id: 'supermarket', label: 'Supermarket', icon: 'storefront',          color: '#7c3aed', bg: '#F5F3FF' },
   { id: 'fast_food',   label: 'Fast Food',   icon: 'fast-food',           color: '#ea580c', bg: '#FFF7ED' },
-  { id: 'chinese',     label: 'Chinese',     icon: 'restaurant',        color: '#b45309', bg: '#FFFBEB' },
+  { id: 'chinese',     label: 'Chinese',     icon: 'fish',              color: '#b45309', bg: '#FFFBEB' },
   { id: 'bakery',      label: 'Bakery',      icon: 'cafe',                color: '#d97706', bg: '#FFFBEB' },
   { id: 'vegetables',  label: 'Vegetables',  icon: 'leaf',                color: '#16a34a', bg: '#F0FDF4' },
   { id: 'fruits',      label: 'Fruits',      icon: 'nutrition',           color: '#ea580c', bg: '#FFF7ED' },
@@ -137,7 +137,7 @@ const getTownCoords = (townName) => {
 const isCoordInIndia = (lat, lng) =>
   lat >= 6.0 && lat <= 37.0 && lng >= 68.0 && lng <= 97.0;
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen({ navigation, route }) {
   const [shops, setShops]             = useState([]);
   const [loading, setLoading]         = useState(true);
   const [refreshing, setRefreshing]   = useState(false);
@@ -161,6 +161,18 @@ export default function HomeScreen({ navigation }) {
   );
   const [town, setTown]                          = useState(user?.town || 'Nellore');
 
+  // Handle location from MapPicker
+  useEffect(() => {
+    if (route?.params?.selectedLocation) {
+      const loc = route.params.selectedLocation;
+      // Update location text
+      const shortAddress = loc.address?.split(',').slice(0, 2).join(',') || 'Selected Location';
+      setTown(shortAddress);
+      fetchShops(null, loc.lat, loc.lng);
+      navigation.setParams({ selectedLocation: undefined });
+    }
+  }, [route?.params?.selectedLocation]);
+
   useEffect(() => {
     const timer = setInterval(() => {
       setBannerIndex(prev => {
@@ -174,12 +186,12 @@ export default function HomeScreen({ navigation }) {
 
   const fetchPopularProducts = async (t) => {
     try {
-      const res = await client.get('/vendors/popular-products/?town=' + (t || town));
+      const res = await client.get(`/vendors/popular-products/?town=${t || town}`);
       setPopularProducts(Array.isArray(res.data) ? res.data.slice(0, 12) : []);
     } catch (e) { console.log('Popular:', e.message); }
   };
 
-  const fetchShops = useCallback(async (currentTown) => {
+  const fetchShops = useCallback(async (currentTown, overrideLat=null, overrideLng=null) => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
 
@@ -189,6 +201,13 @@ export default function HomeScreen({ navigation }) {
 
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Location Permission',
+          'Please allow location access to see nearby shops',
+          [{ text: 'OK' }]
+        );
+      }
       if (status === 'granted') {
         const loc = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
@@ -202,6 +221,7 @@ export default function HomeScreen({ navigation }) {
     }
 
     try {
+      // If using real GPS (not town fallback), skip town filter
       const url = `/vendors/nearby/?town=${t}&lat=${gpsCoords.lat}&lng=${gpsCoords.lng}&radius=${DEFAULT_RADIUS}`;
       const res = await client.get(url);
       setIsOffline(false);
@@ -366,7 +386,7 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={styles.deliverTo}>Deliver to</Text>
-          <TouchableOpacity style={styles.locationRow} onPress={() => navigation.navigate('TownSelection')}>
+          <TouchableOpacity style={styles.locationRow} onPress={() => navigation.navigate('MapPicker', { isHomeScreen: true, onLocationSelected: null })}>
             <Ionicons name="location-sharp" size={16} color={TEAL} />
             <Text style={styles.locationText}>{town}</Text>
             <Ionicons name="chevron-down" size={16} color="#555" />
@@ -468,9 +488,18 @@ export default function HomeScreen({ navigation }) {
             {product.image_url ? <Image source={{ uri: product.image_url }} style={styles.popularImg} resizeMode="cover" /> : <Text style={{ fontSize: 36 }}>🛍️</Text>}
           </View>
           <Text style={styles.popularName} numberOfLines={2}>{product.name}</Text>
-          <Text style={styles.popularShop} numberOfLines={1}>🏪 {product.shop_name}</Text>
+          <Text style={styles.popularShop} numberOfLines={1}>🏬 {product.shop_name}</Text>
           <View style={styles.popularBottom}>
-            <Text style={styles.popularPrice}>₹{parseFloat(product.price).toFixed(0)}</Text>
+            <View>
+              {product.mrp && parseFloat(product.mrp) > parseFloat(product.price) ? (
+                <View style={{flexDirection:'row', alignItems:'center', gap:4}}>
+                  <Text style={styles.popularPrice}>₹{parseFloat(product.price).toFixed(0)}</Text>
+                  <Text style={{fontSize:11, color:'#9CA3AF', textDecorationLine:'line-through'}}>₹{parseFloat(product.mrp).toFixed(0)}</Text>
+                </View>
+              ) : (
+                <Text style={styles.popularPrice}>₹{parseFloat(product.price).toFixed(0)}</Text>
+              )}
+            </View>
             {(() => {
               const vendorId = product.vendor_id;
               const qty = carts[vendorId]?.items?.[product.id] || 0;

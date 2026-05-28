@@ -106,6 +106,7 @@ export default function VendorRegisterScreen({ navigation }) {
       if (!ownerName.trim()) return Alert.alert('Error', 'Please enter owner name');
       if (!phone.trim() || phone.length !== 10) return Alert.alert('Error', 'Enter valid 10-digit phone number');
       if (!town.trim())      return Alert.alert('Error', 'Please enter your town');
+      if (!vendorLat || !vendorLng) return Alert.alert('📍 Location Required', 'Please set your shop location using the GPS button. This helps customers find your shop nearby.');
       if (!password.trim() || password.length < 6) return Alert.alert('Error', 'Password must be at least 6 characters');
       if (password !== confirmPw) return Alert.alert('Error', 'Passwords do not match');
     }

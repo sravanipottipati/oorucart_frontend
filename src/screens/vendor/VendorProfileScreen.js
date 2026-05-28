@@ -101,6 +101,20 @@ export default function VendorProfileScreen({ navigation }) {
           </View>
         </TouchableOpacity>
 
+        {/* GPS Warning Banner */}
+        {shop && !shop.latitude && (
+          <TouchableOpacity
+            style={styles.gpsWarning}
+            onPress={() => navigation.navigate('VendorEditShop', { shop })}
+          >
+            <Ionicons name="location-outline" size={20} color="#92400e" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.gpsWarningTitle}>📍 Set Shop Location</Text>
+              <Text style={styles.gpsWarningText}>Customers can't find your shop without GPS. Tap to set location.</Text>
+            </View>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+        )}
         {/* Account Menu */}
         <Text style={styles.sectionTitle}>Account</Text>
         <View style={styles.menuCard}>
@@ -227,7 +241,7 @@ const styles = StyleSheet.create({
     paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12,
     backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#111' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center' },
   bellBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   bellIcon: { fontSize: 22 },
 
@@ -249,6 +263,9 @@ const styles = StyleSheet.create({
   avatarText: { color: '#fff', fontSize: 26, fontWeight: 'bold' },
   userName: { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 4 },
   shopName: { fontSize: 14, color: '#555', marginBottom: 6 },
+  gpsWarning: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fef3c7', borderRadius: 12, padding: 14, marginBottom: 16, gap: 10, borderWidth: 1, borderColor: '#fcd34d' },
+  gpsWarningTitle: { fontSize: 13, fontWeight: '700', color: '#92400e', marginBottom: 2 },
+  gpsWarningText: { fontSize: 12, color: '#92400e' },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   locationIcon: { fontSize: 14 },
   locationText: { fontSize: 13, color: '#888' },

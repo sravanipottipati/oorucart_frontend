@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   },
   backBtn:     { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   backText:    { fontSize: 24, color: '#111' },
-  headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center' },
   avatarSection: {
     alignItems: 'center', paddingVertical: 28,
     backgroundColor: '#fff', marginBottom: 16,

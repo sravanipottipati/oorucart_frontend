@@ -4,6 +4,8 @@ import {
   ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 import client from '../../api/client';
 
 const STATUS_INFO = {
@@ -77,13 +79,120 @@ export default function OrderDetailScreen({ navigation, route }) {
   const statusInfo    = STATUS_INFO[order.status] || STATUS_INFO.placed;
   const isCancelled   = ['cancelled', 'rejected'].includes(order.status);
   const isDelivered   = order.status === 'delivered';
+
+  const generateInvoice = async () => {
+    try {
+      const itemsHTML = (order.items || []).map(item => `
+        <tr>
+          <td style="padding:8px;border-bottom:1px solid #eee">${item.product_name}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${item.quantity}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">₹${parseFloat(item.price).toFixed(2)}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">₹${(parseFloat(item.price) * item.quantity).toFixed(2)}</td>
+        </tr>`).join('');
+      const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; color: #111; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 2px solid #1669ef; padding-bottom: 16px; }
+    .brand { font-size: 28px; font-weight: bold; color: #1669ef; }
+    .invoice-title { font-size: 14px; color: #888; }
+    .invoice-num { font-size: 16px; font-weight: bold; color: #111; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .info-box { background: #f8f9fa; border-radius: 8px; padding: 12px; }
+    .info-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+    .info-value { font-size: 13px; font-weight: bold; color: #111; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    th { background: #1669ef; color: #fff; padding: 10px 8px; text-align: left; font-size: 13px; }
+    th:last-child, th:nth-child(3), th:nth-child(2) { text-align: right; }
+    th:nth-child(2) { text-align: center; }
+    .totals { margin-left: auto; width: 280px; }
+    .total-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; color: #555; }
+    .total-final { display: flex; justify-content: space-between; padding: 10px 0; font-size: 16px; font-weight: bold; color: #1669ef; border-top: 2px solid #1669ef; margin-top: 6px; }
+    .footer { margin-top: 32px; text-align: center; font-size: 12px; color: #aaa; border-top: 1px solid #eee; padding-top: 16px; }
+    .status-badge { background: #dcfce7; color: #16a34a; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="brand">Univerin</div>
+      <div style="font-size:12px;color:#888;margin-top:4px">Your Local Delivery App</div>
+    </div>
+    <div style="text-align:right">
+      <div class="invoice-title">INVOICE</div>
+      <div class="invoice-num">#${order.order_number}</div>
+      <div style="margin-top:6px"><span class="status-badge">✓ Delivered</span></div>
+    </div>
+  </div>
+  <div class="info-grid">
+    <div class="info-box">
+      <div class="info-label">Order Date</div>
+      <div class="info-value">${new Date(order.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })}</div>
+    </div>
+    <div class="info-box">
+      <div class="info-label">Shop</div>
+      <div class="info-value">${order.shop_name}</div>
+    </div>
+    <div class="info-box">
+      <div class="info-label">Payment</div>
+      <div class="info-value">${order.payment_mode === 'cod' ? 'Cash on Delivery' : 'Online Payment'}</div>
+    </div>
+    <div class="info-box">
+      <div class="info-label">Delivery Address</div>
+      <div class="info-value" style="font-size:11px">${order.delivery_address}</div>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th style="text-align:center">Qty</th>
+        <th style="text-align:right">Price</th>
+        <th style="text-align:right">Total</th>
+      </tr>
+    </thead>
+    <tbody>${itemsHTML}</tbody>
+  </table>
+  <div class="totals">
+    <div class="total-row"><span>Items Total</span><span>₹${parseFloat(order.subtotal || 0).toFixed(2)}</span></div>
+    <div class="total-row"><span>Delivery Fee</span><span>₹${parseFloat(order.delivery_fee || 0).toFixed(2)}</span></div>
+    <div class="total-row"><span>Platform Fee</span><span>₹${parseFloat(order.platform_fee || 0).toFixed(2)}</span></div>
+    <div class="total-final"><span>Total Amount</span><span>₹${parseFloat(order.total_amount || 0).toFixed(2)}</span></div>
+  </div>
+  <div class="footer">
+    Thank you for shopping with Univerin! 🎉<br/>
+    For support: support@univerin.in
+  </div>
+</body>
+</html>`;
+      const { uri } = await Print.printToFileAsync({ html, base64: false });
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: `Invoice ${order.order_number}` });
+      } else {
+        await Print.printAsync({ uri });
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Could not generate invoice');
+    }
+  };
+  const hasReview     = order.has_review || false;
+  const hasReturn     = order.has_return || false;
   const canCancel     = order.status === 'placed';
   const currentIndex  = STATUSES.indexOf(order.status);
-  const subtotal      = order.items?.reduce((sum, i) => sum + i.quantity * parseFloat(i.price), 0) || 0;
+  const subtotal      = parseFloat(order.subtotal || 0);
   const deliveryFee   = parseFloat(order.delivery_fee || 0);
-  const platformFee   = parseFloat(order.platform_fee || 10);
+  const platformFee   = Math.round(parseFloat(order.platform_fee || 10) * 1.18);
   const gstOnPlatform = parseFloat(order.gst_on_platform || 0);
   const total         = parseFloat(order.total_amount || 0);
+  const totalSavings  = order.items?.reduce((sum, i) => {
+    const mrp = parseFloat(i.product_mrp || 0);
+    const price = parseFloat(i.price || 0);
+    return sum + (mrp > price ? (mrp - price) * i.quantity : 0);
+  }, 0) || 0;
   const date          = new Date(order.created_at).toLocaleString('en-IN', {
     day: 'numeric', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
@@ -114,6 +223,11 @@ export default function OrderDetailScreen({ navigation, route }) {
           </View>
           <Text style={styles.statusAmount}>₹{total.toFixed(0)}</Text>
         </View>
+        {isDelivered && (
+          <View style={{ paddingHorizontal: 16, paddingVertical: 8, alignItems: 'center' }}>
+            <Text style={{ fontSize: 13, color: '#16A34A', fontWeight: '600' }}>🎉 Thank you for shopping with Univerin!</Text>
+          </View>
+        )}
 
         {!isCancelled && (
           <View style={styles.card}>
@@ -162,8 +276,8 @@ export default function OrderDetailScreen({ navigation, route }) {
                 <Text style={styles.itemQtyText}>{item.quantity}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.itemName}>{item.product_name || item.name}</Text>
-                <Text style={styles.itemUnit}>₹{parseFloat(item.price).toFixed(0)} each</Text>
+                <Text style={styles.itemName}>{item.product_name || item.name}{item.variant_name ? ` (${item.variant_name})` : ''}</Text>
+                <Text style={styles.itemUnit}>₹{(parseFloat(item.price) * (1 + (parseFloat(item.product_gst) || 0) / 100)).toFixed(0)} each</Text>
               </View>
               <Text style={styles.itemPrice}>₹{(item.quantity * parseFloat(item.price)).toFixed(0)}</Text>
             </View>
@@ -188,6 +302,11 @@ export default function OrderDetailScreen({ navigation, route }) {
             <Text style={styles.billTotalLabel}>Total Amount</Text>
             <Text style={styles.billTotalValue}>₹{total.toFixed(0)}</Text>
           </View>
+          {totalSavings > 0 && (
+            <View style={{ backgroundColor: '#F0FDF4', borderRadius: 8, padding: 10, marginTop: 8, alignItems: 'center' }}>
+              <Text style={{ color: '#16A34A', fontWeight: '700', fontSize: 13 }}>🎉 You saved ₹{Math.round(totalSavings)} on this order!</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.card}>
@@ -242,14 +361,30 @@ export default function OrderDetailScreen({ navigation, route }) {
           </TouchableOpacity>
         )}
 
-        {isDelivered && (
-          <View style={styles.deliveredCard}>
-            <Ionicons name="checkmark-circle" size={32} color="#16A34A" />
-            <Text style={styles.deliveredText}>Order Delivered Successfully!</Text>
-            <Text style={styles.deliveredSub}>Thank you for shopping with Univerin 🎉</Text>
-          </View>
-        )}
 
+
+        <View style={styles.actionBtnsCard}>
+          {isDelivered && (
+            <TouchableOpacity style={styles.invoiceBtn} onPress={generateInvoice}>
+              <Ionicons name="document-text-outline" size={18} color="#fff" />
+              <Text style={styles.invoiceBtnText}>Download Invoice</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.reorderBtnFull} onPress={() => navigation.navigate('Home')}>
+            <Text style={styles.reorderBtnFullText}>Reorder</Text>
+          </TouchableOpacity>
+          {isDelivered && !hasReview && (
+            <TouchableOpacity style={styles.rateBtnFull} onPress={() => navigation.navigate('RateOrder', { order })}>
+              <Text style={styles.rateBtnFullText}>Rate this Order</Text>
+            </TouchableOpacity>
+          )}
+          {isDelivered && !hasReturn && (
+            <TouchableOpacity style={styles.returnBtnFull} onPress={() => navigation.navigate('ReturnOrder', { order })}>
+              <Text style={styles.returnBtnFullText}>Return & Refund</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        <View style={{ height: 20 }} />
       </ScrollView>
     </View>
   );
@@ -265,7 +400,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
   backBtn:     { width: 36, height: 36, justifyContent: 'center' },
-  headerTitle: { fontSize: 16, fontWeight: '800', color: '#111' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center' },
   headerSub:   { fontSize: 11, color: '#888', marginTop: 2 },
   statusBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
@@ -279,15 +414,11 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 15, fontWeight: '700', color: '#111', marginBottom: 16 },
   divider:   { height: 1, backgroundColor: '#F5F5F5', marginVertical: 8 },
   stepperContainer: { position: 'relative', paddingVertical: 4 },
-  stepperLine:      { position: 'absolute', top: 22, left: '10%', right: '10%', height: 2, backgroundColor: '#E5E7EB' },
-  stepperLineFill:  { position: 'absolute', top: 22, left: '10%', height: 2, backgroundColor: '#1669ef' },
+  stepperLine:      { position: 'absolute', top: 20, left: '10%', right: '10%', height: 3, backgroundColor: '#E5E7EB', borderRadius: 2 },
+  stepperLineFill:  { position: 'absolute', top: 20, left: '10%', height: 3, backgroundColor: '#1669ef', borderRadius: 2, maxWidth: '80%' },
   stepperRow:       { flexDirection: 'row', justifyContent: 'space-between' },
   stepCol:          { alignItems: 'center', flex: 1 },
-  stepCircle: {
-    width: 36, height: 36, borderRadius: 18,
-    justifyContent: 'center', alignItems: 'center',
-    borderWidth: 2, marginBottom: 6,
-  },
+  stepCircle: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', borderWidth: 2, marginBottom: 6 },
   stepLabel: { fontSize: 9.5, textAlign: 'center', lineHeight: 13 },
   itemRow:       { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 12 },
   itemRowBorder: { borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
@@ -306,6 +437,15 @@ const styles = StyleSheet.create({
   infoRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
   infoLabel: { fontSize: 13, color: '#888' },
   infoValue: { fontSize: 13, color: '#111', fontWeight: '500' },
+  actionBtnsCard:    { margin: 16, gap: 10 },
+  invoiceBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 14, borderRadius: 12, backgroundColor: '#1669ef', marginBottom: 10 },
+  invoiceBtnText:  { fontSize: 15, fontWeight: '700', color: '#fff' },
+  reorderBtnFull:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 14, borderRadius: 12, borderWidth: 1.5, borderColor: '#1669ef', backgroundColor: '#EFF6FF' },
+  reorderBtnFullText:{ fontSize: 15, fontWeight: '700', color: '#1669ef' },
+  rateBtnFull:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 12, backgroundColor: '#FEF3C7' },
+  rateBtnFullText:   { fontSize: 15, fontWeight: '700', color: '#92400e' },
+  returnBtnFull:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 12, backgroundColor: '#FEF2F2' },
+  returnBtnFullText: { fontSize: 15, fontWeight: '700', color: '#DC2626' },
   cancelBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, marginHorizontal: 16, marginBottom: 12,

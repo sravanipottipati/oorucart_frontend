@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F9FA' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 52, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
   backBtn: { width: 36, height: 36, justifyContent: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center' },
   scroll: { padding: 16 },
   banner: { backgroundColor: '#1669ef', borderRadius: 16, padding: 24, alignItems: 'center', marginBottom: 16 },
   bannerIcon: { fontSize: 36, marginBottom: 8 },
