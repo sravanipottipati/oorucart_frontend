@@ -183,7 +183,7 @@ export default function OrderDetailScreen({ navigation, route }) {
   const hasReturn     = order.has_return || false;
   const canCancel     = order.status === 'placed';
   const currentIndex  = STATUSES.indexOf(order.status);
-  const subtotal      = parseFloat(order.subtotal || 0);
+  const subtotal      = parseFloat(order.total_amount || 0) - parseFloat(order.delivery_fee || 0) - Math.round(parseFloat(order.platform_fee || 0) * 1.18);
   const deliveryFee   = parseFloat(order.delivery_fee || 0);
   const platformFee   = Math.round(parseFloat(order.platform_fee || 10) * 1.18);
   const gstOnPlatform = parseFloat(order.gst_on_platform || 0);
