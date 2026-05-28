@@ -427,10 +427,7 @@ export default function CheckoutScreen({ navigation, route }) {
             <Text style={styles.billTotalLabel}>Total Amount</Text>
             <Text style={styles.billTotalValue}>₹{total.toFixed(0)}</Text>
           </View>
-          <View style={styles.slabInfo}>
-            <Ionicons name="information-circle-outline" size={14} color="#888" />
-            <Text style={styles.slabInfoText}>Delivery fee based on distance ({deliveryInfo.slab})</Text>
-          </View>
+
         </View>
 
         {/* Payment Method */}
