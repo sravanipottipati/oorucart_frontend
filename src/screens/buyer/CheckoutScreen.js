@@ -1,26 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, KeyboardAvoidingView, Platform, TextInput, ActivityIndicator, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import client from '../../api/client';
 import { useCart } from '../../context/CartContext';
+import { globalStore } from '../../utils/globalStore';
+import * as Location from 'expo-location';
 import { useAuth } from '../../context/AuthContext';
 
 // ── Delivery Fee Logic ─────────────────────────────────────────────────────────
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dLon/2)**2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) * 10) / 10;
+};
+
 const getDeliveryInfo = (distanceKm, subtotal) => {
   const dist = parseFloat(distanceKm) || 0;
-  let fee = 0, minOrder = 0, slab = '';
-  if (dist <= 2)      { fee = 10; minOrder = 99;  slab = '0–2 km'; }
-  else if (dist <= 5) { fee = 20; minOrder = 149; slab = '2–5 km'; }
-  else                { fee = 30; minOrder = 199; slab = '5–10 km'; }
-  const isFree      = subtotal >= minOrder;
-  const deliveryFee = isFree ? 0 : fee;
-  const amountLeft  = isFree ? 0 : minOrder - subtotal;
-  return { fee, minOrder, slab, isFree, deliveryFee, amountLeft };
+  let fee = 0, slab = '', outOfRange = false;
+  if (dist <= 2)      { fee = 25; slab = '0–2 km'; }
+  else if (dist <= 4) { fee = 35; slab = '2–4 km'; }
+  else if (dist <= 6) { fee = 45; slab = '4–6 km'; }
+  else                { fee = 0; slab = '>6 km'; outOfRange = true; }
+  return { fee, slab, outOfRange, deliveryFee: fee, isFree: false, amountLeft: 0 };
 };
 
 export default function CheckoutScreen({ navigation, route }) {
@@ -29,6 +39,7 @@ export default function CheckoutScreen({ navigation, route }) {
   const { user } = useAuth();
 
   const [address, setAddress]           = useState('');
+  const [calcDistance, setCalcDistance]  = useState(null);
   const [note, setNote]                 = useState('');
   const [loading, setLoading]           = useState(false);
   const [payment, setPayment]           = useState('cod');
@@ -39,16 +50,29 @@ export default function CheckoutScreen({ navigation, route }) {
   const [placedOrder, setPlacedOrder]   = useState(null);
 
   const cartItems = products.filter(p => cart[p.id] > 0).map(p => ({
-    ...p, qty: cart[p.id], total: cart[p.id] * parseFloat(p.price),
+    ...p, qty: cart[p.id], total: cart[p.id] * parseFloat(p.price) * (1 + (parseFloat(p.gst_percentage) || 0) / 100),
   }));
 
   const subtotal     = cartItems.reduce((sum, item) => sum + item.total, 0);
-  const deliveryInfo = getDeliveryInfo(distance, subtotal);
-  const platformFee  = 10;
-  const gstOnPlatform = Math.round((platformFee + deliveryInfo.deliveryFee) * 18) / 100;
-  const total        = subtotal + deliveryInfo.deliveryFee + platformFee;
+  const totalMrp     = cartItems.reduce((sum, item) => {
+    const mrp = parseFloat(item.mrp) || 0;
+    const price = parseFloat(item.price) || 0;
+    return sum + (mrp > price ? mrp * item.qty : price * item.qty);
+  }, 0);
+  const totalSavings = Math.round(totalMrp - subtotal);
+  const deliveryInfo = getDeliveryInfo(calcDistance || distance, subtotal);
+  const platformFee       = 10;
+  const platformFeeGST    = Math.round(platformFee * 1.18);
+  const deliveryFeeGST    = deliveryInfo.deliveryFee;
+  const total             = subtotal + deliveryFeeGST + platformFeeGST;
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
+    // Check if address was selected from map
+    if (globalStore.checkoutAddress) {
+      setAddress(globalStore.checkoutAddress);
+      globalStore.checkoutAddress = null;
+      return;
+    }
     const fetchAddresses = async () => {
       try {
         const res  = await client.get('/users/addresses/');
@@ -59,10 +83,44 @@ export default function CheckoutScreen({ navigation, route }) {
       } catch (e) { console.log('Address fetch error:', e.message); }
     };
     fetchAddresses();
-  }, []);
+  }, []));
 
   // ── Place Order ────────────────────────────────────────────────────────────
+
+  // Calculate distance from shop on load
+  useEffect(() => {
+    const getDistance = async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') return;
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        const { latitude, longitude } = loc.coords;
+        if (shop?.latitude && shop?.longitude) {
+          const dist = calculateDistance(latitude, longitude, parseFloat(shop.latitude), parseFloat(shop.longitude));
+          setCalcDistance(dist);
+        }
+      } catch (e) {}
+    };
+    getDistance();
+  }, []);
+
+  const useCurrentLocation = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') return;
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const { latitude, longitude } = loc.coords;
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyCS_YRu6O61LCZn_QlypzjcjSdeRqbQaDI`);
+      const data = await res.json();
+      if (data.results?.[0]) setAddress(data.results[0].formatted_address);
+    } catch (e) { Alert.alert('Error', 'Could not get location'); }
+  };
+
   const handlePlaceOrder = async () => {
+    if (deliveryInfo.outOfRange) {
+      Alert.alert('Outside Delivery Area', 'Sorry, this shop does not deliver to your location. Maximum delivery range is 6 km.');
+      return;
+    }
     if (!address.trim()) {
       Alert.alert('Error', 'Please enter delivery address');
       return;
@@ -70,9 +128,10 @@ export default function CheckoutScreen({ navigation, route }) {
     setLoading(true);
     try {
       const orderItems = cartItems.map(item => ({
-        product_id: item.id,
+        product_id: item.base_product_id || item.id,
+        variant_id: item.variant_id || null,
         quantity:   item.qty,
-        price:      item.price,
+        price:      parseFloat(item.price).toFixed(2),
       }));
       const res = await client.post('/orders/place/', {
         vendor_id:        shop.id,
@@ -80,7 +139,8 @@ export default function CheckoutScreen({ navigation, route }) {
         delivery_address: address,
         payment_mode:     payment,
         notes:            note,
-        delivery_fee:     deliveryInfo.deliveryFee,
+        delivery_fee:     deliveryFeeGST,
+        total:            Math.round(total),
       });
 
       const order = res.data.order;
@@ -128,7 +188,6 @@ export default function CheckoutScreen({ navigation, route }) {
         ]);
       }
     } catch (e) {
-      console.log('Payment verify error:', e.message);
       setShowRazorpay(false);
       navigation.replace('OrderSuccess', { order: placedOrder });
     }
@@ -232,20 +291,8 @@ export default function CheckoutScreen({ navigation, route }) {
       <ScrollView showsVerticalScrollIndicator={false}>
 
         {/* Free Delivery Banner */}
-        {!deliveryInfo.isFree && (
-          <View style={styles.freeDeliveryBanner}>
-            <Ionicons name="bicycle-outline" size={18} color="#1669ef" />
-            <Text style={styles.freeDeliveryText}>
-              Add <Text style={styles.freeDeliveryAmount}>₹{deliveryInfo.amountLeft.toFixed(0)}</Text> more for FREE delivery!
-            </Text>
-          </View>
-        )}
-        {deliveryInfo.isFree && (
-          <View style={styles.freeDeliveryBannerGreen}>
-            <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
-            <Text style={styles.freeDeliveryTextGreen}>You have FREE delivery on this order! 🎉</Text>
-          </View>
-        )}
+
+
 
         {/* Deliver To */}
         <View style={styles.card}>
@@ -273,6 +320,19 @@ export default function CheckoutScreen({ navigation, route }) {
               ))}
             </ScrollView>
           )}
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
+            <TouchableOpacity style={styles.locationQuickBtn} onPress={useCurrentLocation}>
+              <Ionicons name="locate-outline" size={16} color="#1669ef" />
+              <Text style={styles.locationQuickText}>Current Location</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.locationQuickBtn} onPress={() => navigation.navigate('MapPicker', {
+              isCheckout: true,
+              onLocationSelected: null,
+            })}>
+              <Ionicons name="map-outline" size={16} color="#1669ef" />
+              <Text style={styles.locationQuickText}>Pick on Map</Text>
+            </TouchableOpacity>
+          </View>
           <TextInput
             style={styles.addressInput}
             placeholder="Enter your full delivery address"
@@ -284,10 +344,22 @@ export default function CheckoutScreen({ navigation, route }) {
           />
         </View>
 
+        {/* Out of Range Warning */}
+        {deliveryInfo.outOfRange && (
+          <View style={styles.outOfRangeBanner}>
+            <Ionicons name="alert-circle" size={18} color="#dc2626" />
+            <Text style={styles.outOfRangeText}>
+              🚫 Outside delivery area — {calcDistance ? `${calcDistance} km` : 'too far'}. This shop delivers only within 6 km.
+            </Text>
+          </View>
+        )}
         {/* Order Summary */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Order Summary</Text>
-          <Text style={styles.shopName}>🏪 {shop?.shop_name}</Text>
+          <View style={{flexDirection:'row', alignItems:'center', gap:6, marginBottom:12}}>
+            <Ionicons name="storefront-outline" size={16} color="#111" />
+            <Text style={styles.shopName}>{shop?.shop_name}</Text>
+          </View>
           <View style={styles.divider} />
           {cartItems.map(item => (
             <View key={item.id} style={styles.orderItem}>
@@ -295,7 +367,12 @@ export default function CheckoutScreen({ navigation, route }) {
                 <View style={styles.qtyBadge}>
                   <Text style={styles.qtyBadgeText}>{item.qty}</Text>
                 </View>
-                <Text style={styles.orderItemName}>{item.name}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.orderItemName}>{item.name}</Text>
+                  {item.mrp && parseFloat(item.mrp) > parseFloat(item.price) && (
+                    <Text style={styles.orderItemMrp}>MRP: <Text style={{textDecorationLine:'line-through'}}>₹{parseFloat(item.mrp).toFixed(0)}</Text> • <Text style={{color:'#16A34A'}}>{Math.round((1 - parseFloat(item.price)/parseFloat(item.mrp))*100)}% OFF</Text></Text>
+                  )}
+                </View>
               </View>
               <Text style={styles.orderItemPrice}>₹{item.total.toFixed(0)}</Text>
             </View>
@@ -311,22 +388,23 @@ export default function CheckoutScreen({ navigation, route }) {
           </View>
           <View style={styles.billRow}>
             <View>
-              <Text style={styles.billLabel}>Delivery Fee (incl. GST)</Text>
+              <Text style={styles.billLabel}>Delivery Fee</Text>
               <Text style={styles.billLabelSub}>
-                {distance ? `📍 ${distance} km away` : ''} • Free above ₹{deliveryInfo.minOrder}
+                {calcDistance ? `📍 ${calcDistance} km away` : (distance ? `📍 ${distance} km away` : '')}
               </Text>
             </View>
-            {deliveryInfo.isFree
-              ? <Text style={styles.billValueFree}>FREE ✅</Text>
-              : <Text style={styles.billValue}>₹{deliveryInfo.deliveryFee}</Text>
-            }
+            <Text style={styles.billValue}>₹{deliveryFeeGST}</Text>
           </View>
           <View style={styles.billRow}>
             <Text style={styles.billLabel}>Platform Fee (incl. GST)</Text>
-            <Text style={styles.billValue}>₹{platformFee.toFixed(0)}</Text>
+            <Text style={styles.billValue}>₹{platformFeeGST}</Text>
           </View>
-
           <View style={styles.divider} />
+          {totalSavings > 0 && (
+            <View style={styles.savingsBanner}>
+              <Text style={styles.savingsText}>🎉 You saved ₹{totalSavings} on this order!</Text>
+            </View>
+          )}
           <View style={styles.billRow}>
             <Text style={styles.billTotalLabel}>Total Amount</Text>
             <Text style={styles.billTotalValue}>₹{total.toFixed(0)}</Text>
@@ -408,16 +486,12 @@ export default function CheckoutScreen({ navigation, route }) {
         <View style={styles.footerTop}>
           <Text style={styles.footerTotal}>₹{total.toFixed(0)}</Text>
           <Text style={styles.footerTotalLabel}>Total</Text>
-          {deliveryInfo.isFree && (
-            <View style={styles.footerFreeTag}>
-              <Text style={styles.footerFreeTagText}>Free Delivery</Text>
-            </View>
-          )}
+
         </View>
         <TouchableOpacity
-          style={[styles.placeOrderBtn, payment === 'online' && styles.placeOrderBtnOnline]}
+          style={[styles.placeOrderBtn, payment === 'online' && styles.placeOrderBtnOnline, deliveryInfo.outOfRange && styles.placeOrderBtnDisabled]}
           onPress={handlePlaceOrder}
-          disabled={loading}
+          disabled={loading || deliveryInfo.outOfRange}
         >
           {loading
             ? <ActivityIndicator color="#fff" />
@@ -440,7 +514,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
   backBtn:     { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center' },
 
   freeDeliveryBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
@@ -468,14 +542,17 @@ const styles = StyleSheet.create({
   addrChipText:       { fontSize: 13, color: '#555', fontWeight: '500' },
   addrChipTextActive: { color: '#1669ef', fontWeight: 'bold' },
 
+  locationQuickBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, padding: 10, borderRadius: 10, borderWidth: 1, borderColor: '#1669ef', backgroundColor: '#EFF6FF' },
+  locationQuickText: { fontSize: 12, fontWeight: '600', color: '#1669ef' },
   addressInput: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12, padding: 12, fontSize: 14, color: '#111', minHeight: 80, textAlignVertical: 'top', backgroundColor: '#F9FAFB' },
 
-  shopName:       { fontSize: 14, fontWeight: '600', color: '#555', marginBottom: 12 },
+  shopName:       { fontSize: 14, fontWeight: '600', color: '#555' },
   divider:        { height: 1, backgroundColor: '#F0F0F0', marginVertical: 12 },
-  orderItem:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  orderItemLeft:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  orderItem:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingHorizontal: 4 },
+  orderItemLeft:  { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, marginRight: 8 },
   qtyBadge:       { width: 24, height: 24, borderRadius: 6, backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center' },
   qtyBadgeText:   { fontSize: 12, fontWeight: 'bold', color: '#1669ef' },
+  orderItemMrp:  { fontSize: 11, color: '#9CA3AF', marginTop: 2 },
   orderItemName:  { fontSize: 14, color: '#555', flex: 1 },
   orderItemPrice: { fontSize: 14, fontWeight: '600', color: '#111' },
 
@@ -517,6 +594,13 @@ const styles = StyleSheet.create({
   footerFreeTagText:{ fontSize: 11, color: '#16A34A', fontWeight: '700' },
 
   placeOrderBtn:       { backgroundColor: '#1669ef', borderRadius: 14, padding: 16, alignItems: 'center' },
-  placeOrderBtnOnline: { backgroundColor: '#1669ef' },
+  placeOrderBtnOnline:    { backgroundColor: '#1669ef' },
+  placeOrderBtnDisabled:  { backgroundColor: '#9CA3AF' },
+  outOfRangeBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#fef2f2', marginHorizontal: 16, marginTop: 16,
+    padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#fecaca',
+  },
+  outOfRangeText: { fontSize: 13, color: '#dc2626', fontWeight: '600', flex: 1 },
   placeOrderText:      { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });
