@@ -6,10 +6,11 @@ import {
   ScrollView, ActivityIndicator, Alert, Modal, TextInput, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import client from '../../api/client';
+import * as Location from 'expo-location';
 
 const LABELS = ['Home', 'Work', 'Other'];
 
-export default function AddressScreen({ navigation }) {
+export default function AddressScreen({ navigation, route }) {
   const [addresses, setAddresses]   = useState([]);
   const [loading, setLoading]       = useState(true);
   const [modalVisible, setModal]    = useState(false);
@@ -19,6 +20,47 @@ export default function AddressScreen({ navigation }) {
   const [town, setTown]             = useState('');
   const [pincode, setPincode]       = useState('');
   const [saving, setSaving]         = useState(false);
+
+  const [locating, setLocating] = useState(false);
+
+  const useCurrentLocation = async () => {
+    setLocating(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission denied', 'Please allow location access');
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const { latitude, longitude } = loc.coords;
+      const geo = await Location.reverseGeocodeAsync({ latitude, longitude });
+      if (geo && geo.length > 0) {
+        const g = geo[0];
+        const addr = [g.name, g.street, g.district, g.city, g.region].filter(Boolean).join(', ');
+        setFullAddr(addr);
+        setTown(g.city || g.district || g.region || '');
+        setPincode(g.postalCode || '');
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Could not get location. Please enter manually.');
+    } finally {
+      setLocating(false);
+    }
+  };
+
+
+
+  // Get location from MapPicker
+  useEffect(() => {
+    if (route?.params?.selectedLocation) {
+      const loc = route.params.selectedLocation;
+      setFullAddr(loc.full_address);
+      if (loc.town) setTown(loc.town);
+      if (loc.pincode) setPincode(loc.pincode);
+      setEdit(null);
+      setModal(true);
+    }
+  }, [route?.params?.selectedLocation]);
 
   const fetchAddresses = async () => {
     try {
@@ -107,8 +149,8 @@ export default function AddressScreen({ navigation }) {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+        <TouchableOpacity onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('Profile')} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={22} color="#111" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Addresses</Text>
         <TouchableOpacity style={styles.addBtn} onPress={openAdd}>
@@ -199,6 +241,22 @@ export default function AddressScreen({ navigation }) {
               ))}
             </View>
 
+            {/* Location Buttons Row */}
+            <View style={styles.locationRow}>
+              <TouchableOpacity style={styles.locationBtn} onPress={() => navigation.navigate('MapPicker', {
+                returnScreen: 'AddressScreen'
+              })}>
+                <Ionicons name="map-outline" size={18} color="#1669ef" />
+                <Text style={styles.locationBtnText}>Pick from Map</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.locationBtn} onPress={useCurrentLocation} disabled={locating}>
+                {locating
+                  ? <ActivityIndicator size="small" color="#1669ef" />
+                  : <Ionicons name="location-outline" size={18} color="#1669ef" />
+                }
+                <Text style={styles.locationBtnText}>{locating ? 'Detecting...' : 'Current Location'}</Text>
+              </TouchableOpacity>
+            </View>
             <Text style={styles.fieldLabel}>Full Address</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
@@ -251,25 +309,7 @@ export default function AddressScreen({ navigation }) {
         </View>
         </KeyboardAvoidingView>
       </Modal>
-      {/* Bottom Tab */}
-      <View style={{ flexDirection: 'row', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F0F0F0', paddingBottom: 20, paddingTop: 10 }}>
-        <TouchableOpacity style={{ flex: 1, alignItems: 'center' }} onPress={() => navigation.navigate('Home')}>
-          <Ionicons name="home-outline" size={25} color="#9CA3AF" />
-          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={{ flex: 1, alignItems: 'center' }} onPress={() => navigation.navigate('Cart')}>
-          <Ionicons name="cart-outline" size={25} color="#9CA3AF" />
-          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>Cart</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={{ flex: 1, alignItems: 'center' }} onPress={() => navigation.navigate('MyOrders')}>
-          <Ionicons name="receipt-outline" size={25} color="#9CA3AF" />
-          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>Orders</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={{ flex: 1, alignItems: 'center' }} onPress={() => navigation.navigate('Profile')}>
-          <Ionicons name="person-outline" size={25} color="#9CA3AF" />
-          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>Profile</Text>
-        </TouchableOpacity>
-      </View>
+
 
           </View>
   );
@@ -285,7 +325,7 @@ const styles = StyleSheet.create({
   },
   backBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   backText: { fontSize: 24, color: '#111' },
-  headerTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center' },
   addBtn: {
     backgroundColor: '#1669ef', borderRadius: 10,
     paddingHorizontal: 14, paddingVertical: 7,
@@ -349,6 +389,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', marginBottom: 16,
   },
+  locationRow:     { flexDirection: 'row', gap: 10, marginTop: 14, marginBottom: 12 },
+  locationBtn:     { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, padding: 11, borderRadius: 10, borderWidth: 1.5, borderColor: '#1669ef', backgroundColor: '#EFF6FF' },
+  locationBtnText: { fontSize: 14, fontWeight: '600', color: '#1669ef' },
   modalTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
   modalClose: { fontSize: 20, color: '#9CA3AF' },
 
