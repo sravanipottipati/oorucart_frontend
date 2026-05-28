@@ -207,11 +207,11 @@ export default function VendorHomeScreen({ navigation }) {
 
           <TouchableOpacity
             style={[styles.statCard, { backgroundColor: '#F0FDF4' }]}
-            onPress={() => navigation.navigate('VendorNotifications')}
+            onPress={() => navigation.navigate('VendorOrders')}
           >
-            <Ionicons name="notifications-outline" size={24} color="#16A34A" style={{ marginBottom: 8 }} />
-            <Text style={styles.statCardLabel}>Unread</Text>
-            <Text style={[styles.statCardValue, { color: '#16A34A' }]}>{unreadCount}</Text>
+            <Ionicons name="checkmark-circle-outline" size={24} color="#16A34A" style={{ marginBottom: 8 }} />
+            <Text style={styles.statCardLabel}>Completed</Text>
+            <Text style={[styles.statCardValue, { color: '#16A34A' }]}>{orders.filter(o => o.status === 'delivered').length}</Text>
           </TouchableOpacity>
         </View>
 

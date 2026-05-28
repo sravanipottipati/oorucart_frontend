@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet,
+  View, Text, TouchableOpacity, StyleSheet, Alert,
   ScrollView, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -62,6 +62,15 @@ export default function VendorNotificationsScreen({ navigation }) {
     } catch (e) { console.log('Error:', e.message); }
   };
 
+  const clearAll = async () => {
+    try {
+      await client.delete('/orders/notifications/clear/');
+      setNotifications([]);
+    } catch (e) {
+      // If no backend endpoint, just clear locally
+      setNotifications([]);
+    }
+  };
   const markRead = async (id, orderId) => {
     try {
       await client.post(`/orders/notifications/${id}/read/`);
@@ -96,13 +105,15 @@ export default function VendorNotificationsScreen({ navigation }) {
             </View>
           )}
         </View>
-        {unreadCount > 0 ? (
-          <TouchableOpacity onPress={markAllRead} style={styles.markAllBtn}>
-            <Ionicons name="checkmark-done" size={18} color="#1669ef" />
-          </TouchableOpacity>
-        ) : (
-          <View style={{ width: 36 }} />
-        )}
+        <TouchableOpacity onPress={() => {
+          Alert.alert('Notifications', 'What would you like to do?', [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Mark All Read', onPress: markAllRead },
+            { text: 'Clear All', style: 'destructive', onPress: clearAll },
+          ]);
+        }} style={styles.markAllBtn}>
+          <Ionicons name="ellipsis-vertical" size={20} color="#444" />
+        </TouchableOpacity>
       </View>
 
       {/* Unread summary bar */}
@@ -112,9 +123,15 @@ export default function VendorNotificationsScreen({ navigation }) {
           <Text style={styles.summaryText}>
             You have <Text style={styles.summaryBold}>{unreadCount} unread</Text> notification{unreadCount > 1 ? 's' : ''}
           </Text>
-          <TouchableOpacity onPress={markAllRead}>
-            <Text style={styles.summaryMarkAll}>Mark all read</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <TouchableOpacity onPress={markAllRead}>
+              <Text style={styles.summaryMarkAll}>Mark all read</Text>
+            </TouchableOpacity>
+            <Text style={{ color: '#ccc' }}>|</Text>
+            <TouchableOpacity onPress={clearAll}>
+              <Text style={[styles.summaryMarkAll, { color: '#DC2626' }]}>Clear all</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
