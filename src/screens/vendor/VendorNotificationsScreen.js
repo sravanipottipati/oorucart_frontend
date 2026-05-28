@@ -97,14 +97,7 @@ export default function VendorNotificationsScreen({ navigation }) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#111" />
         </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Notifications</Text>
-          {unreadCount > 0 && (
-            <View style={styles.unreadBadge}>
-              <Text style={styles.unreadBadgeText}>{unreadCount} new</Text>
-            </View>
-          )}
-        </View>
+        <Text style={styles.headerTitle}>Notifications</Text>
         <TouchableOpacity onPress={() => {
           Alert.alert('Notifications', 'What would you like to do?', [
             { text: 'Cancel', style: 'cancel' },
