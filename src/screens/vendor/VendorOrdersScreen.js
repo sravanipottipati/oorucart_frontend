@@ -89,7 +89,7 @@ export default function VendorOrdersScreen({ navigation }) {
 
   const todayOrders   = orders.filter(o => new Date(o.created_at).toDateString() === new Date().toDateString());
   const pendingOrders = orders.filter(o => o.status === 'placed');
-  const todayRevenue  = todayOrders.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
+  const todayRevenue  = todayOrders.reduce((sum, o) => sum + (parseFloat(o.total_amount || 0) - parseFloat(o.delivery_fee || 0) - Math.round(parseFloat(o.platform_fee || 0) * 1.18)), 0);
 
   return (
     <View style={styles.container}>
@@ -208,7 +208,9 @@ export default function VendorOrdersScreen({ navigation }) {
                         #{order?.order_number || order?.id?.slice(0, 8).toUpperCase()}
                       </Text>
                     </View>
-                    <Text style={styles.orderAmount}>₹{order.total_amount}</Text>
+                    <Text style={styles.orderAmount}>
+                      ₹{(parseFloat(order.total_amount || 0) - parseFloat(order.delivery_fee || 0) - Math.round(parseFloat(order.platform_fee || 0) * 1.18)).toFixed(0)}
+                    </Text>
                   </View>
 
                   {/* Middle row — items + time */}
