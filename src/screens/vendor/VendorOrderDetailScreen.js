@@ -4,6 +4,7 @@ import {
   ScrollView, ActivityIndicator, Linking, Alert, Modal, TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Share } from 'react-native';
 import client from '../../api/client';
 
 const STATUS_INFO = {
@@ -83,6 +84,32 @@ export default function VendorOrderDetailScreen({ navigation, route }) {
     const address = encodeURIComponent(order.delivery_address);
     Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${address}`)
       .catch(() => Alert.alert('Error', 'Could not open maps'));
+  };
+
+  const handleShareOrder = async () => {
+    const items = order.items?.map(i => `  • ${i.quantity}x ${i.product_name || i.name} — Rs.${(i.quantity * parseFloat(i.price)).toFixed(0)}`).join('\n') || '';
+    const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.delivery_address)}`;
+    const text = `🛵 *Delivery Details*
+━━━━━━━━━━━━━━━
+📦 Order ID: #${order.order_number || order.id?.slice(0, 8).toUpperCase()}
+👤 Customer: ${order.buyer_name || 'Customer'}
+📞 Phone: ${order.buyer_phone || 'N/A'}
+
+🛍️ *Items:*
+${items}
+
+📍 *Delivery Address:*
+${order.delivery_address}
+
+🗺️ Map: ${mapsLink}
+━━━━━━━━━━━━━━━
+💰 Total: Rs.${parseFloat(order.total_amount).toFixed(0)} (COD)`;
+
+    try {
+      await Share.share({ message: text, title: `Order #${order.order_number}` });
+    } catch (e) {
+      Alert.alert('Error', 'Could not share order details');
+    }
   };
 
   if (loading) return <View style={styles.loadingContainer}><ActivityIndicator size="large" color="#1669ef" /></View>;
@@ -193,8 +220,8 @@ export default function VendorOrderDetailScreen({ navigation, route }) {
           {order.buyer_name && <View style={styles.buyerRow}><Ionicons name="person-outline" size={16} color="#888" /><Text style={styles.buyerName}>{order.buyer_name}</Text></View>}
           <Text style={styles.addressText}>{order.delivery_address}</Text>
           <View style={styles.addressBtns}>
-            <TouchableOpacity style={styles.mapsBtn} onPress={handleOpenMaps}>
-              <Ionicons name="location-outline" size={16} color="#1669ef" /><Text style={styles.mapsBtnText}>Open in Maps</Text>
+            <TouchableOpacity style={styles.mapsBtn} onPress={handleShareOrder}>
+              <Ionicons name="share-social-outline" size={16} color="#1669ef" /><Text style={styles.mapsBtnText}>Share Order</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.callBtnSmall} onPress={handleCallBuyer}>
               <Ionicons name="call-outline" size={16} color="#16A34A" /><Text style={styles.callBtnSmallText}>Call Buyer</Text>
