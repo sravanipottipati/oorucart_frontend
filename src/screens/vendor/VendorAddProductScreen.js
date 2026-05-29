@@ -176,7 +176,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
                   <Ionicons name="camera-outline" size={32} color="#1669ef" />
                 </View>
                 <Text style={styles.imagePlaceholderText}>Tap to add photos</Text>
-                <Text style={styles.imagePlaceholderSub}>Add up to 5 photos (JPG, PNG up to 5MB)</Text>
+                <Text style={styles.imagePlaceholderSub}>JPG, PNG up to 5MB</Text>
               </View>
             )}
           </TouchableOpacity>
