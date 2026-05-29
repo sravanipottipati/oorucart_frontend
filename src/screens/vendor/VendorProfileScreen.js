@@ -147,7 +147,7 @@ export default function VendorProfileScreen({ navigation }) {
           >
             <View style={styles.menuLeft}>
               <View style={[styles.menuIconBox, { backgroundColor: '#DCFCE7' }]}>
-                <Text style={styles.menuIcon}>💵</Text>
+                <Ionicons name="wallet-outline" size={20} color="#16A34A" />
               </View>
               <Text style={styles.menuLabel}>Earnings & Settlements</Text>
             </View>
@@ -160,7 +160,7 @@ export default function VendorProfileScreen({ navigation }) {
           >
             <View style={styles.menuLeft}>
               <View style={[styles.menuIconBox, { backgroundColor: '#FFF7ED' }]}>
-                <Text style={styles.menuIcon}>❓</Text>
+                <Ionicons name="help-circle-outline" size={20} color="#EA580C" />
               </View>
               <Text style={styles.menuLabel}>Help & Support</Text>
             </View>
@@ -170,7 +170,7 @@ export default function VendorProfileScreen({ navigation }) {
           <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('PrivacyPolicy')}>
             <View style={styles.menuLeft}>
               <View style={[styles.menuIconBox, { backgroundColor: '#F3F4F6' }]}>
-                <Text style={styles.menuIcon}>📄</Text>
+                <Ionicons name="document-text-outline" size={20} color="#6B7280" />
               </View>
               <Text style={styles.menuLabel}>Privacy Policy</Text>
             </View>
@@ -178,7 +178,9 @@ export default function VendorProfileScreen({ navigation }) {
           </TouchableOpacity>
           <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('TermsAndConditions')}>
             <View style={styles.menuLeft}>
-              <Text style={styles.menuIcon}>📋</Text>
+              <View style={[styles.menuIconBox, { backgroundColor: '#F3F4F6' }]}>
+                <Ionicons name="shield-checkmark-outline" size={20} color="#6B7280" />
+              </View>
               <Text style={styles.menuLabel}>Terms & Conditions</Text>
             </View>
             <Text style={styles.menuArrow}>›</Text>
