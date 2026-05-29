@@ -192,9 +192,16 @@ export default function VendorProfileScreen({ navigation }) {
             <Text style={styles.infoLabel}>Delivery Type</Text>
             <Text style={styles.infoValue}>{shop?.delivery_type || '—'}</Text>
           </View>
-          <View style={styles.infoRow}>
+          <View style={[styles.infoRow, styles.menuItemBorder]}>
             <Text style={styles.infoLabel}>Est. Delivery Time</Text>
             <Text style={styles.infoValue}>{shop?.estimated_delivery_time || 30} mins</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <View>
+              <Text style={styles.infoLabel}>Minimum Order Value</Text>
+              <Text style={[styles.infoLabel, { fontSize: 11, color: '#1669ef' }]}>Set by Platform</Text>
+            </View>
+            <Text style={[styles.infoValue, { color: '#16A34A', fontWeight: '700' }]}>₹{minOrderValue}</Text>
           </View>
         </View>
 
