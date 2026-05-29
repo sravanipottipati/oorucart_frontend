@@ -5,6 +5,7 @@ import {
   ScrollView, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import client from '../../api/client';
+import { Alert, TextInput, Modal } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -15,6 +16,14 @@ export default function VendorWalletScreen({ navigation }) {
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [shop, setShop]               = useState(null);
+  const [showBankModal, setShowBankModal] = useState(false);
+  const [bankName, setBankName]           = useState('');
+  const [bankAccountName, setBankAccountName] = useState('');
+  const [bankAccountNumber, setBankAccountNumber] = useState('');
+  const [bankConfirmNumber, setBankConfirmNumber] = useState('');
+  const [bankIFSC, setBankIFSC]           = useState('');
+  const [savingBank, setSavingBank]       = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
@@ -47,15 +56,23 @@ export default function VendorWalletScreen({ navigation }) {
 
   const fetchData = async () => {
     try {
-      const [walletRes, transRes] = await Promise.all([
+      const [walletRes, transRes, shopRes] = await Promise.all([
         client.get('/wallet/summary/'),
         client.get('/wallet/transactions/'),
+        client.get('/vendors/myshop/'),
       ]);
       setWallet(walletRes.data);
       const data = Array.isArray(transRes.data)
         ? transRes.data
         : transRes.data.transactions || [];
       setTrans(data);
+      const shopData = shopRes.data;
+      setShop(shopData);
+      setBankName(shopData.bank_name || '');
+      setBankAccountName(shopData.bank_account_name || '');
+      setBankAccountNumber(shopData.bank_account_number || '');
+      setBankConfirmNumber(shopData.bank_account_number || '');
+      setBankIFSC(shopData.bank_ifsc_code || '');
     } catch (e) {
       console.log('Error:', e.message);
     } finally {
@@ -66,6 +83,31 @@ export default function VendorWalletScreen({ navigation }) {
 
   useEffect(() => { fetchData(); }, []);
   const onRefresh = () => { setRefreshing(true); fetchData(); };
+
+  const hasBankDetails = shop?.bank_account_number && shop?.bank_ifsc_code;
+
+  const saveBankDetails = async () => {
+    if (!bankAccountName.trim()) { Alert.alert('Error', 'Please enter account holder name'); return; }
+    if (!bankAccountNumber.trim()) { Alert.alert('Error', 'Please enter account number'); return; }
+    if (bankAccountNumber !== bankConfirmNumber) { Alert.alert('Error', 'Account numbers do not match'); return; }
+    if (!bankIFSC.trim()) { Alert.alert('Error', 'Please enter IFSC code'); return; }
+    setSavingBank(true);
+    try {
+      await client.patch('/vendors/myshop/', {
+        bank_account_name:   bankAccountName,
+        bank_account_number: bankAccountNumber,
+        bank_ifsc_code:      bankIFSC.toUpperCase(),
+        bank_name:           bankName,
+      });
+      setShowBankModal(false);
+      fetchData();
+      Alert.alert('Success', 'Bank details saved successfully!');
+    } catch (e) {
+      Alert.alert('Error', 'Could not save bank details');
+    } finally {
+      setSavingBank(false);
+    }
+  };
 
   const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('en-IN', {
     day: 'numeric', month: 'short', year: 'numeric',
@@ -92,7 +134,7 @@ export default function VendorWalletScreen({ navigation }) {
           style={styles.bellBtn}
           onPress={() => navigation.navigate('VendorNotifications')}
         >
-          <Text style={styles.bellIcon}>🔔</Text>
+          <Ionicons name='notifications-outline' size={24} color='#444' />
         </TouchableOpacity>
       </View>
 
@@ -111,7 +153,7 @@ export default function VendorWalletScreen({ navigation }) {
             <Text style={styles.lifetimeLabel}>Lifetime earnings</Text>
           </View>
           <View style={styles.totalCardIcon}>
-            <Text style={styles.totalCardIconText}>💰</Text>
+            <Text style={styles.totalCardIconText}>₹</Text>
           </View>
         </View>
 
@@ -132,6 +174,31 @@ export default function VendorWalletScreen({ navigation }) {
             </Text>
           </View>
         </View>
+
+        {/* Bank Details */}
+        {!hasBankDetails ? (
+          <TouchableOpacity style={styles.bankWarning} onPress={() => setShowBankModal(true)}>
+            <Ionicons name="alert-circle" size={20} color="#DC2626" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.bankWarningTitle}>⚠️ Bank Details Missing!</Text>
+              <Text style={styles.bankWarningText}>Add bank details to receive payments. Orders may be blocked without bank details.</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#DC2626" />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.bankCard}>
+            <View style={styles.bankCardHeader}>
+              <Text style={styles.bankCardTitle}>🏦 Bank Details</Text>
+              <TouchableOpacity onPress={() => setShowBankModal(true)}>
+                <Ionicons name="create-outline" size={18} color="#1669ef" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.bankRow}><Text style={styles.bankLabel}>Account Name</Text><Text style={styles.bankValue}>{shop?.bank_account_name}</Text></View>
+            <View style={styles.bankRow}><Text style={styles.bankLabel}>Account Number</Text><Text style={styles.bankValue}>{'*'.repeat((shop?.bank_account_number?.length || 4) - 4) + shop?.bank_account_number?.slice(-4)}</Text></View>
+            <View style={styles.bankRow}><Text style={styles.bankLabel}>IFSC Code</Text><Text style={styles.bankValue}>{shop?.bank_ifsc_code}</Text></View>
+            {shop?.bank_name && <View style={styles.bankRow}><Text style={styles.bankLabel}>Bank Name</Text><Text style={styles.bankValue}>{shop?.bank_name}</Text></View>}
+          </View>
+        )}
 
         {/* Download Report */}
         <View style={styles.downloadCard}>
@@ -210,6 +277,34 @@ export default function VendorWalletScreen({ navigation }) {
 
         <View style={{ height: 80 }} />
       </ScrollView>
+      {/* Bank Details Modal */}
+      <Modal visible={showBankModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>🏦 Bank Details</Text>
+              <TouchableOpacity onPress={() => setShowBankModal(false)}>
+                <Ionicons name="close" size={22} color="#888" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.modalSub}>Required for receiving payments</Text>
+            <Text style={styles.fieldLabel}>Bank Name</Text>
+            <TextInput style={styles.input} placeholder="e.g. State Bank of India" placeholderTextColor="#9CA3AF" value={bankName} onChangeText={setBankName} />
+            <Text style={styles.fieldLabel}>Account Holder Name *</Text>
+            <TextInput style={styles.input} placeholder="As per bank records" placeholderTextColor="#9CA3AF" value={bankAccountName} onChangeText={setBankAccountName} />
+            <Text style={styles.fieldLabel}>Account Number *</Text>
+            <TextInput style={styles.input} placeholder="Enter account number" placeholderTextColor="#9CA3AF" value={bankAccountNumber} onChangeText={setBankAccountNumber} keyboardType="numeric" secureTextEntry />
+            <Text style={styles.fieldLabel}>Confirm Account Number *</Text>
+            <TextInput style={styles.input} placeholder="Re-enter account number" placeholderTextColor="#9CA3AF" value={bankConfirmNumber} onChangeText={setBankConfirmNumber} keyboardType="numeric" />
+            <Text style={styles.fieldLabel}>IFSC Code *</Text>
+            <TextInput style={styles.input} placeholder="e.g. SBIN0001234" placeholderTextColor="#9CA3AF" value={bankIFSC} onChangeText={setBankIFSC} autoCapitalize="characters" />
+            <TouchableOpacity style={styles.saveBtn} onPress={saveBankDetails} disabled={savingBank}>
+              {savingBank ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Save Bank Details</Text>}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Bottom Tab */}
       <View style={{ flexDirection: 'row', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F0F0F0', paddingBottom: 20, paddingTop: 10 }}>
         <TouchableOpacity style={{ flex: 1, alignItems: 'center' }} onPress={() => navigation.navigate('VendorHome')}>
@@ -322,4 +417,22 @@ const styles = StyleSheet.create({
   },
   downloadBtnDisabled: { backgroundColor: '#93c5fd' },
   downloadBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  bankWarning: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FEF2F2', marginHorizontal: 16, marginBottom: 12, padding: 14, borderRadius: 14, borderWidth: 1, borderColor: '#FECACA' },
+  bankWarningTitle: { fontSize: 13, fontWeight: '700', color: '#DC2626', marginBottom: 2 },
+  bankWarningText: { fontSize: 12, color: '#DC2626' },
+  bankCard: { backgroundColor: '#fff', marginHorizontal: 16, marginBottom: 12, padding: 16, borderRadius: 14, borderWidth: 1, borderColor: '#E5E7EB' },
+  bankCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  bankCardTitle: { fontSize: 15, fontWeight: '700', color: '#111' },
+  bankRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
+  bankLabel: { fontSize: 13, color: '#888' },
+  bankValue: { fontSize: 13, color: '#111', fontWeight: '600' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalBox: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 40 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  modalTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
+  modalSub: { fontSize: 13, color: '#888', marginBottom: 16 },
+  fieldLabel: { fontSize: 13, fontWeight: '600', color: '#555', marginBottom: 6, marginTop: 10 },
+  input: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12, padding: 12, fontSize: 14, color: '#111', backgroundColor: '#F9FAFB' },
+  saveBtn: { backgroundColor: '#1669ef', borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 20 },
+  saveBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 });
