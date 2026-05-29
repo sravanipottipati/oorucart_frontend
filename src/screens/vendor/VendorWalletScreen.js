@@ -281,6 +281,7 @@ export default function VendorWalletScreen({ navigation }) {
       <Modal visible={showBankModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>🏦 Bank Details</Text>
               <TouchableOpacity onPress={() => setShowBankModal(false)}>
@@ -301,6 +302,7 @@ export default function VendorWalletScreen({ navigation }) {
             <TouchableOpacity style={styles.saveBtn} onPress={saveBankDetails} disabled={savingBank}>
               {savingBank ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Save Bank Details</Text>}
             </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </Modal>
