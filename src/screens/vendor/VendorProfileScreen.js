@@ -68,7 +68,7 @@ export default function VendorProfileScreen({ navigation }) {
           style={styles.bellBtn}
           onPress={() => navigation.navigate('VendorNotifications')}
         >
-          <Text style={styles.bellIcon}>🔔</Text>
+          <Ionicons name="notifications-outline" size={24} color="#444" />
         </TouchableOpacity>
       </View>
 
@@ -80,7 +80,7 @@ export default function VendorProfileScreen({ navigation }) {
             style={styles.editIconBtn}
             onPress={() => navigation.navigate('VendorEditShop', { shop })}
           >
-            <Text style={styles.editIcon}>✏️</Text>
+            <Ionicons name="create-outline" size={16} color="#1669ef" />
           </TouchableOpacity>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{initials}</Text>
@@ -106,7 +106,7 @@ export default function VendorProfileScreen({ navigation }) {
             <Text style={styles.viewEarnings}>View Earnings {'>'}</Text>
           </View>
           <View style={styles.earningsIconBox}>
-            <Text style={styles.earningsIcon}>💰</Text>
+            <Text style={styles.earningsIcon}>₹</Text>
           </View>
         </TouchableOpacity>
 
