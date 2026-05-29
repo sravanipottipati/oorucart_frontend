@@ -49,6 +49,15 @@ export default function VendorProfileScreen({ navigation }) {
     ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     : 'V';
 
+  const getMinOrderValue = (category) => {
+    if (!category) return 100;
+    const cat = category.toLowerCase();
+    if (['vegetables', 'fruits'].includes(cat)) return 50;
+    if (['restaurant', 'bakery', 'fast_food', 'chinese', 'ice_cream'].includes(cat)) return 100;
+    return 100;
+  };
+  const minOrderValue = getMinOrderValue(shop?.category);
+
   return (
     <View style={styles.container}>
 
