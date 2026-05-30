@@ -23,14 +23,19 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) * 10) / 10;
 };
 
-const getDeliveryInfo = (distanceKm, subtotal) => {
+const getDeliveryInfo = (distanceKm, subtotal, mov) => {
   const dist = parseFloat(distanceKm) || 0;
+  const minOrderValue = parseFloat(mov) || 0;
   let fee = 0, slab = '', outOfRange = false;
   if (dist <= 2)      { fee = 25; slab = '0–2 km'; }
   else if (dist <= 4) { fee = 35; slab = '2–4 km'; }
   else if (dist <= 6) { fee = 45; slab = '4–6 km'; }
   else                { fee = 0; slab = '>6 km'; outOfRange = true; }
-  return { fee, slab, outOfRange, deliveryFee: fee, isFree: false, amountLeft: 0 };
+  // Free delivery if subtotal >= MOV
+  const isFree = !outOfRange && minOrderValue > 0 && subtotal >= minOrderValue;
+  if (isFree) fee = 0;
+  const amountLeft = minOrderValue > 0 ? Math.max(0, minOrderValue - subtotal) : 0;
+  return { fee, slab, outOfRange, deliveryFee: fee, isFree, amountLeft, mov: minOrderValue };
 };
 
 export default function CheckoutScreen({ navigation, route }) {
@@ -60,7 +65,7 @@ export default function CheckoutScreen({ navigation, route }) {
     return sum + (mrp > price ? mrp * item.qty : price * item.qty);
   }, 0);
   const totalSavings = Math.round(totalMrp - subtotal);
-  const deliveryInfo = getDeliveryInfo(calcDistance || distance, subtotal);
+  const deliveryInfo = getDeliveryInfo(calcDistance || distance, subtotal, shop?.min_order_value);
   const platformFee       = 10;
   const platformFeeGST    = Math.round(platformFee * 1.18);
   const deliveryFeeGST    = deliveryInfo.deliveryFee;
@@ -411,7 +416,10 @@ export default function CheckoutScreen({ navigation, route }) {
                 {calcDistance ? `📍 ${calcDistance} km away` : (distance ? `📍 ${distance} km away` : '')}
               </Text>
             </View>
-            <Text style={styles.billValue}>₹{deliveryFeeGST}</Text>
+            {deliveryInfo.isFree
+              ? <Text style={styles.billValueFree}>FREE ✅</Text>
+              : <Text style={styles.billValue}>₹{deliveryFeeGST}</Text>
+            }
           </View>
           <View style={styles.billRow}>
             <Text style={styles.billLabel}>Platform Fee (incl. GST)</Text>
