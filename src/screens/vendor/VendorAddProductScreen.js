@@ -208,7 +208,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
                   {selectedCat ? selectedCat.label : 'Select category'}
                 </Text>
                 <Ionicons name="chevron-down" size={16} color="#888" />
-              </TouchableOpacity>
+              </View>
               {showCatPicker && (
                 <View style={styles.pickerDropdown}>
                   {CATEGORIES.map(cat => (
