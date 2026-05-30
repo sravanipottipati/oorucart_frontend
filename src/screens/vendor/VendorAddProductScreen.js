@@ -33,15 +33,7 @@ const DELIVERY_TIMES = ['15 mins','30 mins','45 mins','60 mins','90 mins','120 m
 
 export default function VendorAddProductScreen({ navigation, route }) {
   const { onGoBack } = route.params || {};
-  // Auto-set product category based on shop category
-  const getDefaultCategory = async () => {
-    try {
-      const res = await client.get('/vendors/myshop/');
-      const shopCat = res.data.category;
-      const mapped = SHOP_TO_PRODUCT_CATEGORY[shopCat];
-      if (mapped) setCategory(mapped.key);
-    } catch (e) {}
-  };
+
 
   const [name, setName]             = useState('');
   const [hsnCode, setHsnCode]       = useState('');
@@ -139,6 +131,15 @@ export default function VendorAddProductScreen({ navigation, route }) {
     } catch (e) {
       Alert.alert('Error', e.response?.data?.error || 'Failed to save product');
     } finally { setLoading(false); }
+  };
+
+  const getDefaultCategory = async () => {
+    try {
+      const res = await client.get('/vendors/myshop/');
+      const shopCat = res.data.category;
+      const mapped = SHOP_TO_PRODUCT_CATEGORY[shopCat];
+      if (mapped) setCategory(mapped.key);
+    } catch (e) { console.log('getDefaultCategory error:', e.message); }
   };
 
   useEffect(() => { getDefaultCategory(); }, []);
