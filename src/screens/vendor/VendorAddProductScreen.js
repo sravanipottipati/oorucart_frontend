@@ -8,40 +8,40 @@ import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import client from '../../api/client';
 
+// Product category mapped from shop category
+const SHOP_TO_PRODUCT_CATEGORY = {
+  'restaurant':  { key: 'food_meals',       label: 'Food & Meals',       icon: 'restaurant-outline',  color: '#dc2626' },
+  'supermarket': { key: 'grocery_staples',  label: 'Grocery & Staples',  icon: 'storefront-outline',  color: '#7c3aed' },
+  'bakery':      { key: 'bakery_sweets',    label: 'Bakery & Sweets',    icon: 'cafe-outline',        color: '#d97706' },
+  'veg_fruits':  { key: 'fresh_produce',    label: 'Fresh Produce',      icon: 'leaf-outline',        color: '#16a34a' },
+};
 const CATEGORIES = [
-  { key: 'restaurant',  label: 'Restaurant',  emoji: '🍽' },
-  { key: 'supermarket', label: 'Supermarket', emoji: '🏪' },
-  { key: 'fast_food',   label: 'Fast Food',   emoji: '🍔' },
-  { key: 'chinese',     label: 'Chinese',     emoji: '🥡' },
-  { key: 'bakery',      label: 'Bakery',      emoji: '🥐' },
-  { key: 'vegetables',  label: 'Vegetables',  emoji: '🥬' },
-  { key: 'fruits',      label: 'Fruits',      emoji: '🍎' },
-  { key: 'dairy',       label: 'Dairy',       emoji: '🥛' },
-  { key: 'grocery',     label: 'Grocery',     emoji: '🛒' },
-  { key: 'snacks',      label: 'Snacks',      emoji: '🍿' },
-  { key: 'beverages',   label: 'Beverages',   emoji: '🧃' },
-  { key: 'other',       label: 'Other',       emoji: '📦' },
+  { key: 'food_meals',      label: 'Food & Meals',      icon: 'restaurant-outline', color: '#dc2626' },
+  { key: 'grocery_staples', label: 'Grocery & Staples', icon: 'storefront-outline', color: '#7c3aed' },
+  { key: 'bakery_sweets',   label: 'Bakery & Sweets',   icon: 'cafe-outline',       color: '#d97706' },
+  { key: 'fresh_produce',   label: 'Fresh Produce',     icon: 'leaf-outline',       color: '#16a34a' },
 ];
 
 const SUBCATEGORIES = {
-  vegetables: ['Tomatoes','Onions','Potatoes','Leafy Greens','Carrots','Other'],
-  fruits:     ['Apples','Bananas','Mangoes','Grapes','Citrus','Other'],
-  dairy:      ['Milk','Curd','Butter','Paneer','Ghee','Eggs','Other'],
-  grocery:    ['Rice & Grains','Dal & Pulses','Oils','Spices','Sugar & Salt','Other'],
-  snacks:     ['Chips','Biscuits','Namkeen','Chocolates','Other'],
-  beverages:  ['Soft Drinks','Juices','Tea & Coffee','Water','Other'],
-  bakery:     ['Bread','Cakes','Buns','Cookies','Other'],
-  restaurant: ['Breakfast','Lunch','Dinner','Snacks','Beverages','Other'],
-  fast_food:  ['Burgers','Pizza','Fries','Wraps','Other'],
-  chinese:    ['Noodles','Rice','Momos','Soups','Other'],
-  supermarket:['Staples','Personal Care','Cleaning','Frozen','Other'],
-  other:      ['Other'],
+  food_meals:      ['Breakfast', 'Lunch / Dinner', 'Biryani & Rice', 'Curries & Gravies', 'Snacks & Starters', 'Desserts', 'Beverages', 'Combos & Meals'],
+  grocery_staples: ['Rice, Dal & Grains', 'Atta & Flours', 'Oils & Ghee', 'Spices & Masala', 'Packaged & Ready-to-eat', 'Dairy & Eggs', 'Beverages & Drinks', 'Cleaning & Household', 'Personal Care', 'Baby & Kids'],
+  bakery_sweets:   ['Breads & Buns', 'Cakes & Pastries', 'Cookies & Biscuits', 'Indian Sweets', 'Savory Snacks', 'Festive Specials'],
+  fresh_produce:   ['Leafy Vegetables', 'Root Vegetables', 'Gourds & Beans', 'Seasonal Fruits', 'Tropical Fruits', 'Herbs & Greens', 'Cut & Ready'],
 };
 
 const DELIVERY_TIMES = ['15 mins','30 mins','45 mins','60 mins','90 mins','120 mins'];
 
 export default function VendorAddProductScreen({ navigation, route }) {
   const { onGoBack } = route.params || {};
+  // Auto-set product category based on shop category
+  const getDefaultCategory = async () => {
+    try {
+      const res = await client.get('/vendors/myshop/');
+      const shopCat = res.data.category;
+      const mapped = SHOP_TO_PRODUCT_CATEGORY[shopCat];
+      if (mapped) setCategory(mapped.key);
+    } catch (e) {}
+  };
 
   const [name, setName]             = useState('');
   const [hsnCode, setHsnCode]       = useState('');
@@ -141,6 +141,8 @@ export default function VendorAddProductScreen({ navigation, route }) {
     } finally { setLoading(false); }
   };
 
+  useEffect(() => { getDefaultCategory(); }, []);
+
   const selectedCat = CATEGORIES.find(c => c.key === category);
   const subcats = SUBCATEGORIES[category] || [];
 
@@ -201,7 +203,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
           <View style={styles.twoCol}>
             <View style={{ flex: 1 }}>
               <Text style={styles.fieldLabel}>Category <Text style={styles.required}>*</Text></Text>
-              <TouchableOpacity style={styles.dropdown} onPress={() => { setShowCatPicker(!showCatPicker); setShowSubPicker(false); }}>
+              <View style={[styles.dropdown, { backgroundColor: '#F0FDF4' }]}>
                 <Text style={[styles.dropdownText, !category && { color: '#9CA3AF' }]}>
                   {selectedCat ? selectedCat.label : 'Select category'}
                 </Text>
