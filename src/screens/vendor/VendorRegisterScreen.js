@@ -41,7 +41,7 @@ export default function VendorRegisterScreen({ navigation }) {
   const [category,        setCategory]        = useState('restaurant');
   // MOV auto-set based on category
   const [deliveryType,    setDeliveryType]    = useState('delivery');
-  const [minOrder,        setMinOrder]        = useState('100');
+  const [minOrder,        setMinOrder]        = useState('499');
   const [deliveryTime,    setDeliveryTime]    = useState('30');
   const [deliveryRadius,  setDeliveryRadius]  = useState('6');
 
@@ -282,7 +282,10 @@ export default function VendorRegisterScreen({ navigation }) {
         {CATEGORIES.map(cat => (
           <TouchableOpacity key={cat.id}
             style={[styles.categoryCard, category === cat.id && styles.categoryCardActive]}
-            onPress={() => setCategory(cat.id)}>
+            onPress={() => {
+              setCategory(cat.id);
+              setMinOrder(String(cat.mov));
+            }}>
             <View style={[styles.categoryIconBox, { backgroundColor: category === cat.id ? cat.color : cat.bg }]}>
               <Ionicons name={cat.icon} size={24} color={category === cat.id ? '#fff' : cat.color} />
             </View>
@@ -321,7 +324,7 @@ export default function VendorRegisterScreen({ navigation }) {
         <View style={styles.halfField}>
           <Text style={styles.label}>Min Order (Rs.)</Text>
           <TextInput style={styles.input} placeholder="100" placeholderTextColor="#9CA3AF"
-            value={minOrder} onChangeText={setMinOrder} keyboardType="numeric" />
+            value={minOrder} editable={false} style={{ color: '#1669ef', fontWeight: 'bold' }} />
         </View>
       </View>
 
