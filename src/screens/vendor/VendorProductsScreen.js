@@ -5,6 +5,7 @@ import {
   ScrollView, ActivityIndicator, RefreshControl, Alert, Switch,
 } from 'react-native';
 import client from '../../api/client';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function VendorProductsScreen({ navigation }) {
   const [products, setProducts]   = useState([]);
@@ -18,6 +19,7 @@ export default function VendorProductsScreen({ navigation }) {
       const shopRes = await client.get('/vendors/myshop/');
       const shop    = shopRes.data;
       setShop(shop);
+      await AsyncStorage.setItem('shop_category', shop.category || '');
       const res     = await client.get(`/vendors/${shop.id}/products/`);
       const data    = Array.isArray(res.data) ? res.data : res.data.products || [];
       setProducts(data);

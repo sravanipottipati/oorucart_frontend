@@ -142,16 +142,16 @@ export default function VendorAddProductScreen({ navigation, route }) {
   };
 
   useEffect(() => {
-    if (shopCategory) {
-      const mapped = SHOP_TO_PRODUCT_CATEGORY[shopCategory];
-      if (mapped) setCategory(mapped.key);
-    } else {
-      // fallback: fetch from API
-      client.get('/vendors/myshop/').then(res => {
-        const mapped = SHOP_TO_PRODUCT_CATEGORY[res.data.category];
-        if (mapped) setCategory(mapped.key);
-      }).catch(() => {});
-    }
+    const loadCategory = async () => {
+      try {
+        const cat = shopCategory || await AsyncStorage.getItem('shop_category');
+        if (cat) {
+          const mapped = SHOP_TO_PRODUCT_CATEGORY[cat];
+          if (mapped) setCategory(mapped.key);
+        }
+      } catch (e) {}
+    };
+    loadCategory();
   }, []);
 
   const selectedCat = CATEGORIES.find(c => c.key === category);
