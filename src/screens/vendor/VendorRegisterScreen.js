@@ -19,7 +19,7 @@ const CATEGORIES = [
 const WEEKLY_OFF = ['None','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
 // ── Delivery radius options ───────────────────────────────────────────────────
-const RADIUS_OPTIONS = ['1', '2', '3', '5', '10', '15', '20'];
+const RADIUS_OPTIONS = ['1', '2', '3', '4', '5', '6', '10', '15', '20'];
 
 export default function VendorRegisterScreen({ navigation }) {
   const { login } = useAuth();
@@ -43,7 +43,7 @@ export default function VendorRegisterScreen({ navigation }) {
   const [deliveryType,    setDeliveryType]    = useState('delivery');
   const [minOrder,        setMinOrder]        = useState('100');
   const [deliveryTime,    setDeliveryTime]    = useState('30');
-  const [deliveryRadius,  setDeliveryRadius]  = useState('5'); // ← NEW default 5 km
+  const [deliveryRadius,  setDeliveryRadius]  = useState('6');
 
   const [accountName, setAccountName] = useState('');
   const [bankName,    setBankName]    = useState('');
