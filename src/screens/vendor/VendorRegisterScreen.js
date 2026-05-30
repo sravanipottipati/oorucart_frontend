@@ -321,11 +321,7 @@ export default function VendorRegisterScreen({ navigation }) {
           <TextInput style={[styles.input, { color: '#1669ef', fontWeight: 'bold' }]} placeholder="30" placeholderTextColor="#9CA3AF"
             value={deliveryTime} editable={false} />
         </View>
-        <View style={styles.halfField}>
-          <Text style={styles.label}>Min Order (Rs.)</Text>
-          <TextInput style={[styles.input, { color: '#1669ef', fontWeight: 'bold' }]} placeholder="100" placeholderTextColor="#9CA3AF"
-            value={minOrder} editable={false} />
-        </View>
+
       </View>
 
       {/* ── Delivery Radius ── */}
