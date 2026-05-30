@@ -17,10 +17,10 @@ export default function VendorProductsScreen({ navigation }) {
   const fetchProducts = async () => {
     try {
       const shopRes = await client.get('/vendors/myshop/');
-      const shop    = shopRes.data;
-      setShop(shop);
-      await AsyncStorage.setItem('shop_category', shop.category || '');
-      const res     = await client.get(`/vendors/${shop.id}/products/`);
+      const shopData = shopRes.data;
+      setShop(shopData);
+      await AsyncStorage.setItem('shop_category', shopData.category || '');
+      const res     = await client.get(`/vendors/${shopData.id}/products/`);
       const data    = Array.isArray(res.data) ? res.data : res.data.products || [];
       setProducts(data);
     } catch (e) {
