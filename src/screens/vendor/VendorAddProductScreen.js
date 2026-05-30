@@ -14,6 +14,14 @@ const SHOP_TO_PRODUCT_CATEGORY = {
   'supermarket': { key: 'grocery_staples',  label: 'Grocery & Staples',  icon: 'storefront-outline',  color: '#7c3aed' },
   'bakery':      { key: 'bakery_sweets',    label: 'Bakery & Sweets',    icon: 'cafe-outline',        color: '#d97706' },
   'veg_fruits':  { key: 'fresh_produce',    label: 'Fresh Produce',      icon: 'leaf-outline',        color: '#16a34a' },
+  // Legacy category mappings
+  'vegetables':  { key: 'fresh_produce',    label: 'Fresh Produce',      icon: 'leaf-outline',        color: '#16a34a' },
+  'fruits':      { key: 'fresh_produce',    label: 'Fresh Produce',      icon: 'leaf-outline',        color: '#16a34a' },
+  'dairy':       { key: 'grocery_staples',  label: 'Grocery & Staples',  icon: 'storefront-outline',  color: '#7c3aed' },
+  'grocery':     { key: 'grocery_staples',  label: 'Grocery & Staples',  icon: 'storefront-outline',  color: '#7c3aed' },
+  'fast_food':   { key: 'food_meals',       label: 'Food & Meals',       icon: 'restaurant-outline',  color: '#dc2626' },
+  'chinese':     { key: 'food_meals',       label: 'Food & Meals',       icon: 'restaurant-outline',  color: '#dc2626' },
+  'ice_cream':   { key: 'food_meals',       label: 'Food & Meals',       icon: 'restaurant-outline',  color: '#dc2626' },
 };
 const CATEGORIES = [
   { key: 'food_meals',      label: 'Food & Meals',      icon: 'restaurant-outline', color: '#dc2626' },
@@ -32,7 +40,7 @@ const SUBCATEGORIES = {
 const DELIVERY_TIMES = ['15 mins','30 mins','45 mins','60 mins','90 mins','120 mins'];
 
 export default function VendorAddProductScreen({ navigation, route }) {
-  const { onGoBack } = route.params || {};
+  const { onGoBack, shopCategory } = route.params || {};
 
 
   const [name, setName]             = useState('');
@@ -133,16 +141,18 @@ export default function VendorAddProductScreen({ navigation, route }) {
     } finally { setLoading(false); }
   };
 
-  const getDefaultCategory = async () => {
-    try {
-      const res = await client.get('/vendors/myshop/');
-      const shopCat = res.data.category;
-      const mapped = SHOP_TO_PRODUCT_CATEGORY[shopCat];
+  useEffect(() => {
+    if (shopCategory) {
+      const mapped = SHOP_TO_PRODUCT_CATEGORY[shopCategory];
       if (mapped) setCategory(mapped.key);
-    } catch (e) { console.log('getDefaultCategory error:', e.message); }
-  };
-
-  useEffect(() => { getDefaultCategory(); }, []);
+    } else {
+      // fallback: fetch from API
+      client.get('/vendors/myshop/').then(res => {
+        const mapped = SHOP_TO_PRODUCT_CATEGORY[res.data.category];
+        if (mapped) setCategory(mapped.key);
+      }).catch(() => {});
+    }
+  }, []);
 
   const selectedCat = CATEGORIES.find(c => c.key === category);
   const subcats = SUBCATEGORIES[category] || [];

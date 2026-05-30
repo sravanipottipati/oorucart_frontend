@@ -11,10 +11,13 @@ export default function VendorProductsScreen({ navigation }) {
   const [loading, setLoading]     = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const [shop, setShop] = useState(null);
+
   const fetchProducts = async () => {
     try {
       const shopRes = await client.get('/vendors/myshop/');
       const shop    = shopRes.data;
+      setShop(shop);
       const res     = await client.get(`/vendors/${shop.id}/products/`);
       const data    = Array.isArray(res.data) ? res.data : res.data.products || [];
       setProducts(data);
@@ -82,7 +85,7 @@ export default function VendorProductsScreen({ navigation }) {
       <View style={styles.topRow}>
         <TouchableOpacity
           style={styles.addBtn}
-          onPress={() => navigation.navigate('VendorAddProduct', { onGoBack: fetchProducts })}
+          onPress={() => navigation.navigate('VendorAddProduct', { onGoBack: fetchProducts, shopCategory: shop?.category })}
         >
           <Text style={styles.addBtnText}>+ Add New Product</Text>
         </TouchableOpacity>
@@ -107,7 +110,7 @@ export default function VendorProductsScreen({ navigation }) {
               <Text style={styles.emptySubtitle}>Add your first product!</Text>
               <TouchableOpacity
                 style={styles.addFirstBtn}
-                onPress={() => navigation.navigate('VendorAddProduct', { onGoBack: fetchProducts })}
+                onPress={() => navigation.navigate('VendorAddProduct', { onGoBack: fetchProducts, shopCategory: shop?.category })}
               >
                 <Text style={styles.addFirstBtnText}>+ Add Product</Text>
               </TouchableOpacity>
