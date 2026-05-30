@@ -295,7 +295,7 @@ export default function VendorRegisterScreen({ navigation }) {
 
       <View style={styles.feeInfo}>
         <Text style={styles.feeInfoText}>
-          Platform fee: <Text style={{ fontWeight: 'bold' }}>{platformFee()}</Text>
+          Commission: <Text style={{ fontWeight: 'bold' }}>{getCommission()}% per order</Text> • MOV: <Text style={{ fontWeight: 'bold' }}>₹{getMOV()}</Text>
         </Text>
       </View>
 
@@ -454,7 +454,7 @@ export default function VendorRegisterScreen({ navigation }) {
         <Text style={styles.reviewRow}><Text style={styles.reviewKey}>Delivery: </Text>{deliveryType}</Text>
         <Text style={styles.reviewRow}><Text style={styles.reviewKey}>Delivery Radius: </Text>{deliveryRadius} km 📡</Text>
         <Text style={styles.reviewRow}><Text style={styles.reviewKey}>Min Order: </Text>Rs.{minOrder}</Text>
-        <Text style={styles.reviewRow}><Text style={styles.reviewKey}>Platform Fee: </Text>{platformFee()}</Text>
+        <Text style={styles.reviewRow}><Text style={styles.reviewKey}>Commission: </Text>{getCommission()}% • MOV: ₹{getMOV()}</Text>
       </View>
 
       {(accountName || bankName) && (
