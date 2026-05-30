@@ -6,11 +6,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 const QUICK_HELP = [
-  { icon: '💰', label: 'Payment & Settlement', bg: '#eff6ff', msg: 'Hi, I have a query about my payment or settlement.' },
-  { icon: '📦', label: 'Order Issues',         bg: '#FFF7ED', msg: 'Hi, I have an issue with an order.' },
-  { icon: '🛍️', label: 'Product Issues',       bg: '#F0FDF4', msg: 'Hi, I have an issue with my product listing.' },
-  { icon: '⚙️', label: 'Technical Issues',     bg: '#F5F3FF', msg: 'Hi, I am facing a technical issue with the app.' },
-  { icon: '👤', label: 'Account Issues',       bg: '#FEF2F2', msg: 'Hi, I have an issue with my vendor account.' },
+  { icon: 'wallet-outline',        color: '#1669ef', label: 'Payment & Settlement', bg: '#eff6ff', msg: 'Hi, I have a query about my payment or settlement.' },
+  { icon: 'receipt-outline',       color: '#EA580C', label: 'Order Issues',         bg: '#FFF7ED', msg: 'Hi, I have an issue with an order.' },
+  { icon: 'cube-outline',          color: '#16A34A', label: 'Product Issues',       bg: '#F0FDF4', msg: 'Hi, I have an issue with my product listing.' },
+  { icon: 'construct-outline',     color: '#8B5CF6', label: 'Technical Issues',     bg: '#F5F3FF', msg: 'Hi, I am facing a technical issue with the app.' },
+  { icon: 'person-circle-outline', color: '#DC2626', label: 'Account Issues',       bg: '#FEF2F2', msg: 'Hi, I have an issue with my vendor account.' },
 ];
 
 const FAQS = [
@@ -116,7 +116,7 @@ export default function VendorHelpScreen({ navigation }) {
               onPress={() => Alert.alert("Help", item.msg || "Please contact us via email or call.")}
             >
               <View style={[styles.quickIconBox, { backgroundColor: item.bg }]}>
-                <Text style={styles.quickIcon}>{item.icon}</Text>
+                <Ionicons name={item.icon} size={22} color={item.color} />
               </View>
               <Text style={styles.quickLabel}>{item.label}</Text>
               <Text style={styles.quickArrow}>›</Text>
