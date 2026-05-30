@@ -594,7 +594,7 @@ const styles = StyleSheet.create({
   categoryGrid:    { flexDirection: 'row', flexWrap: 'nowrap', gap: 8, marginBottom: 12 },
   categoryCard: {
     flex: 1,
-    width: '30%', borderWidth: 1.5, borderColor: '#E5E7EB',
+    borderWidth: 1.5, borderColor: '#E5E7EB',
     borderRadius: 12, padding: 10, alignItems: 'center', backgroundColor: '#F9FAFB',
   },
   categoryCardActive:  { borderColor: '#1669ef', backgroundColor: '#eff6ff' },
