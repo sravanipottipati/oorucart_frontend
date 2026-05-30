@@ -591,8 +591,9 @@ const styles = StyleSheet.create({
     marginBottom: 12, borderWidth: 1, borderColor: '#FED7AA',
   },
   townManualText:  { fontSize: 13, color: '#EA580C', fontWeight: '500' },
-  categoryGrid:    { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
+  categoryGrid:    { flexDirection: 'row', flexWrap: 'nowrap', gap: 8, marginBottom: 12 },
   categoryCard: {
+    flex: 1,
     width: '30%', borderWidth: 1.5, borderColor: '#E5E7EB',
     borderRadius: 12, padding: 10, alignItems: 'center', backgroundColor: '#F9FAFB',
   },
