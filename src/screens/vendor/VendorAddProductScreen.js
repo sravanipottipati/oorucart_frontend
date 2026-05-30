@@ -144,12 +144,24 @@ export default function VendorAddProductScreen({ navigation, route }) {
   useEffect(() => {
     const loadCategory = async () => {
       try {
-        const cat = shopCategory || await AsyncStorage.getItem('shop_category');
-        if (cat) {
-          const mapped = SHOP_TO_PRODUCT_CATEGORY[cat];
-          if (mapped) setCategory(mapped.key);
+        // Try route param first
+        if (shopCategory) {
+          const mapped = SHOP_TO_PRODUCT_CATEGORY[shopCategory];
+          if (mapped) { setCategory(mapped.key); return; }
         }
-      } catch (e) {}
+        // Try AsyncStorage
+        const stored = await AsyncStorage.getItem('shop_category');
+        if (stored) {
+          const mapped = SHOP_TO_PRODUCT_CATEGORY[stored];
+          if (mapped) { setCategory(mapped.key); return; }
+        }
+        // Fallback: fetch directly
+        const res = await client.get('/vendors/myshop/');
+        const shopCat = res.data.category;
+        await AsyncStorage.setItem('shop_category', shopCat || '');
+        const mapped = SHOP_TO_PRODUCT_CATEGORY[shopCat];
+        if (mapped) setCategory(mapped.key);
+      } catch (e) { console.log('loadCategory error:', e.message); }
     };
     loadCategory();
   }, []);
