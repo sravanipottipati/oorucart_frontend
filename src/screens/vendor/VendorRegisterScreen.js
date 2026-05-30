@@ -318,8 +318,8 @@ export default function VendorRegisterScreen({ navigation }) {
       <View style={styles.row}>
         <View style={styles.halfField}>
           <Text style={styles.label}>Delivery Time (mins)</Text>
-          <TextInput style={styles.input} placeholder="30" placeholderTextColor="#9CA3AF"
-            value={deliveryTime} onChangeText={setDeliveryTime} keyboardType="numeric" />
+          <TextInput style={[styles.input, { color: '#1669ef', fontWeight: 'bold' }]} placeholder="30" placeholderTextColor="#9CA3AF"
+            value={deliveryTime} editable={false} />
         </View>
         <View style={styles.halfField}>
           <Text style={styles.label}>Min Order (Rs.)</Text>
@@ -329,26 +329,10 @@ export default function VendorRegisterScreen({ navigation }) {
       </View>
 
       {/* ── Delivery Radius ── */}
-      <Text style={styles.label}>Delivery Radius *</Text>
-      <Text style={styles.radiusSubLabel}>
-        How far can you deliver from your shop?
-      </Text>
-      <View style={styles.radiusRow}>
-        {RADIUS_OPTIONS.map(val => (
-          <TouchableOpacity
-            key={val}
-            style={[styles.radiusChip, deliveryRadius === val && styles.radiusChipActive]}
-            onPress={() => setDeliveryRadius(val)}
-          >
-            <Text style={[styles.radiusChipText, deliveryRadius === val && styles.radiusChipTextActive]}>
-              {val} km
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <Text style={styles.label}>Delivery Radius</Text>
       <View style={styles.radiusInfo}>
         <Text style={styles.radiusInfoText}>
-          📡 Buyers within <Text style={{ fontWeight: 'bold' }}>{deliveryRadius} km</Text> of your shop will see you. Buyers outside this range will not see your shop.
+          📡 Platform default delivery radius is <Text style={{ fontWeight: 'bold', color: '#1669ef' }}>6 km</Text>. Buyers within this range will see your shop.
         </Text>
       </View>
 
