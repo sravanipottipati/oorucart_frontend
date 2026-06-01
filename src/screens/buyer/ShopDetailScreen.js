@@ -158,7 +158,7 @@ const formatPrice = (price) => {
 };
 
 // ─── GRID PRODUCT CARD ────────────────────────────────────────────────────────
-const ProductCard = React.memo(({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, handleWishlist, selectedVariantsRef }) => {
+const ProductCard = React.memo(({ product, cart, onAdd, onRemove, shopColor, wishlistedIds, handleWishlist, selectedVariantsRef }) => {
   const [showVariants, setShowVariants] = useState(false);
   const hasVariants = product.variants && product.variants.length > 0;
   const lowestVariant = hasVariants
@@ -192,7 +192,7 @@ const ProductCard = React.memo(({ product, qty, onAdd, onRemove, shopColor, wish
   const activeMrp   = selectedVariant ? selectedVariant.mrp   : product.mrp;
   const discount    = getDiscount(activePrice, activeMrp);
   const variantCartKey = selectedVariant ? `${product.id}_${selectedVariant.id}` : product.id;
-  const variantQty = qty || 0;
+  const variantQty = (cart && cart[variantCartKey]) || 0;
 
   return (
     <View style={[styles.gridCard, isOutOfStock && { opacity: 0.85 }]}>
@@ -358,7 +358,7 @@ const ProductCard = React.memo(({ product, qty, onAdd, onRemove, shopColor, wish
       </Modal>
     </View>
   );
-}, (prevProps, nextProps) => prevProps.product.id === nextProps.product.id && prevProps.wishlistedIds === nextProps.wishlistedIds);
+}, (prevProps, nextProps) => prevProps.product.id === nextProps.product.id && prevProps.cart === nextProps.cart && prevProps.wishlistedIds === nextProps.wishlistedIds);
 
 // ─── MAIN SCREEN ──────────────────────────────────────────────────────────────
 export default function ShopDetailScreen({ navigation, route }) {
@@ -527,11 +527,7 @@ export default function ShopDetailScreen({ navigation, route }) {
             <View key={rowIdx} style={styles.gridRow}>
               {row.map(product => (
                 <ProductCard key={product.id} product={product}
-                  qty={(() => {
-                    if (!product.variants || product.variants.length === 0) return cart[product.id] || 0;
-                    const activeV = product.variants.filter(v => v.stock_quantity > 0).sort((a,b) => parseFloat(a.price) - parseFloat(b.price))[0];
-                    return activeV ? (cart[`${product.id}_${activeV.id}`] || 0) : 0;
-                  })()}
+                  cart={cart}
                   onAdd={handleAddToCart} onRemove={removeFromCart} shopColor={shopColor} wishlistedIds={wishlistedIds} handleWishlist={handleWishlist} selectedVariantsRef={selectedVariantsRef} />
               ))}
               {row.length === 1 && <View style={{ width: CARD_WIDTH }} />}
