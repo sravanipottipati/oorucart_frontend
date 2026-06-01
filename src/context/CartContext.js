@@ -91,7 +91,7 @@ export const CartProvider = ({ children }) => {
         vendor_id:  vid,
         quantity:   1,
       }, { headers });
-      await fetchCartFromDb();
+      // Don't fetchCartFromDb here — optimistic update already done
     } catch (err) {
       console.log('addToCart error:', err?.response?.data || err.message);
     }
