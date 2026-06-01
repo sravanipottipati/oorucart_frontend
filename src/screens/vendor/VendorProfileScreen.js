@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView,
 } from 'react-native';
@@ -11,7 +12,7 @@ export default function VendorProfileScreen({ navigation }) {
   const [shop, setShop]   = useState(null);
   const [wallet, setWallet] = useState(null);
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     const fetchData = async () => {
       try {
         const [shopRes, walletRes] = await Promise.all([
@@ -25,7 +26,7 @@ export default function VendorProfileScreen({ navigation }) {
       }
     };
     fetchData();
-  }, []);
+  }));
 
   const handleLogout = () => {
     Alert.alert(
