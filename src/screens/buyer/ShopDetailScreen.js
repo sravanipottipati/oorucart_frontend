@@ -158,7 +158,7 @@ const formatPrice = (price) => {
 };
 
 // ─── GRID PRODUCT CARD ────────────────────────────────────────────────────────
-const ProductCard = ({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, handleWishlist }) => {
+const ProductCard = React.memo(({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, handleWishlist }) => {
   const [showVariants, setShowVariants] = useState(false);
   const hasVariants = product.variants && product.variants.length > 0;
   const lowestVariant = hasVariants
