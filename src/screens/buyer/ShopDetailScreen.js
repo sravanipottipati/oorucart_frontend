@@ -359,7 +359,7 @@ const ProductCard = React.memo(({ product, cart, onAdd, onRemove, shopColor, wis
       </Modal>
     </View>
   );
-}, (prevProps, nextProps) => prevProps.product.id === nextProps.product.id && prevProps.cart === nextProps.cart && prevProps.wishlistedIds === nextProps.wishlistedIds);
+};
 
 // ─── MAIN SCREEN ──────────────────────────────────────────────────────────────
 export default function ShopDetailScreen({ navigation, route }) {
@@ -391,7 +391,7 @@ export default function ShopDetailScreen({ navigation, route }) {
     }
   };
   const { carts, addToCart, removeFromCart, cartCount } = useCart();
-  const selectedVariantsRef = React.useRef({});
+
   const cart          = carts[vendorId]?.items || {};
   const shopCartCount = Object.values(cart).reduce((a, b) => a + b, 0);
   const shopColor     = SHOP_COLORS[Math.abs((vendorId?.charCodeAt(0) || 65) - 65) % SHOP_COLORS.length] || '#1669ef';
@@ -529,7 +529,7 @@ export default function ShopDetailScreen({ navigation, route }) {
               {row.map(product => (
                 <ProductCard key={product.id} product={product}
                   cart={cart}
-                  onAdd={handleAddToCart} onRemove={removeFromCart} shopColor={shopColor} wishlistedIds={wishlistedIds} handleWishlist={handleWishlist} selectedVariantsRef={selectedVariantsRef} />
+                  onAdd={handleAddToCart} onRemove={removeFromCart} shopColor={shopColor} wishlistedIds={wishlistedIds} handleWishlist={handleWishlist} />
               ))}
               {row.length === 1 && <View style={{ width: CARD_WIDTH }} />}
             </View>
