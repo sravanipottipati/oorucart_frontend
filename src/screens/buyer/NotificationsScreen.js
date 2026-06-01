@@ -133,7 +133,7 @@ export default function NotificationsScreen({ navigation }) {
         </ScrollView>
       )}
       {/* Bottom Tab */}
-      <View style={{ flexDirection: 'row', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F0F0F0', paddingBottom: 20, paddingTop: 10 }}>
+      <View style={{ flexDirection: 'row', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F0F0F0', paddingBottom: 20, paddingTop: 10, position: 'absolute', bottom: 0, left: 0, right: 0 }}>
         <TouchableOpacity style={{ flex: 1, alignItems: 'center' }} onPress={() => navigation.navigate('Home')}>
           <Ionicons name="home-outline" size={25} color="#9CA3AF" />
           <Text style={{ fontSize: 11, color: '#9CA3AF' }}>Home</Text>
