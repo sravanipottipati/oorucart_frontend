@@ -255,6 +255,13 @@ export default function VendorWalletScreen({ navigation }) {
               <Text style={styles.downloadBtnText}>⬇ Download {months[selectedMonth-1]} {selectedYear} Report</Text>
             )}
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.downloadBtn, { backgroundColor: '#7C3AED', marginTop: 10 }, downloading && styles.downloadBtnDisabled]}
+            onPress={downloadTDS}
+            disabled={downloading}
+          >
+            <Text style={styles.downloadBtnText}>⬇ Download TDS Certificate</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Settlement History */}
