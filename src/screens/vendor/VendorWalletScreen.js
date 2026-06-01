@@ -5,7 +5,7 @@ import {
   ScrollView, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import client from '../../api/client';
-import { Alert, TextInput, Modal } from 'react-native';
+import { Alert, TextInput, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -309,6 +309,7 @@ export default function VendorWalletScreen({ navigation }) {
       </ScrollView>
       {/* Bank Details Modal */}
       <Modal visible={showBankModal} animationType="slide" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
@@ -335,6 +336,7 @@ export default function VendorWalletScreen({ navigation }) {
             </ScrollView>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Bottom Tab */}
