@@ -370,9 +370,7 @@ export default function OrderDetailScreen({ navigation, route }) {
               <Text style={styles.invoiceBtnText}>Download Invoice</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity style={styles.reorderBtnFull} onPress={() => navigation.navigate('Home')}>
-            <Text style={styles.reorderBtnFullText}>Reorder</Text>
-          </TouchableOpacity>
+
           {isDelivered && !hasReview && (
             <TouchableOpacity style={styles.rateBtnFull} onPress={() => navigation.navigate('RateOrder', { order })}>
               <Text style={styles.rateBtnFullText}>Rate this Order</Text>
