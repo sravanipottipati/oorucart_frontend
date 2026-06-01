@@ -126,7 +126,12 @@ export const CartProvider = ({ children }) => {
     try {
       const headers = await getHeaders();
       if (!headers.Authorization) return;
-      const dbItem = carts[vid]?.dbItems?.find(i => i.product_id === product.id);
+      const baseProductId = product.base_product_id || product.id;
+      const variantId = product.variant_id || null;
+      const dbItem = carts[vid]?.dbItems?.find(i => 
+        i.product_id === baseProductId && 
+        (variantId ? i.variant_id === variantId : !i.variant_id)
+      );
       if (dbItem) {
         const newQty = (dbItem.quantity || 1) - 1;
         if (newQty <= 0) {
