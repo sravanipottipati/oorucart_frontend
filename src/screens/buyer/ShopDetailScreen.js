@@ -256,8 +256,7 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, 
                   ]}
                   onPress={() => {
                     if (isVarOOS) return;
-                    const newVariant = isActive ? null : v;
-                    setSelectedVariant(newVariant);
+                    setSelectedVariant(v);
                   }}
                   disabled={isVarOOS}>
                   <Text style={[
