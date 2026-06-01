@@ -4,6 +4,9 @@ import {
   ScrollView, ActivityIndicator, Linking, Alert, Modal, TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Share } from 'react-native';
 import client from '../../api/client';
 
@@ -31,6 +34,28 @@ export default function VendorOrderDetailScreen({ navigation, route }) {
   const [updating, setUpdating] = useState(false);
   const [showReject, setShowReject]     = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+
+  const downloadInvoice = async (type) => {
+    try {
+      const token = await AsyncStorage.getItem('access_token');
+      const endpoint = type === 'doc2' 
+        ? `/invoices/seller/${orderId}/`
+        : `/invoices/commission/${orderId}/`;
+      const url = `https://api.univerin.in/api${endpoint}`;
+      const fileUri = FileSystem.documentDirectory + `${type}_${orderId}.pdf`;
+      const res = await FileSystem.downloadAsync(url, fileUri, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(res.uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: type === 'doc2' ? 'Doc 2 - Seller Invoice' : 'Doc 4 - Commission Invoice',
+        });
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Could not download invoice');
+    }
+  };
 
   const fetchOrder = async () => {
     try {
@@ -197,6 +222,16 @@ ${order.delivery_address}
                 <Text style={styles.progressSub}>Payment collected: Rs.{total.toFixed(0)}</Text>
               </View>
             </View>
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+              <TouchableOpacity style={styles.invoiceBtn} onPress={() => downloadInvoice('doc2')}>
+                <Ionicons name="document-text-outline" size={16} color="#1669ef" />
+                <Text style={styles.invoiceBtnText}>Doc 2 (Seller→Buyer)</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.invoiceBtn} onPress={() => downloadInvoice('doc4')}>
+                <Ionicons name="receipt-outline" size={16} color="#8B5CF6" />
+                <Text style={[styles.invoiceBtnText, { color: '#8B5CF6' }]}>Doc 4 (Commission)</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
@@ -356,6 +391,8 @@ const styles = StyleSheet.create({
   infoRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
   infoLabel: { fontSize: 13, color: '#888' },
   infoValue: { fontSize: 13, color: '#111', fontWeight: '500' },
+  invoiceBtn:     { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, padding: 10, borderRadius: 10, borderWidth: 1, borderColor: '#1669ef', backgroundColor: '#eff6ff' },
+  invoiceBtnText: { fontSize: 12, fontWeight: '600', color: '#1669ef' },
   bottomTab:      { flexDirection: 'row', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F0F0F0', paddingBottom: 24, paddingTop: 10, position: 'absolute', bottom: 0, left: 0, right: 0 },
   tabItem:        { flex: 1, alignItems: 'center', gap: 3 },
   tabLabel:       { fontSize: 11, color: '#9CA3AF' },
