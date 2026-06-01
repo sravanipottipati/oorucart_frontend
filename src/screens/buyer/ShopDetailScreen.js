@@ -183,11 +183,9 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, 
     onAdd(product, variant);
   };
 
-  const lowestVariant = hasVariants && !selectedVariant
-    ? product.variants.reduce((a, b) => parseFloat(a.price) < parseFloat(b.price) ? a : b, product.variants[0])
-    : null;
-  const activePrice = selectedVariant ? selectedVariant.price : (lowestVariant ? lowestVariant.price : product.price);
-  const activeMrp   = selectedVariant ? selectedVariant.mrp   : (lowestVariant ? lowestVariant.mrp : product.mrp);
+  const activeVariant = selectedVariant || (hasVariants ? product.variants.filter(v => v.stock_quantity > 0).sort((a,b) => parseFloat(a.price) - parseFloat(b.price))[0] : null);
+  const activePrice = activeVariant ? activeVariant.price : product.price;
+  const activeMrp   = activeVariant ? activeVariant.mrp   : product.mrp;
   const discount    = getDiscount(activePrice, activeMrp);
 
   return (
