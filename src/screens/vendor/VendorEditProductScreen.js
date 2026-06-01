@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, KeyboardAvoidingView, Platform, TextInput, ActivityIndicator, Alert, Image, Switch,
@@ -8,34 +8,31 @@ import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import client from '../../api/client';
 
+const SHOP_TO_PRODUCT_CATEGORY = {
+  'restaurant':  { key: 'food_meals',       label: 'Food & Meals',       icon: 'restaurant-outline', color: '#dc2626' },
+  'supermarket': { key: 'grocery_staples',  label: 'Grocery & Staples',  icon: 'storefront-outline', color: '#7c3aed' },
+  'bakery':      { key: 'bakery_sweets',    label: 'Bakery & Sweets',    icon: 'cafe-outline',       color: '#d97706' },
+  'veg_fruits':  { key: 'fresh_produce',    label: 'Fresh Produce',      icon: 'leaf-outline',       color: '#16a34a' },
+  'vegetables':  { key: 'fresh_produce',    label: 'Fresh Produce',      icon: 'leaf-outline',       color: '#16a34a' },
+  'fruits':      { key: 'fresh_produce',    label: 'Fresh Produce',      icon: 'leaf-outline',       color: '#16a34a' },
+  'dairy':       { key: 'grocery_staples',  label: 'Grocery & Staples',  icon: 'storefront-outline', color: '#7c3aed' },
+  'grocery':     { key: 'grocery_staples',  label: 'Grocery & Staples',  icon: 'storefront-outline', color: '#7c3aed' },
+  'fast_food':   { key: 'food_meals',       label: 'Food & Meals',       icon: 'restaurant-outline', color: '#dc2626' },
+  'chinese':     { key: 'food_meals',       label: 'Food & Meals',       icon: 'restaurant-outline', color: '#dc2626' },
+  'ice_cream':   { key: 'food_meals',       label: 'Food & Meals',       icon: 'restaurant-outline', color: '#dc2626' },
+};
 const CATEGORIES = [
-  { key: 'restaurant',  label: 'Restaurant',  emoji: '🍽' },
-  { key: 'supermarket', label: 'Supermarket', emoji: '🏪' },
-  { key: 'fast_food',   label: 'Fast Food',   emoji: '🍔' },
-  { key: 'chinese',     label: 'Chinese',     emoji: '🥡' },
-  { key: 'bakery',      label: 'Bakery',      emoji: '🥐' },
-  { key: 'vegetables',  label: 'Vegetables',  emoji: '🥬' },
-  { key: 'fruits',      label: 'Fruits',      emoji: '🍎' },
-  { key: 'dairy',       label: 'Dairy',       emoji: '🥛' },
-  { key: 'grocery',     label: 'Grocery',     emoji: '🛒' },
-  { key: 'snacks',      label: 'Snacks',      emoji: '🍿' },
-  { key: 'beverages',   label: 'Beverages',   emoji: '🧃' },
-  { key: 'other',       label: 'Other',       emoji: '📦' },
+  { key: 'food_meals',      label: 'Food & Meals',      icon: 'restaurant-outline', color: '#dc2626' },
+  { key: 'grocery_staples', label: 'Grocery & Staples', icon: 'storefront-outline', color: '#7c3aed' },
+  { key: 'bakery_sweets',   label: 'Bakery & Sweets',   icon: 'cafe-outline',       color: '#d97706' },
+  { key: 'fresh_produce',   label: 'Fresh Produce',     icon: 'leaf-outline',       color: '#16a34a' },
 ];
 
 const SUBCATEGORIES = {
-  vegetables: ['Tomatoes','Onions','Potatoes','Leafy Greens','Carrots','Other'],
-  fruits:     ['Apples','Bananas','Mangoes','Grapes','Citrus','Other'],
-  dairy:      ['Milk','Curd','Butter','Paneer','Ghee','Eggs','Other'],
-  grocery:    ['Rice & Grains','Dal & Pulses','Oils','Spices','Sugar & Salt','Other'],
-  snacks:     ['Chips','Biscuits','Namkeen','Chocolates','Other'],
-  beverages:  ['Soft Drinks','Juices','Tea & Coffee','Water','Other'],
-  bakery:     ['Bread','Cakes','Buns','Cookies','Other'],
-  restaurant: ['Breakfast','Lunch','Dinner','Snacks','Beverages','Other'],
-  fast_food:  ['Burgers','Pizza','Fries','Wraps','Other'],
-  chinese:    ['Noodles','Rice','Momos','Soups','Other'],
-  supermarket:['Staples','Personal Care','Cleaning','Frozen','Other'],
-  other:      ['Other'],
+  food_meals:      ['Breakfast', 'Lunch / Dinner', 'Biryani & Rice', 'Curries & Gravies', 'Snacks & Starters', 'Desserts', 'Beverages', 'Combos & Meals'],
+  grocery_staples: ['Rice, Dal & Grains', 'Atta & Flours', 'Oils & Ghee', 'Spices & Masala', 'Packaged & Ready-to-eat', 'Dairy & Eggs', 'Beverages & Drinks', 'Cleaning & Household', 'Personal Care', 'Baby & Kids'],
+  bakery_sweets:   ['Breads & Buns', 'Cakes & Pastries', 'Cookies & Biscuits', 'Indian Sweets', 'Savory Snacks', 'Festive Specials'],
+  fresh_produce:   ['Leafy Vegetables', 'Root Vegetables', 'Gourds & Beans', 'Seasonal Fruits', 'Tropical Fruits', 'Herbs & Greens', 'Cut & Ready'],
 };
 
 const DELIVERY_TIMES = ['15 mins','30 mins','45 mins','60 mins','90 mins','120 mins'];
@@ -172,6 +169,22 @@ export default function VendorEditProductScreen({ navigation, route }) {
       }},
     ]);
   };
+
+  useEffect(() => {
+    const loadCategory = async () => {
+      try {
+        // If product already has a mapped category, keep it
+        if (category && CATEGORIES.find(c => c.key === category)) return;
+        // Otherwise map from shop category
+        const shopCat = await AsyncStorage.getItem('shop_category');
+        if (shopCat) {
+          const mapped = SHOP_TO_PRODUCT_CATEGORY[shopCat];
+          if (mapped) setCategory(mapped.key);
+        }
+      } catch (e) {}
+    };
+    loadCategory();
+  }, []);
 
   const selectedCat = CATEGORIES.find(c => c.key === category);
   const subcats = SUBCATEGORIES[category] || [];
