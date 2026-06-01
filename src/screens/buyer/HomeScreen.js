@@ -12,6 +12,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import client from '../../api/client';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+const DEFAULT_PRODUCT_IMG = require('../../../assets/default_product.png');
 import { ShopCardSkeleton } from '../../components/Skeleton';
 import ProductDetailModal from '../../components/ProductDetailModal';
 
