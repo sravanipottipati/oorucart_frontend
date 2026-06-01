@@ -199,8 +199,8 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, 
             resizeMode="cover" />
         ) : (
           <Image source={DEFAULT_PRODUCT_IMG}
-            style={[styles.gridImage, isOutOfStock && { opacity: 0.4 }]}
-            resizeMode="contain" />
+            style={[styles.gridImage, { opacity: isOutOfStock ? 0.4 : 0.65 }]}
+            resizeMode="cover" />
         )}
         {/* Discount badge — top left */}
         {!isOutOfStock && discount && (
