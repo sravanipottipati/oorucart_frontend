@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import client from '../../api/client';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STATUS_COLORS = {
   placed:     { bg: '#FFF7ED', text: '#EA580C' },
@@ -49,6 +50,7 @@ export default function VendorHomeScreen({ navigation }) {
       ]);
       setShop(shopRes.data);
       setIsOpen(shopRes.data.is_open);
+      await AsyncStorage.setItem('shop_category', shopRes.data.category || '');
       const ordersData = Array.isArray(ordersRes.data)
         ? ordersRes.data
         : ordersRes.data.orders || [];
