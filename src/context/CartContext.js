@@ -139,7 +139,7 @@ export const CartProvider = ({ children }) => {
         } else {
           await client.patch(`/orders/cart/update/${dbItem.id}/`, { quantity: newQty }, { headers });
         }
-        // Optimistic update already done above
+        await fetchCartFromDb();
       }
     } catch (err) {
       console.log('removeFromCart error:', err?.response?.data || err.message);
