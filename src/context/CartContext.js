@@ -40,16 +40,17 @@ export const CartProvider = ({ children }) => {
         const cartKey = item.variant_id ? `${item.product_id}_${item.variant_id}` : item.product_id;
         grouped[vid].items[cartKey] = item.quantity;
         grouped[vid].dbItems.push(item);
-        if (!grouped[vid].products.find(p => p.id === item.product_id)) {
+        const productKey = item.variant_id ? `${item.product_id}_${item.variant_id}` : item.product_id;
+        if (!grouped[vid].products.find(p => p.id === productKey)) {
           grouped[vid].products.push({
-            id:            item.product_id,
-            name:          item.product_name,
-            price:         item.product_price,
-            mrp:           item.product_mrp || null,
+            id:            productKey,
+            name:          item.variant_id ? `${item.product_name} (${item.variant_name || ''})` : item.product_name,
+            price:         item.variant_price || item.product_price,
+            mrp:           item.variant_mrp || item.product_mrp || null,
             image:         item.product_image,
             gst_percentage: item.product_gst || 0,
             variant_id:    item.variant_id || null,
-            base_product_id: item.base_product_id || item.product_id,
+            base_product_id: item.product_id,
           });
         }
       });
