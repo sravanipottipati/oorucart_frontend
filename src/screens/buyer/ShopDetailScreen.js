@@ -158,42 +158,32 @@ const formatPrice = (price) => {
 };
 
 // ─── GRID PRODUCT CARD ────────────────────────────────────────────────────────
-const ProductCard = React.memo(({ product, cart, onAdd, onRemove, shopColor, wishlistedIds, handleWishlist, selectedVariantsRef }) => {
+const ProductCard = ({ product, cart, onAdd, onRemove, shopColor, wishlistedIds, handleWishlist }) => {
   const [showVariants, setShowVariants] = useState(false);
   const hasVariants = product.variants && product.variants.length > 0;
   const lowestVariant = hasVariants
     ? [...product.variants].filter(v => v.stock_quantity > 0).sort((a,b) => parseFloat(a.price) - parseFloat(b.price))[0] || product.variants[0]
     : null;
-  const persistedVariant = selectedVariantsRef?.current?.[product.id] || lowestVariant;
-  const [selectedVariant, setSelectedVariantState] = useState(persistedVariant);
-  const setSelectedVariant = (v) => {
-    if (selectedVariantsRef) selectedVariantsRef.current[product.id] = v;
-    setSelectedVariantState(v);
-  };
-
+  const [selectedVariant, setSelectedVariant] = useState(lowestVariant);
   const productOutOfStock     = !hasVariants && product.stock_quantity === 0;
   const allVariantsOutOfStock = hasVariants && product.variants.every(v => v.stock_quantity === 0);
   const isOutOfStock          = productOutOfStock || allVariantsOutOfStock;
-
   const handleAddPress = () => {
     if (isOutOfStock) return;
     onAdd(product, selectedVariant);
   };
-
   const handleVariantSelect = (variant) => {
     if (variant.stock_quantity === 0) return;
     setSelectedVariant(variant);
     setShowVariants(false);
     onAdd(product, variant);
   };
-
   const activePrice = selectedVariant ? selectedVariant.price : product.price;
   const activeMrp   = selectedVariant ? selectedVariant.mrp   : product.mrp;
   const discount    = getDiscount(activePrice, activeMrp);
   const variantCartKey = selectedVariant ? `${product.id}_${selectedVariant.id}` : product.id;
-  const variantQty = (cart && cart[variantCartKey]) || (cart && cart[product.id]) || 0;
-  // Debug
-  if (variantQty > 0 || Object.keys(cart || {}).length > 0) console.log('Cart keys:', Object.keys(cart || {}), 'variantCartKey:', variantCartKey, 'variantQty:', variantQty);
+  const variantQty = (cart && (cart[variantCartKey] || cart[product.id])) || 0;
+  return (
 
   return (
     <View style={[styles.gridCard, isOutOfStock && { opacity: 0.85 }]}>
