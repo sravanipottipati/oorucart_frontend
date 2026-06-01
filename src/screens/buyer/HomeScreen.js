@@ -483,17 +483,32 @@ export default function HomeScreen({ navigation, route }) {
             {product.image_url ? <Image source={{ uri: product.image_url }} style={styles.popularImg} resizeMode="cover" /> : <Text style={{ fontSize: 36 }}>🛍️</Text>}
           </View>
           <Text style={styles.popularName} numberOfLines={2}>{product.name}</Text>
+          {product.variants && product.variants.length > 0 && (
+            <Text style={{fontSize:10, color:'#888', marginBottom:2}}>{product.variants[0].name}</Text>
+          )}
           <Text style={styles.popularShop} numberOfLines={1}>🏬 {product.shop_name}</Text>
           <View style={styles.popularBottom}>
             <View>
-              {product.mrp && parseFloat(product.mrp) > parseFloat(product.price) ? (
-                <View style={{flexDirection:'row', alignItems:'center', gap:4}}>
-                  <Text style={styles.popularPrice}>₹{parseFloat(product.price).toFixed(0)}</Text>
-                  <Text style={{fontSize:11, color:'#9CA3AF', textDecorationLine:'line-through'}}>₹{parseFloat(product.mrp).toFixed(0)}</Text>
-                </View>
-              ) : (
-                <Text style={styles.popularPrice}>₹{parseFloat(product.price).toFixed(0)}</Text>
-              )}
+              {(() => {
+                const price = product.variants && product.variants.length > 0
+                  ? parseFloat(product.variants[0].price)
+                  : parseFloat(product.price);
+                const mrp = product.variants && product.variants.length > 0
+                  ? parseFloat(product.variants[0].mrp || 0)
+                  : parseFloat(product.mrp || 0);
+                const discountPct = mrp > price ? Math.round((1 - price/mrp) * 100) : 0;
+                return (
+                  <View>
+                    <Text style={styles.popularPrice}>From ₹{price.toFixed(0)}</Text>
+                    {mrp > price && (
+                      <View style={{flexDirection:'row', alignItems:'center', gap:4}}>
+                        <Text style={{fontSize:10, color:'#9CA3AF', textDecorationLine:'line-through'}}>₹{mrp.toFixed(0)}</Text>
+                        <Text style={{fontSize:10, color:'#16A34A', fontWeight:'700'}}>{discountPct}% OFF</Text>
+                      </View>
+                    )}
+                  </View>
+                );
+              })()}
             </View>
             {(() => {
               const vendorId = product.vendor_id;
