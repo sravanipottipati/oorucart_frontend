@@ -283,7 +283,7 @@ export default function VendorEditProductScreen({ navigation, route }) {
               <Text style={styles.fieldLabel}>Category</Text>
               <TouchableOpacity style={styles.dropdown} onPress={() => { setShowCatPicker(!showCatPicker); setShowSubPicker(false); }}>
                 <Text style={[styles.dropdownText, !category && { color: '#9CA3AF' }]}>
-                  {selectedCat ? `${selectedCat.emoji} ${selectedCat.label}` : 'Select category'}
+                  {selectedCat ? selectedCat.label : 'Select category'}
                 </Text>
                 <Ionicons name="chevron-down" size={16} color="#888" />
               </TouchableOpacity>
