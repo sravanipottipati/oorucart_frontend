@@ -24,16 +24,11 @@ const GRAY       = '#9CA3AF';
 const DARK       = '#111827';
 
 const CATEGORIES = [
-  { id: 'all',         label: 'All',         icon: 'grid',                color: '#1669ef', bg: '#eff6ff' },
-  { id: 'restaurant',  label: 'Restaurant',  icon: 'restaurant',          color: '#dc2626', bg: '#FEF2F2' },
-  { id: 'supermarket', label: 'Supermarket', icon: 'storefront',          color: '#7c3aed', bg: '#F5F3FF' },
-  { id: 'fast_food',   label: 'Fast Food',   icon: 'fast-food',           color: '#ea580c', bg: '#FFF7ED' },
-  { id: 'chinese',     label: 'Chinese',     icon: 'fish',              color: '#b45309', bg: '#FFFBEB' },
-  { id: 'bakery',      label: 'Bakery',      icon: 'cafe',                color: '#d97706', bg: '#FFFBEB' },
-  { id: 'vegetables',  label: 'Vegetables',  icon: 'leaf',                color: '#16a34a', bg: '#F0FDF4' },
-  { id: 'fruits',      label: 'Fruits',      icon: 'nutrition',           color: '#ea580c', bg: '#FFF7ED' },
-  { id: 'dairy',       label: 'Dairy',       icon: 'water',               color: '#0369a1', bg: '#F0F9FF' },
-  { id: 'ice_cream',   label: 'Ice Cream',   icon: 'ice-cream',           color: '#0284c7', bg: '#F0F9FF' },
+  { id: 'all',         label: 'All',          icon: 'grid',        color: '#1669ef', bg: '#eff6ff' },
+  { id: 'restaurant',  label: 'Restaurant',   icon: 'restaurant',  color: '#dc2626', bg: '#FEF2F2' },
+  { id: 'supermarket', label: 'Supermarket',  icon: 'storefront',  color: '#7c3aed', bg: '#F5F3FF' },
+  { id: 'bakery',      label: 'Bakery',       icon: 'cafe',        color: '#d97706', bg: '#FFFBEB' },
+  { id: 'veg_fruits',  label: 'Veg & Fruits', icon: 'leaf',        color: '#16a34a', bg: '#F0FDF4' },
 ];
 
 // ── Subcategories shown below main categories ─────────────────────────────────
