@@ -27,6 +27,29 @@ export default function VendorWalletScreen({ navigation }) {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
+  const downloadTDS = async () => {
+    try {
+      setDownloading(true);
+      const token = `Bearer ${await AsyncStorage.getItem('access_token')}`;
+      const url = `${client.defaults.baseURL}/invoices/tcs/?month=${selectedMonth}&year=${selectedYear}`;
+      const fileUri = FileSystem.documentDirectory + `univerin_tcs_${selectedMonth}_${selectedYear}.pdf`;
+      const downloadRes = await FileSystem.downloadAsync(url, fileUri, {
+        headers: { Authorization: token }
+      });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(downloadRes.uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'TDS Certificate',
+        });
+      }
+    } catch (e) {
+      console.log('TDS download error:', e.message);
+      alert('Download failed. Please try again!');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const downloadExcel = async () => {
     try {
       setDownloading(true);
