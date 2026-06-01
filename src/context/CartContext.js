@@ -44,9 +44,9 @@ export const CartProvider = ({ children }) => {
         if (!grouped[vid].products.find(p => p.id === productKey)) {
           grouped[vid].products.push({
             id:            productKey,
-            name:          item.variant_id ? `${item.product_name} (${item.variant_name || ''})` : item.product_name,
-            price:         item.variant_price || item.product_price,
-            mrp:           item.variant_mrp || item.product_mrp || null,
+            name:          item.product_name,
+            price:         item.product_price,
+            mrp:           item.product_mrp || null,
             image:         item.product_image,
             gst_percentage: item.product_gst || 0,
             variant_id:    item.variant_id || null,
