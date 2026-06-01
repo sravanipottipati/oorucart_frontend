@@ -92,6 +92,7 @@ export const CartProvider = ({ children }) => {
         variant_id: product.variant_id || null,
         vendor_id:  vid,
         quantity:   1,
+        price:      product.price,
       }, { headers });
       await fetchCartFromDb();
     } catch (err) {
