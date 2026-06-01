@@ -88,12 +88,16 @@ export default function NotificationsScreen({ navigation }) {
             <Text style={styles.headerSub}>{unreadCount} unread</Text>
           )}
         </View>
-        {unreadCount > 0 ? (
-          <TouchableOpacity onPress={markAllRead} style={styles.markAllBtn}>
-            <Text style={styles.markAllIcon}>✓</Text>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {unreadCount > 0 && (
+            <TouchableOpacity onPress={markAllRead} style={styles.markAllBtn}>
+              <Text style={styles.markAllIcon}>✓</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={clearAll} style={[styles.markAllBtn, { backgroundColor: '#FEE2E2' }]}>
+            <Text style={{ color: '#EF4444', fontSize: 11, fontWeight: '700' }}>Clear</Text>
           </TouchableOpacity>
-        ) : (
-          <View style={{ width: 36 }} />
+        </View>
         )}
       </View>
 
