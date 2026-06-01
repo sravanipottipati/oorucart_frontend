@@ -158,13 +158,18 @@ const formatPrice = (price) => {
 };
 
 // ─── GRID PRODUCT CARD ────────────────────────────────────────────────────────
-const ProductCard = React.memo(({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, handleWishlist }) => {
+const ProductCard = React.memo(({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, handleWishlist, selectedVariantsRef }) => {
   const [showVariants, setShowVariants] = useState(false);
   const hasVariants = product.variants && product.variants.length > 0;
   const lowestVariant = hasVariants
     ? [...product.variants].filter(v => v.stock_quantity > 0).sort((a,b) => parseFloat(a.price) - parseFloat(b.price))[0] || product.variants[0]
     : null;
-  const [selectedVariant, setSelectedVariant] = useState(lowestVariant);
+  const persistedVariant = selectedVariantsRef?.current?.[product.id] || lowestVariant;
+  const [selectedVariant, setSelectedVariantState] = useState(persistedVariant);
+  const setSelectedVariant = (v) => {
+    if (selectedVariantsRef) selectedVariantsRef.current[product.id] = v;
+    setSelectedVariantState(v);
+  };
 
   const productOutOfStock     = !hasVariants && product.stock_quantity === 0;
   const allVariantsOutOfStock = hasVariants && product.variants.every(v => v.stock_quantity === 0);
@@ -383,6 +388,7 @@ export default function ShopDetailScreen({ navigation, route }) {
     }
   };
   const { carts, addToCart, removeFromCart, cartCount } = useCart();
+  const selectedVariantsRef = React.useRef({});
   const cart          = carts[vendorId]?.items || {};
   const shopCartCount = Object.values(cart).reduce((a, b) => a + b, 0);
   const shopColor     = SHOP_COLORS[Math.abs((vendorId?.charCodeAt(0) || 65) - 65) % SHOP_COLORS.length] || '#1669ef';
@@ -520,7 +526,7 @@ export default function ShopDetailScreen({ navigation, route }) {
               {row.map(product => (
                 <ProductCard key={product.id} product={product}
                   qty={cart[product.id] || 0}
-                  onAdd={handleAddToCart} onRemove={removeFromCart} shopColor={shopColor} wishlistedIds={wishlistedIds} handleWishlist={handleWishlist} />
+                  onAdd={handleAddToCart} onRemove={removeFromCart} shopColor={shopColor} wishlistedIds={wishlistedIds} handleWishlist={handleWishlist} selectedVariantsRef={selectedVariantsRef} />
               ))}
               {row.length === 1 && <View style={{ width: CARD_WIDTH }} />}
             </View>
