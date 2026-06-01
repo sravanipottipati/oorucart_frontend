@@ -411,7 +411,7 @@ export default function CheckoutScreen({ navigation, route }) {
           </View>
           <View style={styles.billRow}>
             <View>
-              <Text style={styles.billLabel}>Delivery Fee</Text>
+              <Text style={styles.billLabel}>Delivery Fee (incl. 18% GST)</Text>
               <Text style={styles.billLabelSub}>
                 {calcDistance ? `📍 ${calcDistance} km away` : (distance ? `📍 ${distance} km away` : '')}
               </Text>
