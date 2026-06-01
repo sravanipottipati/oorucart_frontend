@@ -177,7 +177,6 @@ const ProductCard = React.memo(({ product, cart, onAdd, onRemove, shopColor, wis
 
   const handleAddPress = () => {
     if (isOutOfStock) return;
-    if (isOutOfStock) return;
     onAdd(product, selectedVariant);
   };
 
@@ -192,7 +191,9 @@ const ProductCard = React.memo(({ product, cart, onAdd, onRemove, shopColor, wis
   const activeMrp   = selectedVariant ? selectedVariant.mrp   : product.mrp;
   const discount    = getDiscount(activePrice, activeMrp);
   const variantCartKey = selectedVariant ? `${product.id}_${selectedVariant.id}` : product.id;
-  const variantQty = (cart && cart[variantCartKey]) || 0;
+  const variantQty = (cart && cart[variantCartKey]) || (cart && cart[product.id]) || 0;
+  // Debug
+  if (variantQty > 0 || Object.keys(cart || {}).length > 0) console.log('Cart keys:', Object.keys(cart || {}), 'variantCartKey:', variantCartKey, 'variantQty:', variantQty);
 
   return (
     <View style={[styles.gridCard, isOutOfStock && { opacity: 0.85 }]}>
