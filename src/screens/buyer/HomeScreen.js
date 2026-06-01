@@ -206,7 +206,7 @@ export default function HomeScreen({ navigation, route }) {
       }
       if (status === 'granted') {
         const loc = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
+          accuracy: Location.Accuracy.Low,
           timeInterval: 5000,
         });
         const { latitude: lat, longitude: lng } = loc.coords;

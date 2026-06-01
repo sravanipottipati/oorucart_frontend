@@ -31,7 +31,7 @@ export default function AddressScreen({ navigation, route }) {
         Alert.alert('Permission denied', 'Please allow location access');
         return;
       }
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
       const { latitude, longitude } = loc.coords;
       const geo = await Location.reverseGeocodeAsync({ latitude, longitude });
       if (geo && geo.length > 0) {
