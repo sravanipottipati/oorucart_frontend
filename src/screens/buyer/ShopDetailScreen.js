@@ -527,7 +527,7 @@ export default function ShopDetailScreen({ navigation, route }) {
             <View key={rowIdx} style={styles.gridRow}>
               {row.map(product => (
                 <ProductCard key={product.id} product={product}
-                  qty={cart[product.id] || (product.variants?.length > 0 ? product.variants.reduce((sum, v) => sum + (cart[`${product.id}_${v.id}`] || 0), 0) : 0)}
+                  qty={cart[product.id] || 0}
                   onAdd={handleAddToCart} onRemove={removeFromCart} shopColor={shopColor} wishlistedIds={wishlistedIds} handleWishlist={handleWishlist} selectedVariantsRef={selectedVariantsRef} />
               ))}
               {row.length === 1 && <View style={{ width: CARD_WIDTH }} />}

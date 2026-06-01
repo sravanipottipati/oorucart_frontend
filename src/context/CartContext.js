@@ -37,7 +37,8 @@ export const CartProvider = ({ children }) => {
             dbItems:  [],
           };
         }
-        grouped[vid].items[item.product_id] = item.quantity;
+        const cartKey = item.variant_id ? `${item.product_id}_${item.variant_id}` : item.product_id;
+        grouped[vid].items[cartKey] = item.quantity;
         grouped[vid].dbItems.push(item);
         if (!grouped[vid].products.find(p => p.id === item.product_id)) {
           grouped[vid].products.push({
