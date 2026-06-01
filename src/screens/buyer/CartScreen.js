@@ -5,6 +5,7 @@ import {
   ScrollView, Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+const DEFAULT_PRODUCT_IMG = require('../../../assets/default_product.png');
 import { useCart } from '../../context/CartContext';
 
 const TEAL = '#1669ef';
@@ -137,11 +138,7 @@ export default function CartScreen({ navigation }) {
                   <View key={product.id} style={[styles.itemRow, i < products.length - 1 && styles.itemRowBorder]}>
                     {/* Image */}
                     <View style={styles.itemImg}>
-                      {imgUrl ? (
-                        <Image source={{ uri: imgUrl }} style={styles.itemImgImg} resizeMode="contain" />
-                      ) : (
-                        <Ionicons name="cube-outline" size={24} color="#9CA3AF" />
-                      )}
+                      <Image source={imgUrl ? { uri: imgUrl } : DEFAULT_PRODUCT_IMG} style={styles.itemImgImg} resizeMode="contain" />
                     </View>
 
                     {/* Info */}
