@@ -191,6 +191,8 @@ const ProductCard = React.memo(({ product, qty, onAdd, onRemove, shopColor, wish
   const activePrice = selectedVariant ? selectedVariant.price : product.price;
   const activeMrp   = selectedVariant ? selectedVariant.mrp   : product.mrp;
   const discount    = getDiscount(activePrice, activeMrp);
+  const variantCartKey = selectedVariant ? `${product.id}_${selectedVariant.id}` : product.id;
+  const variantQty = qty > 0 ? qty : 0;
 
   return (
     <View style={[styles.gridCard, isOutOfStock && { opacity: 0.85 }]}>
@@ -294,7 +296,7 @@ const ProductCard = React.memo(({ product, qty, onAdd, onRemove, shopColor, wish
           <View style={styles.gridOOSBtn}>
             <Text style={styles.gridOOSBtnText}>Out of Stock</Text>
           </View>
-        ) : qty === 0 ? (
+        ) : variantQty === 0 ? (
           <TouchableOpacity style={[styles.gridAddBtn, { backgroundColor: shopColor }]} onPress={handleAddPress}>
             <Text style={styles.gridAddBtnText}>
               {hasVariants && !selectedVariant ? 'ADD  ▾' : 'ADD'}
@@ -305,7 +307,7 @@ const ProductCard = React.memo(({ product, qty, onAdd, onRemove, shopColor, wish
             <TouchableOpacity style={styles.gridQtyBtn} onPress={() => onRemove(selectedVariant ? {...product, id: `${product.id}_${selectedVariant.id}`, variant_id: selectedVariant.id, base_product_id: product.id} : product)}>
               <Text style={[styles.gridQtyBtnText, { color: shopColor }]}>−</Text>
             </TouchableOpacity>
-            <Text style={[styles.gridQtyText, { color: shopColor }]}>{qty}</Text>
+            <Text style={[styles.gridQtyText, { color: shopColor }]}>{variantQty}</Text>
             <TouchableOpacity style={styles.gridQtyBtn} onPress={handleAddPress}>
               <Text style={[styles.gridQtyBtnText, { color: shopColor }]}>+</Text>
             </TouchableOpacity>
@@ -525,7 +527,7 @@ export default function ShopDetailScreen({ navigation, route }) {
             <View key={rowIdx} style={styles.gridRow}>
               {row.map(product => (
                 <ProductCard key={product.id} product={product}
-                  qty={cart[product.id] || (product.variants ? Math.max(...product.variants.map(v => cart[`${product.id}_${v.id}`] || 0)) : 0)}
+                  qty={cart[product.id] || (product.variants?.length > 0 ? product.variants.reduce((sum, v) => sum + (cart[`${product.id}_${v.id}`] || 0), 0) : 0)}
                   onAdd={handleAddToCart} onRemove={removeFromCart} shopColor={shopColor} wishlistedIds={wishlistedIds} handleWishlist={handleWishlist} selectedVariantsRef={selectedVariantsRef} />
               ))}
               {row.length === 1 && <View style={{ width: CARD_WIDTH }} />}
