@@ -351,7 +351,7 @@ const ProductCard = React.memo(({ product, qty, onAdd, onRemove, shopColor, wish
       </Modal>
     </View>
   );
-};
+}, (prevProps, nextProps) => prevProps.product.id === nextProps.product.id && prevProps.wishlistedIds === nextProps.wishlistedIds);
 
 // ─── MAIN SCREEN ──────────────────────────────────────────────────────────────
 export default function ShopDetailScreen({ navigation, route }) {
