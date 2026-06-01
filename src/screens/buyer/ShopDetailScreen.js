@@ -302,7 +302,7 @@ const ProductCard = React.memo(({ product, qty, onAdd, onRemove, shopColor, wish
           </TouchableOpacity>
         ) : (
           <View style={[styles.gridQtyControl, { borderColor: shopColor }]}>
-            <TouchableOpacity style={styles.gridQtyBtn} onPress={() => onRemove(product)}>
+            <TouchableOpacity style={styles.gridQtyBtn} onPress={() => onRemove(selectedVariant ? {...product, id: `${product.id}_${selectedVariant.id}`, variant_id: selectedVariant.id, base_product_id: product.id} : product)}>
               <Text style={[styles.gridQtyBtnText, { color: shopColor }]}>−</Text>
             </TouchableOpacity>
             <Text style={[styles.gridQtyText, { color: shopColor }]}>{qty}</Text>
