@@ -276,7 +276,7 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, 
         {/* Price */}
         <View style={styles.gridPriceRow}>
           <Text style={[styles.gridPrice, isOutOfStock && { color: '#9CA3AF' }]}>
-            {lowestVariant ? `From ${formatPrice(activePrice)}` : formatPrice(activePrice)}
+            {hasVariants ? `From ${formatPrice(activePrice)}` : formatPrice(activePrice)}
           </Text>
           {!isOutOfStock && activeMrp && parseFloat(activeMrp) > parseFloat(activePrice) && (
             <Text style={styles.gridMrp}>{formatPrice(activeMrp)}</Text>
