@@ -117,24 +117,16 @@ export default function VendorEditShopScreen({ navigation, route }) {
           <TextInput style={styles.input} value={town} onChangeText={setTown} placeholder="Enter town" placeholderTextColor="#9CA3AF" />
         </View>
 
-        {/* Category */}
+        {/* Category — read only */}
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Shop Category</Text>
-          <TouchableOpacity style={styles.dropdown} onPress={() => setShowCatPicker(!showCatPicker)}>
-            <Text style={styles.dropdownText}>{selectedCat ? `${selectedCat.emoji} ${selectedCat.label}` : 'Select category'}</Text>
-            <Ionicons name="chevron-down" size={16} color="#888" />
-          </TouchableOpacity>
-          {showCatPicker && (
-            <View style={styles.pickerDropdown}>
-              {CATEGORIES.map(cat => (
-                <TouchableOpacity key={cat.key} style={[styles.pickerItem, category === cat.key && styles.pickerItemActive]}
-                  onPress={() => { setCategory(cat.key); setShowCatPicker(false); }}>
-                  <Text style={[styles.pickerItemText, category === cat.key && { color: '#1669ef', fontWeight: '700' }]}>{cat.emoji} {cat.label}</Text>
-                  {category === cat.key && <Ionicons name="checkmark" size={16} color="#1669ef" />}
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+          <View style={[styles.dropdown, { backgroundColor: '#F0FDF4' }]}>
+            <Text style={[styles.dropdownText, { color: '#16a34a', fontWeight: '600' }]}>
+              {selectedCat ? `${selectedCat.emoji} ${selectedCat.label}` : category}
+            </Text>
+            <Ionicons name="lock-closed-outline" size={16} color="#16a34a" />
+          </View>
+          <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>Category cannot be changed after registration.</Text>
         </View>
 
         {/* Delivery Settings */}
