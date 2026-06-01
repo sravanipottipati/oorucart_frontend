@@ -449,7 +449,7 @@ export default function ShopDetailScreen({ navigation, route }) {
           <View style={styles.shopInfoLeft}>
             <Text style={styles.shopInfoName}>{shop?.shop_name || shopName}</Text>
             <Text style={styles.shopInfoCategory}>
-              {shop?.category?.charAt(0).toUpperCase() + shop?.category?.slice(1)} • {shop?.town}
+              {({'restaurant':'Restaurant','supermarket':'Supermarket','bakery':'Bakery','veg_fruits':'Veg & Fruits'}[shop?.category] || shop?.category)} • {shop?.town}
             </Text>
           </View>
           <View style={[styles.shopOpenBadge, { backgroundColor: shop?.is_open ? '#DCFCE7' : '#F3F4F6' }]}>
