@@ -184,7 +184,6 @@ const ProductCard = ({ product, cart, onAdd, onRemove, shopColor, wishlistedIds,
   const variantCartKey = selectedVariant ? `${product.id}_${selectedVariant.id}` : product.id;
   const variantQty = (cart && (cart[variantCartKey] || cart[product.id])) || 0;
   return (
-  return (
     <View style={[styles.gridCard, isOutOfStock && { opacity: 0.85 }]}>
 
       {/* ── Large Image ── */}
