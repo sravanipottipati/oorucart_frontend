@@ -159,12 +159,12 @@ const formatPrice = (price) => {
 
 // ─── GRID PRODUCT CARD ────────────────────────────────────────────────────────
 const ProductCard = ({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, handleWishlist }) => {
-  const [showVariants, setShowVariants]       = useState(false);
-  const lowestVariantDefault = product.variants && product.variants.length > 0
-    ? product.variants.filter(v => v.stock_quantity > 0).reduce((a, b) => parseFloat(a.price) < parseFloat(b.price) ? a : b, product.variants.find(v => v.stock_quantity > 0) || product.variants[0])
-    : null;
-  const [selectedVariant, setSelectedVariant] = useState(lowestVariantDefault);
+  const [showVariants, setShowVariants] = useState(false);
   const hasVariants = product.variants && product.variants.length > 0;
+  const lowestVariant = hasVariants
+    ? [...product.variants].filter(v => v.stock_quantity > 0).sort((a,b) => parseFloat(a.price) - parseFloat(b.price))[0] || product.variants[0]
+    : null;
+  const [selectedVariant, setSelectedVariant] = useState(lowestVariant);
 
   const productOutOfStock     = !hasVariants && product.stock_quantity === 0;
   const allVariantsOutOfStock = hasVariants && product.variants.every(v => v.stock_quantity === 0);
@@ -172,7 +172,7 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, 
 
   const handleAddPress = () => {
     if (isOutOfStock) return;
-    if (hasVariants && !selectedVariant) { setShowVariants(true); return; }
+    if (isOutOfStock) return;
     onAdd(product, selectedVariant);
   };
 
@@ -183,9 +183,8 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, 
     onAdd(product, variant);
   };
 
-  const activeVariant = selectedVariant || (hasVariants ? product.variants.filter(v => v.stock_quantity > 0).sort((a,b) => parseFloat(a.price) - parseFloat(b.price))[0] : null);
-  const activePrice = activeVariant ? activeVariant.price : product.price;
-  const activeMrp   = activeVariant ? activeVariant.mrp   : product.mrp;
+  const activePrice = selectedVariant ? selectedVariant.price : product.price;
+  const activeMrp   = selectedVariant ? selectedVariant.mrp   : product.mrp;
   const discount    = getDiscount(activePrice, activeMrp);
 
   return (
