@@ -46,6 +46,13 @@ export default function NotificationsScreen({ navigation }) {
   useEffect(() => { fetchNotifications(); }, []);
   const onRefresh = () => { setRefreshing(true); fetchNotifications(); };
 
+  const clearAll = async () => {
+    try {
+      await client.delete('/orders/notifications/clear/');
+      setNotifications([]);
+    } catch (e) { console.log('Error:', e.message); }
+  };
+
   const markAllRead = async () => {
     try {
       await client.post('/orders/notifications/read/');
