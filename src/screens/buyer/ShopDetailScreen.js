@@ -6,6 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
 import { useCart } from '../../context/CartContext';
+const DEFAULT_PRODUCT_IMG = require('../../../assets/default_product.png');
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2;
@@ -199,9 +200,9 @@ const ProductCard = ({ product, qty, onAdd, onRemove, shopColor, wishlistedIds, 
             style={[styles.gridImage, isOutOfStock && { opacity: 0.4 }]}
             resizeMode="cover" />
         ) : (
-          <Text style={[styles.gridEmoji, isOutOfStock && { opacity: 0.4 }]}>
-            {CATEGORY_EMOJIS[product.category] || '🛍'}
-          </Text>
+          <Image source={DEFAULT_PRODUCT_IMG}
+            style={[styles.gridImage, isOutOfStock && { opacity: 0.4 }]}
+            resizeMode="contain" />
         )}
         {/* Discount badge — top left */}
         {!isOutOfStock && discount && (
