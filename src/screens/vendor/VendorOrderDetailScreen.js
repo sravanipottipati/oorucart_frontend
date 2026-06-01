@@ -120,7 +120,12 @@ ${order.delivery_address}
   const isCancelled = ['cancelled', 'rejected'].includes(order.status);
   const isDelivered = order.status === 'delivered';
   const isNew       = order.status === 'placed';
-  const subtotal    = parseFloat(order.total_amount || 0) - parseFloat(order.delivery_fee || 0) - Math.round(parseFloat(order.platform_fee || 0) * 1.18);
+  const subtotal        = parseFloat(order.total_amount || 0) - parseFloat(order.delivery_fee || 0) - Math.round(parseFloat(order.platform_fee || 0) * 1.18);
+  const commissionRate  = parseFloat(order.commission_rate || 0);
+  const commissionAmt   = parseFloat(order.commission_amount || (subtotal * commissionRate / 100));
+  const tcsAmt          = parseFloat(order.tcs_amount || (subtotal * 1 / 100));
+  const platformFeeGST  = Math.round(parseFloat(order.platform_fee || 0) * 1.18);
+  const netSettlement   = subtotal - commissionAmt - tcsAmt - platformFeeGST;
   const deliveryFee = parseFloat(order.delivery_fee || 0);
   const total       = parseFloat(order.total_amount || 0);
   const date        = new Date(order.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -195,6 +200,20 @@ ${order.delivery_address}
           </View>
         )}
 
+        {isDelivered && (
+          <View style={[styles.card, { borderWidth: 1, borderColor: '#16A34A' }]}>
+            <Text style={[styles.cardTitle, { color: '#16A34A' }]}>💰 Settlement Breakdown</Text>
+            <View style={styles.billRow}><Text style={styles.billLabel}>Items Total (incl. GST)</Text><Text style={styles.billValue}>Rs.{subtotal.toFixed(2)}</Text></View>
+            <View style={styles.billRow}><Text style={styles.billLabel}>Commission ({commissionRate}%)</Text><Text style={[styles.billValue, { color: '#DC2626' }]}>- Rs.{commissionAmt.toFixed(2)}</Text></View>
+            <View style={styles.billRow}><Text style={styles.billLabel}>TDS (1%)</Text><Text style={[styles.billValue, { color: '#DC2626' }]}>- Rs.{tcsAmt.toFixed(2)}</Text></View>
+            <View style={styles.billRow}><Text style={styles.billLabel}>Platform Fee (incl. GST)</Text><Text style={[styles.billValue, { color: '#DC2626' }]}>- Rs.{platformFeeGST.toFixed(2)}</Text></View>
+            <View style={styles.divider} />
+            <View style={styles.billRow}>
+              <Text style={styles.billTotalLabel}>Net Settlement</Text>
+              <Text style={[styles.billTotalValue, { color: '#16A34A' }]}>Rs.{netSettlement.toFixed(2)}</Text>
+            </View>
+          </View>
+        )}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Items ({order.items?.length || 0})</Text>
           {order.items?.map((item, i) => (
