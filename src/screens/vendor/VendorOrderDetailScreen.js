@@ -145,7 +145,7 @@ ${order.delivery_address}
   const isCancelled = ['cancelled', 'rejected'].includes(order.status);
   const isDelivered = order.status === 'delivered';
   const isNew       = order.status === 'placed';
-  const subtotal        = parseFloat(order.total_amount || 0) - parseFloat(order.delivery_fee || 0);
+  const subtotal        = parseFloat(order.total_amount || 0) - parseFloat(order.delivery_fee || 0) - Math.round(parseFloat(order.platform_fee || 0) * 1.18);
   const commissionRate  = parseFloat(order.commission_rate || 0);
   const commissionAmt   = parseFloat(order.commission_amount || (subtotal * commissionRate / 100));
   const tcsAmt          = parseFloat(order.tcs_amount || (subtotal * 1 / 100));
