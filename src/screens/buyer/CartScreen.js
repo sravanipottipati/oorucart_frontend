@@ -106,9 +106,9 @@ export default function CartScreen({ navigation }) {
           const products  = shopCart.products;
           const itemCount = Object.values(items).reduce((a, b) => a + b, 0);
           const subtotal  = products.reduce((sum, p) => sum + (items[p.id] || 0) * parseFloat(p.price), 0);
-          const MIN_FREE_DELIVERY = 999999; // No free delivery
-          const isFreeDelivery = false;
-          const amountLeft = 0;
+          const mov = parseFloat(shop?.min_order_value || 0);
+          const isFreeDelivery = mov > 0 && subtotal >= mov;
+          const amountLeft = mov > 0 ? Math.max(0, mov - subtotal) : 0;
 
           return (
             <View key={vid} style={styles.shopCard}>
