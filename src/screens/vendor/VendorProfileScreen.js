@@ -51,11 +51,10 @@ export default function VendorProfileScreen({ navigation }) {
     : 'V';
 
   const getMinOrderValue = (category) => {
-    if (!category) return 100;
+    if (!category) return 199;
     const cat = category.toLowerCase();
-    if (['vegetables', 'fruits'].includes(cat)) return 50;
-    if (['restaurant', 'bakery', 'fast_food', 'chinese', 'ice_cream'].includes(cat)) return 100;
-    return 100;
+    const mov = { 'restaurant': 499, 'supermarket': 699, 'bakery': 399, 'veg_fruits': 199, 'vegetables': 199, 'fruits': 199 };
+    return mov[cat] || 199;
   };
   const minOrderValue = getMinOrderValue(shop?.category);
 
