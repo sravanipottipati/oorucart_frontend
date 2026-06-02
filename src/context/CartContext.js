@@ -31,7 +31,7 @@ export const CartProvider = ({ children }) => {
         const vid = item.vendor_id;
         if (!grouped[vid]) {
           grouped[vid] = {
-            shop:     { id: vid, shop_name: item.vendor_name },
+            shop:     { id: vid, shop_name: item.vendor_name, min_order_value: item.vendor_mov || 0 },
             items:    {},
             products: [],
             dbItems:  [],
