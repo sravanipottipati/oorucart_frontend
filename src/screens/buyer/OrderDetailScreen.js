@@ -4,8 +4,9 @@ import {
   ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system/legacy';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import client from '../../api/client';
 
 const STATUS_INFO = {
@@ -82,101 +83,20 @@ export default function OrderDetailScreen({ navigation, route }) {
 
   const generateInvoice = async () => {
     try {
-      const itemsHTML = (order.items || []).map(item => `
-        <tr>
-          <td style="padding:8px;border-bottom:1px solid #eee">${item.product_name}</td>
-          <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${item.quantity}</td>
-          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">₹${parseFloat(item.price).toFixed(2)}</td>
-          <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">₹${(parseFloat(item.price) * item.quantity).toFixed(2)}</td>
-        </tr>`).join('');
-      const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    body { font-family: Arial, sans-serif; padding: 30px; color: #111; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 2px solid #1669ef; padding-bottom: 16px; }
-    .brand { font-size: 28px; font-weight: bold; color: #1669ef; }
-    .invoice-title { font-size: 14px; color: #888; }
-    .invoice-num { font-size: 16px; font-weight: bold; color: #111; }
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-    .info-box { background: #f8f9fa; border-radius: 8px; padding: 12px; }
-    .info-label { font-size: 11px; color: #888; margin-bottom: 4px; }
-    .info-value { font-size: 13px; font-weight: bold; color: #111; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-    th { background: #1669ef; color: #fff; padding: 10px 8px; text-align: left; font-size: 13px; }
-    th:last-child, th:nth-child(3), th:nth-child(2) { text-align: right; }
-    th:nth-child(2) { text-align: center; }
-    .totals { margin-left: auto; width: 280px; }
-    .total-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; color: #555; }
-    .total-final { display: flex; justify-content: space-between; padding: 10px 0; font-size: 16px; font-weight: bold; color: #1669ef; border-top: 2px solid #1669ef; margin-top: 6px; }
-    .footer { margin-top: 32px; text-align: center; font-size: 12px; color: #aaa; border-top: 1px solid #eee; padding-top: 16px; }
-    .status-badge { background: #dcfce7; color: #16a34a; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div>
-      <div class="brand">Univerin</div>
-      <div style="font-size:12px;color:#888;margin-top:4px">Your Local Delivery App</div>
-    </div>
-    <div style="text-align:right">
-      <div class="invoice-title">INVOICE</div>
-      <div class="invoice-num">#${order.order_number}</div>
-      <div style="margin-top:6px"><span class="status-badge">✓ Delivered</span></div>
-    </div>
-  </div>
-  <div class="info-grid">
-    <div class="info-box">
-      <div class="info-label">Order Date</div>
-      <div class="info-value">${new Date(order.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })}</div>
-    </div>
-    <div class="info-box">
-      <div class="info-label">Shop</div>
-      <div class="info-value">${order.shop_name}</div>
-    </div>
-    <div class="info-box">
-      <div class="info-label">Payment</div>
-      <div class="info-value">${order.payment_mode === 'cod' ? 'Cash on Delivery' : 'Online Payment'}</div>
-    </div>
-    <div class="info-box">
-      <div class="info-label">Delivery Address</div>
-      <div class="info-value" style="font-size:11px">${order.delivery_address}</div>
-    </div>
-  </div>
-  <table>
-    <thead>
-      <tr>
-        <th>Item</th>
-        <th style="text-align:center">Qty</th>
-        <th style="text-align:right">Price</th>
-        <th style="text-align:right">Total</th>
-      </tr>
-    </thead>
-    <tbody>${itemsHTML}</tbody>
-  </table>
-  <div class="totals">
-    <div class="total-row"><span>Items Total (incl. GST)</span><span>₹${(parseFloat(order.total_amount || 0) - parseFloat(order.delivery_fee || 0) - Math.round(parseFloat(order.platform_fee || 0) * 1.18)).toFixed(2)}</span></div>
-    <div class="total-row"><span>Delivery Fee</span><span>₹${parseFloat(order.delivery_fee || 0).toFixed(2)}</span></div>
-    <div class="total-row"><span>Platform Fee (incl. GST)</span><span>₹${Math.round(parseFloat(order.platform_fee || 0) * 1.18).toFixed(2)}</span></div>
-    <div class="total-final"><span>Total Amount</span><span>₹${parseFloat(order.total_amount || 0).toFixed(2)}</span></div>
-  </div>
-  <div class="footer">
-    Thank you for shopping with Univerin! 🎉<br/>
-    For support: support@univerin.in
-  </div>
-</body>
-</html>`;
-      const { uri } = await Print.printToFileAsync({ html, base64: false });
-      const canShare = await Sharing.isAvailableAsync();
-      if (canShare) {
-        await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: `Invoice ${order.order_number}` });
-      } else {
-        await Print.printAsync({ uri });
+      const token = await AsyncStorage.getItem('access_token');
+      const url = `https://api.univerin.in/api/invoices/buyer/${orderId}/`;
+      const fileUri = FileSystem.documentDirectory + `invoice_${orderId}.pdf`;
+      const res = await FileSystem.downloadAsync(url, fileUri, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(res.uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: `Invoice ${order.order_number}`,
+        });
       }
     } catch (e) {
-      Alert.alert('Error', 'Could not generate invoice');
+      Alert.alert('Error', 'Could not download invoice');
     }
   };
   const hasReview     = order.has_review || false;

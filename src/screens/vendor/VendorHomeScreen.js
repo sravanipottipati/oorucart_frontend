@@ -260,7 +260,7 @@ export default function VendorHomeScreen({ navigation }) {
                   )}
                 </View>
                 <View style={styles.orderRight}>
-                  <Text style={styles.orderAmount}>₹{order.total_amount}</Text>
+                  <Text style={styles.orderAmount}>₹{parseFloat(order.subtotal || 0).toFixed(0)}</Text>
                   <View style={[styles.statusBadge, { backgroundColor: statusColor.bg }]}>
                     <Text style={[styles.statusText, { color: statusColor.text }]}>
                       {statusLabel}

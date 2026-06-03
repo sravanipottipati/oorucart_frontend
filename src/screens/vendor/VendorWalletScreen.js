@@ -31,20 +31,43 @@ export default function VendorWalletScreen({ navigation }) {
     try {
       setDownloading(true);
       const token = `Bearer ${await AsyncStorage.getItem('access_token')}`;
-      const url = `${client.defaults.baseURL}/invoices/tcs/?month=${selectedMonth}&year=${selectedYear}`;
-      const fileUri = FileSystem.documentDirectory + `univerin_tcs_${selectedMonth}_${selectedYear}.pdf`;
+      const url = `${client.defaults.baseURL}/invoices/tcs/`;
+      const fileUri = FileSystem.documentDirectory + `univerin_tcs_Q${Math.ceil(selectedMonth/3)}_${selectedYear}.pdf`;
       const downloadRes = await FileSystem.downloadAsync(url, fileUri, {
         headers: { Authorization: token }
       });
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(downloadRes.uri, {
           mimeType: 'application/pdf',
-          dialogTitle: 'TDS Certificate',
+          dialogTitle: 'TCS Certificate',
         });
       }
     } catch (e) {
-      console.log('TDS download error:', e.message);
-      alert('Download failed. Please try again!');
+      console.log('TCS download error:', e.message);
+      Alert.alert('Error', 'Download failed. Please try again!');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const downloadSettlementPDF = async () => {
+    try {
+      setDownloading(true);
+      const token = `Bearer ${await AsyncStorage.getItem('access_token')}`;
+      const url = `${client.defaults.baseURL}/invoices/settlement/`;
+      const fileUri = FileSystem.documentDirectory + `univerin_settlement_${selectedMonth}_${selectedYear}.pdf`;
+      const downloadRes = await FileSystem.downloadAsync(url, fileUri, {
+        headers: { Authorization: token }
+      });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(downloadRes.uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'Settlement Statement',
+        });
+      }
+    } catch (e) {
+      console.log('Settlement PDF error:', e.message);
+      Alert.alert('Error', 'Download failed. Please try again!');
     } finally {
       setDownloading(false);
     }
@@ -260,7 +283,14 @@ export default function VendorWalletScreen({ navigation }) {
             onPress={downloadTDS}
             disabled={downloading}
           >
-            <Text style={styles.downloadBtnText}>⬇ Download TDS Certificate</Text>
+            <Text style={styles.downloadBtnText}>⬇ Download TCS Certificate (PDF)</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.downloadBtn, { backgroundColor: '#16A34A', marginTop: 10 }, downloading && styles.downloadBtnDisabled]}
+            onPress={downloadSettlementPDF}
+            disabled={downloading}
+          >
+            <Text style={styles.downloadBtnText}>⬇ Download Settlement Statement (PDF)</Text>
           </TouchableOpacity>
         </View>
 
@@ -288,7 +318,7 @@ export default function VendorWalletScreen({ navigation }) {
                 <Text style={styles.txnDate}>{formatDate(txn.created_at || txn.date)}</Text>
               </View>
               <View style={styles.txnRight}>
-                <Text style={styles.txnAmount}>₹{parseFloat(txn.amount || txn.net_amount || 0).toFixed(0)}</Text>
+                <Text style={styles.txnAmount}>₹{parseFloat(txn.net_settlement || txn.amount || 0).toFixed(0)}</Text>
                 <View style={[
                   styles.txnBadge,
                   { backgroundColor: txn.status === 'settled' ? '#DCFCE7' : '#FFF7ED' }
