@@ -103,8 +103,8 @@ export default function OrderDetailScreen({ navigation, route }) {
   const hasReturn     = order.has_return || false;
   const canCancel     = order.status === 'placed';
   const currentIndex  = STATUSES.indexOf(order.status);
-  const subtotal      = parseFloat(order.total_amount || 0) - parseFloat(order.delivery_fee || 0) - Math.round(parseFloat(order.platform_fee || 0) * 1.18);
-  const deliveryFee   = parseFloat(order.delivery_fee || 0);
+  const subtotal      = parseFloat(order.subtotal || 0);
+  const deliveryFee   = parseFloat(order.delivery_fee || 0) + parseFloat(order.gst_on_delivery || 0);
   const platformFee   = Math.round(parseFloat(order.platform_fee || 10) * 1.18);
   const gstOnPlatform = parseFloat(order.gst_on_platform || 0);
   const total         = parseFloat(order.total_amount || 0);
@@ -197,7 +197,7 @@ export default function OrderDetailScreen({ navigation, route }) {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.itemName}>{item.product_name || item.name}{item.variant_name ? ` (${item.variant_name})` : ''}</Text>
-                <Text style={styles.itemUnit}>₹{(parseFloat(item.price) * (1 + (parseFloat(item.product_gst) || 0) / 100)).toFixed(0)} each</Text>
+                <Text style={styles.itemUnit}>₹{parseFloat(item.price).toFixed(0)} each</Text>
               </View>
               <Text style={styles.itemPrice}>₹{(item.quantity * parseFloat(item.price)).toFixed(0)}</Text>
             </View>
