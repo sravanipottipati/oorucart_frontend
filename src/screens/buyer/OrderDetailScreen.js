@@ -103,11 +103,11 @@ export default function OrderDetailScreen({ navigation, route }) {
   const hasReturn     = order.has_return || false;
   const canCancel     = order.status === 'placed';
   const currentIndex  = STATUSES.indexOf(order.status);
-  const subtotal      = parseFloat(order.subtotal || 0);
+  const subtotal      = order.items?.reduce((sum, i) => sum + (parseFloat(i.price) * i.quantity * (1 + (parseFloat(i.product_gst || 0) / 100))), 0) || parseFloat(order.subtotal || 0);
   const deliveryFee   = parseFloat(order.delivery_fee || 0) + parseFloat(order.gst_on_delivery || 0);
-  const platformFee   = Math.round(parseFloat(order.platform_fee || 10) * 1.18);
+  const platformFee   = parseFloat((parseFloat(order.platform_fee || 10) * 1.18).toFixed(1));
   const gstOnPlatform = parseFloat(order.gst_on_platform || 0);
-  const total         = parseFloat(order.total_amount || 0);
+  const total         = parseFloat((subtotal + deliveryFee + platformFee).toFixed(1));
   const totalSavings  = order.items?.reduce((sum, i) => {
     const mrp = parseFloat(i.product_mrp || 0);
     const price = parseFloat(i.price || 0);
@@ -141,7 +141,7 @@ export default function OrderDetailScreen({ navigation, route }) {
             <Text style={[styles.statusLabel, { color: statusInfo.color }]}>{statusInfo.label}</Text>
             <Text style={styles.statusDesc}>{statusInfo.desc}</Text>
           </View>
-          <Text style={styles.statusAmount}>₹{total.toFixed(0)}</Text>
+          <Text style={styles.statusAmount}>₹{total % 1 === 0 ? total.toFixed(0) : total.toFixed(1)}</Text>
         </View>
         {isDelivered && (
           <View style={{ paddingHorizontal: 16, paddingVertical: 8, alignItems: 'center' }}>
@@ -205,22 +205,22 @@ export default function OrderDetailScreen({ navigation, route }) {
           <View style={styles.divider} />
           <View style={styles.billRow}>
             <Text style={styles.billLabel}>Items Total (incl. GST)</Text>
-            <Text style={styles.billValue}>₹{subtotal.toFixed(0)}</Text>
+            <Text style={styles.billValue}>₹{subtotal % 1 === 0 ? subtotal.toFixed(0) : subtotal.toFixed(1)}</Text>
           </View>
           <View style={styles.billRow}>
             <Text style={styles.billLabel}>Delivery Fee (incl. GST)</Text>
             {deliveryFee === 0
               ? <Text style={[styles.billValue, { color: '#16A34A' }]}>FREE</Text>
-              : <Text style={styles.billValue}>₹{deliveryFee.toFixed(0)}</Text>
+              : <Text style={styles.billValue}>₹{deliveryFee % 1 === 0 ? deliveryFee.toFixed(0) : deliveryFee.toFixed(1)}</Text>
             }
           </View>
           <View style={styles.billRow}>
             <Text style={styles.billLabel}>Platform Fee (incl. GST)</Text>
-            <Text style={styles.billValue}>₹{platformFee.toFixed(0)}</Text>
+            <Text style={styles.billValue}>₹{platformFee % 1 === 0 ? platformFee.toFixed(0) : platformFee.toFixed(1)}</Text>
           </View>
           <View style={[styles.billRow, styles.billTotal]}>
             <Text style={styles.billTotalLabel}>Total Amount</Text>
-            <Text style={styles.billTotalValue}>₹{total.toFixed(0)}</Text>
+            <Text style={styles.billTotalValue}>₹{total % 1 === 0 ? total.toFixed(0) : total.toFixed(1)}</Text>
           </View>
           {totalSavings > 0 && (
             <View style={{ backgroundColor: '#F0FDF4', borderRadius: 8, padding: 10, marginTop: 8, alignItems: 'center' }}>

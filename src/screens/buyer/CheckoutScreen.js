@@ -67,7 +67,7 @@ export default function CheckoutScreen({ navigation, route }) {
   const totalSavings = Math.round(totalMrp - subtotal);
   const deliveryInfo = getDeliveryInfo(calcDistance || distance, subtotal, shop?.min_order_value);
   const platformFee       = 10;
-  const platformFeeGST    = Math.round(platformFee * 1.18);
+  const platformFeeGST    = parseFloat((platformFee * 1.18).toFixed(1));
   const deliveryFeeGST    = deliveryInfo.deliveryFee;
   const total             = subtotal + deliveryFeeGST + platformFeeGST;
 
@@ -179,10 +179,11 @@ export default function CheckoutScreen({ navigation, route }) {
         clearShopCart(shop.id);
       } else {
         clearShopCart(shop.id);
-        navigation.replace('OrderSuccess', { order });
+        navigation.replace('OrderSuccess', { order, calculatedTotal: total });
       }
     } catch (e) {
-      const msg = e.response?.data?.error || 'Failed to place order. Please try again.';
+      console.log("ORDER ERROR:", JSON.stringify(e.response?.data), e.message);
+      const msg = e.response?.data?.error || "Failed to place order. Please try again.";
       Alert.alert('Error', msg);
     } finally {
       setLoading(false);
@@ -201,18 +202,18 @@ export default function CheckoutScreen({ navigation, route }) {
           order_id:            placedOrder.id,
         });
         setShowRazorpay(false);
-        navigation.replace('OrderSuccess', { order: placedOrder });
+        navigation.replace('OrderSuccess', { order: placedOrder, calculatedTotal: total });
       } else {
         // Payment failed
         await client.post('/orders/payment/failed/', { order_id: placedOrder.id });
         setShowRazorpay(false);
         Alert.alert('Payment Failed', 'Your payment failed. Order placed as Cash on Delivery.', [
-          { text: 'OK', onPress: () => navigation.replace('OrderSuccess', { order: placedOrder }) }
+          { text: 'OK', onPress: () => navigation.replace('OrderSuccess', { order: placedOrder, calculatedTotal: total }) }
         ]);
       }
     } catch (e) {
       setShowRazorpay(false);
-      navigation.replace('OrderSuccess', { order: placedOrder });
+      navigation.replace('OrderSuccess', { order: placedOrder, calculatedTotal: total });
     }
   };
 
@@ -407,7 +408,7 @@ export default function CheckoutScreen({ navigation, route }) {
           <Text style={styles.cardTitle}>Bill Details</Text>
           <View style={styles.billRow}>
             <Text style={styles.billLabel}>Items Total (incl. GST)</Text>
-            <Text style={styles.billValue}>₹{subtotal.toFixed(0)}</Text>
+            <Text style={styles.billValue}>₹{subtotal % 1 === 0 ? subtotal.toFixed(0) : subtotal.toFixed(1)}</Text>
           </View>
           <View style={styles.billRow}>
             <View>
@@ -433,7 +434,7 @@ export default function CheckoutScreen({ navigation, route }) {
           )}
           <View style={styles.billRow}>
             <Text style={styles.billTotalLabel}>Total Amount</Text>
-            <Text style={styles.billTotalValue}>₹{total.toFixed(0)}</Text>
+            <Text style={styles.billTotalValue}>₹{total % 1 === 0 ? total.toFixed(0) : total.toFixed(1)}</Text>
           </View>
 
         </View>

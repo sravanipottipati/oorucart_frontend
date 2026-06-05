@@ -6,7 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 export default function OrderSuccessScreen({ navigation, route }) {
-  const { order } = route.params || {};
+  const { order, calculatedTotal } = route.params || {};
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim  = useRef(new Animated.Value(0)).current;
 
@@ -68,7 +68,7 @@ export default function OrderSuccessScreen({ navigation, route }) {
               <Text style={styles.detailLabel}>Total Amount</Text>
             </View>
             <Text style={[styles.detailValue, { color: '#1669ef', fontWeight: '800', fontSize: 16 }]}>
-              ₹{order?.total_amount || '0'}
+              ₹{calculatedTotal ? calculatedTotal.toFixed(1) : order?.total_amount || '0'}
             </Text>
           </View>
           <View style={styles.divider} />
