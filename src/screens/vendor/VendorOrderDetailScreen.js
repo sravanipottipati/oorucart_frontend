@@ -145,12 +145,13 @@ ${order.delivery_address}
   const isCancelled = ['cancelled', 'rejected'].includes(order.status);
   const isDelivered = order.status === 'delivered';
   const isNew       = order.status === 'placed';
-  const subtotal        = parseFloat(order.subtotal || 0);
+  const subtotal        = order.items?.reduce((sum, i) => sum + (parseFloat(i.price) * i.quantity * (1 + (parseFloat(i.product_gst || 0) / 100))), 0) || parseFloat(order.subtotal || 0);
   const commissionRate  = parseFloat(order.commission_rate || 0);
   const commissionAmt   = parseFloat(order.commission_amount || (subtotal * commissionRate / 100));
   const tcsAmt          = parseFloat(order.tcs_amount || (subtotal * 1 / 100));
   const platformFeeGST  = Math.round(parseFloat(order.platform_fee || 0) * 1.18);
-  const netSettlement   = subtotal - commissionAmt - tcsAmt;
+  const rawSubtotal     = parseFloat(order.subtotal || 0);
+  const netSettlement   = rawSubtotal - commissionAmt - tcsAmt;
   const deliveryFee = parseFloat(order.delivery_fee || 0);
   const total       = parseFloat(order.total_amount || 0);
   const date        = new Date(order.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -181,7 +182,7 @@ ${order.delivery_address}
               {isNew ? 'Respond within 10 minutes' : isDelivered ? 'Order completed successfully' : isCancelled ? 'This order was cancelled' : 'Update status as you progress'}
             </Text>
           </View>
-          <Text style={styles.statusAmount}>Rs.{total.toFixed(0)}</Text>
+          <Text style={styles.statusAmount}>Rs.{rawSubtotal.toFixed(0)}</Text>
         </View>
 
         {isNew && (
@@ -225,11 +226,11 @@ ${order.delivery_address}
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
               <TouchableOpacity style={styles.invoiceBtn} onPress={() => downloadInvoice('doc2')}>
                 <Ionicons name="document-text-outline" size={16} color="#1669ef" />
-                <Text style={styles.invoiceBtnText}>Doc 2 (Seller→Buyer)</Text>
+                <Text style={styles.invoiceBtnText}>Seller Invoice</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.invoiceBtn} onPress={() => downloadInvoice('doc4')}>
                 <Ionicons name="receipt-outline" size={16} color="#8B5CF6" />
-                <Text style={[styles.invoiceBtnText, { color: '#8B5CF6' }]}>Doc 4 (Commission)</Text>
+                <Text style={[styles.invoiceBtnText, { color: '#8B5CF6' }]}>Commission Invoice</Text>
               </TouchableOpacity>
             </View>
           </View>
