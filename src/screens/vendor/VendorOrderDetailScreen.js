@@ -151,7 +151,7 @@ ${order.delivery_address}
   const tcsAmt          = parseFloat(order.tcs_amount || (subtotal * 1 / 100));
   const platformFeeGST  = Math.round(parseFloat(order.platform_fee || 0) * 1.18);
   const rawSubtotal     = parseFloat(order.subtotal || 0);
-  const netSettlement   = rawSubtotal - commissionAmt - tcsAmt;
+  const netSettlement   = subtotal - commissionAmt - tcsAmt;
   const deliveryFee = parseFloat(order.delivery_fee || 0);
   const total       = parseFloat(order.total_amount || 0);
   const date        = new Date(order.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
