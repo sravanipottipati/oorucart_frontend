@@ -147,7 +147,7 @@ ${order.delivery_address}
   const isNew       = order.status === 'placed';
   const subtotal        = order.items?.reduce((sum, i) => sum + (parseFloat(i.price) * i.quantity * (1 + (parseFloat(i.product_gst || 0) / 100))), 0) || parseFloat(order.subtotal || 0);
   const commissionRate  = parseFloat(order.commission_rate || 0);
-  const commissionAmt   = parseFloat(order.commission_amount || (subtotal * commissionRate / 100));
+  const commissionAmt   = parseFloat(order.commission_amount || (rawSubtotal * commissionRate / 100)) * 1.18;
   const tcsAmt          = parseFloat(order.tcs_amount || (subtotal * 1 / 100));
   const platformFeeGST  = Math.round(parseFloat(order.platform_fee || 0) * 1.18);
   const rawSubtotal     = parseFloat(order.subtotal || 0);
@@ -220,7 +220,7 @@ ${order.delivery_address}
               <Ionicons name="checkmark-circle" size={28} color="#16A34A" />
               <View>
                 <Text style={[styles.progressTitle, { color: '#16A34A' }]}>Order Delivered!</Text>
-                <Text style={styles.progressSub}>Payment collected: Rs.{total.toFixed(0)}</Text>
+                <Text style={styles.progressSub}>Payment collected: Rs.{total % 1 === 0 ? total.toFixed(0) : total.toFixed(1)}</Text>
               </View>
             </View>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
@@ -262,7 +262,7 @@ ${order.delivery_address}
             </View>
           ))}
           <View style={styles.divider} />
-          <View style={styles.billRow}><Text style={styles.billTotalLabel}>Items Total (incl. GST)</Text><Text style={styles.billTotalValue}>Rs.{subtotal.toFixed(0)}</Text></View>
+          <View style={styles.billRow}><Text style={styles.billTotalLabel}>Items Total (incl. GST)</Text><Text style={styles.billTotalValue}>Rs.{subtotal.toFixed(2)}</Text></View>
           <View style={styles.billRow}>
             <Text style={styles.billLabel}></Text>
           </View>
