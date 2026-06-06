@@ -398,7 +398,7 @@ export default function CheckoutScreen({ navigation, route }) {
                   )}
                 </View>
               </View>
-              <Text style={styles.orderItemPrice}>₹{item.total.toFixed(0)}</Text>
+              <Text style={styles.orderItemPrice}>₹{(parseFloat(item.price) * item.qty).toFixed(0)}</Text>
             </View>
           ))}
         </View>
