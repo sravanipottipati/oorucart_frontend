@@ -29,6 +29,9 @@ export default function VendorEditShopScreen({ navigation, route }) {
   const [ownerName, setOwnerName]       = useState(shop?.owner_name || '');
   const [address, setAddress]           = useState(shop?.address || '');
   const [town, setTown]                 = useState(shop?.town || '');
+  const [state, setState]               = useState(shop?.state || 'Andhra Pradesh');
+  const [gstin, setGstin]               = useState(shop?.gstin || '');
+  const [pan, setPan]                   = useState(shop?.pan || '');
   const [phone, setPhone]               = useState(shop?.phone_number || '');
   const [category, setCategory]         = useState(shop?.category || 'restaurant');
   const [deliveryRadius, setDeliveryRadius] = useState(shop?.delivery_radius?.toString() || '5');
@@ -69,6 +72,9 @@ export default function VendorEditShopScreen({ navigation, route }) {
         shop_name:       shopName.trim(),
         address:         address.trim(),
         town:            town.trim(),
+        state:           state.trim(),
+        gstin:           gstin.trim(),
+        pan:             pan.trim(),
         phone_number:    phone.trim(),
         description:     description.trim(),
         category:        category,
@@ -115,6 +121,12 @@ export default function VendorEditShopScreen({ navigation, route }) {
 
           <Text style={styles.label}>Town</Text>
           <TextInput style={styles.input} value={town} onChangeText={setTown} placeholder="Enter town" placeholderTextColor="#9CA3AF" />
+        <Text style={styles.label}>State</Text>
+          <TextInput style={styles.input} value={state} onChangeText={setState} placeholder="e.g. Andhra Pradesh" placeholderTextColor="#9CA3AF" />
+        <Text style={styles.label}>GSTIN (optional)</Text>
+          <TextInput style={styles.input} value={gstin} onChangeText={setGstin} placeholder="15-digit GSTIN" placeholderTextColor="#9CA3AF" autoCapitalize="characters" maxLength={15} />
+        <Text style={styles.label}>PAN (optional)</Text>
+          <TextInput style={styles.input} value={pan} onChangeText={setPan} placeholder="10-digit PAN" placeholderTextColor="#9CA3AF" autoCapitalize="characters" maxLength={10} />
         </View>
 
         {/* Category — read only */}

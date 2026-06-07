@@ -31,6 +31,9 @@ export default function VendorRegisterScreen({ navigation }) {
   const [ownerName, setOwnerName] = useState('');
   const [phone,     setPhone]     = useState('');
   const [town,      setTown]      = useState('');
+  const [state,     setState]     = useState('Andhra Pradesh');
+  const [gstin,     setGstin]     = useState('');
+  const [pan,       setPan]       = useState('');
   const [vendorLat, setVendorLat] = useState(null);
   const [vendorLng, setVendorLng] = useState(null);
   const [password,  setPassword]  = useState('');
@@ -142,6 +145,9 @@ export default function VendorRegisterScreen({ navigation }) {
         shop_name:               shopName,
         category:                category,
         town:                    town,
+        state:                   state,
+        gstin:                   gstin || '',
+        pan:                     pan || '',
         phone_number:            phone,
         address:                 town,
         latitude:                vendorLat || null,
@@ -224,6 +230,27 @@ export default function VendorRegisterScreen({ navigation }) {
         </View>
       </View>
 
+      <View style={styles.fieldRow}>
+        <View style={styles.halfField}>
+          <Text style={styles.label}>State *</Text>
+          <TextInput style={styles.input} placeholder="e.g. Andhra Pradesh"
+            placeholderTextColor="#9CA3AF" value={state} onChangeText={setState} />
+        </View>
+        <View style={styles.halfField}>
+          <Text style={styles.label}>GSTIN (optional)</Text>
+          <TextInput style={styles.input} placeholder="15-digit GSTIN"
+            placeholderTextColor="#9CA3AF" value={gstin} onChangeText={setGstin}
+            autoCapitalize="characters" maxLength={15} />
+        </View>
+      </View>
+      <View style={styles.fieldRow}>
+        <View style={styles.halfField}>
+          <Text style={styles.label}>PAN (optional)</Text>
+          <TextInput style={styles.input} placeholder="10-digit PAN"
+            placeholderTextColor="#9CA3AF" value={pan} onChangeText={setPan}
+            autoCapitalize="characters" maxLength={10} />
+        </View>
+      </View>
       <TouchableOpacity style={styles.gpsBtn} onPress={handleDetectLocation} disabled={gpsLoading}>
         {gpsLoading
           ? <ActivityIndicator color="#1669ef" size="small" />

@@ -19,6 +19,7 @@ export default function AddressScreen({ navigation, route }) {
   const [fullAddress, setFullAddr]  = useState('');
   const [town, setTown]             = useState('');
   const [pincode, setPincode]       = useState('');
+  const [state, setState]           = useState('Andhra Pradesh');
   const [saving, setSaving]         = useState(false);
 
   const [locating, setLocating] = useState(false);
@@ -90,6 +91,7 @@ export default function AddressScreen({ navigation, route }) {
     setFullAddr(addr.full_address);
     setTown(addr.town);
     setPincode(addr.pincode || '');
+    setState(addr.state || 'Andhra Pradesh');
     setModal(true);
   };
 
@@ -100,11 +102,11 @@ export default function AddressScreen({ navigation, route }) {
     try {
       if (editAddress) {
         await client.patch(`/users/addresses/${editAddress.id}/`, {
-          label, full_address: fullAddress, town, pincode,
+          label, full_address: fullAddress, town, pincode, state,
         });
       } else {
         await client.post('/users/addresses/', {
-          label, full_address: fullAddress, town, pincode,
+          label, full_address: fullAddress, town, pincode, state,
         });
       }
       setModal(false);
@@ -291,6 +293,16 @@ export default function AddressScreen({ navigation, route }) {
                   maxLength={6}
                 />
               </View>
+            </View>
+            <View style={styles.halfField}>
+              <Text style={styles.fieldLabel}>State</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. Andhra Pradesh"
+                placeholderTextColor="#9CA3AF"
+                value={state}
+                onChangeText={setState}
+              />
             </View>
 
             <TouchableOpacity
