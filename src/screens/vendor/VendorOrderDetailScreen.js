@@ -238,7 +238,7 @@ ${order.delivery_address}
 
         {isDelivered && (
           <View style={[styles.card, { borderWidth: 1, borderColor: '#16A34A' }]}>
-            <Text style={[styles.cardTitle, { color: '#16A34A' }]}>💰 Settlement Breakdown</Text>
+            <Text style={[styles.cardTitle, { color: '#16A34A' }]}>₹ Settlement Breakdown</Text>
             <View style={styles.billRow}><Text style={styles.billLabel}>Items Total (incl. GST)</Text><Text style={styles.billValue}>Rs.{subtotal.toFixed(2)}</Text></View>
             <View style={styles.billRow}><Text style={styles.billLabel}>Commission ({commissionRate}%)</Text><Text style={[styles.billValue, { color: '#DC2626' }]}>- Rs.{commissionAmt.toFixed(2)}</Text></View>
             <View style={styles.billRow}><Text style={styles.billLabel}>TDS (1%)</Text><Text style={[styles.billValue, { color: '#DC2626' }]}>- Rs.{tcsAmt.toFixed(2)}</Text></View>
