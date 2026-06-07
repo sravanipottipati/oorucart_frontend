@@ -22,7 +22,7 @@ export default function ReturnOrderScreen({ navigation, route }) {
     if (!selectedReason) { Alert.alert('Error', 'Please select a reason'); return; }
     setLoading(true);
     try {
-      await client.post(`/orders/${order.id}/return/`, {
+      await client.post(`/orders/${order.id}/refund/`, {
         reason: selectedReason,
         comment: comment,
       });
