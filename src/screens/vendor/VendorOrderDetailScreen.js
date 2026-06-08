@@ -149,7 +149,8 @@ ${order.delivery_address}
   const commissionRate  = parseFloat(order.commission_rate || 0);
   const platformFeeGST  = Math.round(parseFloat(order.platform_fee || 0) * 1.18);
   const rawSubtotal     = parseFloat(order.subtotal || order.items?.reduce((s,i) => s + parseFloat(i.price) * i.quantity, 0) || 0);
-  const commissionAmt   = parseFloat(order.commission_amount || 0) || (rawSubtotal * commissionRate / 100 * 1.18);
+  const commissionBase  = parseFloat(order.commission_amount || (rawSubtotal * commissionRate / 100));
+  const commissionAmt   = parseFloat((commissionBase * 1.18).toFixed(2)); // incl. 18% GST
   const tdsAmt          = parseFloat((rawSubtotal * 1 / 100).toFixed(2));
   const gstTcsAmt       = parseFloat((rawSubtotal * 0.5 / 100).toFixed(2));
   const tcsAmt          = tdsAmt;
