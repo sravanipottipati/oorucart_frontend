@@ -35,7 +35,7 @@ export default function VendorEditShopScreen({ navigation, route }) {
   const [phone, setPhone]               = useState(shop?.phone_number || '');
   const [category, setCategory]         = useState(shop?.category || 'restaurant');
   const [deliveryRadius, setDeliveryRadius] = useState(shop?.delivery_radius?.toString() || '5');
-  const [minOrder, setMinOrder]         = useState(shop?.min_order?.toString() || '100');
+  const [minOrder, setMinOrder]         = useState((shop?.min_order || shop?.min_order_value)?.toString() || '100');
   const [deliveryTime, setDeliveryTime] = useState(shop?.delivery_time || '30 mins');
   const [openTime, setOpenTime]         = useState(shop?.open_time || '9:00 AM');
   const [closeTime, setCloseTime]       = useState(shop?.close_time || '9:00 PM');
