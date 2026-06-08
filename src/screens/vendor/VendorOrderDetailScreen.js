@@ -148,10 +148,12 @@ ${order.delivery_address}
   const subtotal        = order.items?.reduce((sum, i) => sum + (parseFloat(i.price) * i.quantity * (1 + (parseFloat(i.product_gst || 0) / 100))), 0) || parseFloat(order.subtotal || 0);
   const commissionRate  = parseFloat(order.commission_rate || 0);
   const commissionAmt   = parseFloat(order.commission_amount || (rawSubtotal * commissionRate / 100)) * 1.18;
-  const tcsAmt          = parseFloat(order.tcs_amount || (subtotal * 1 / 100));
+  const tdsAmt          = parseFloat(order.tcs_amount || (rawSubtotal * 1 / 100));  // TDS 194-O 1%
+  const gstTcsAmt       = parseFloat((rawSubtotal * 0.5 / 100).toFixed(2));  // GST TCS 0.5%
+  const tcsAmt          = tdsAmt; // kept for backward compat
   const platformFeeGST  = Math.round(parseFloat(order.platform_fee || 0) * 1.18);
   const rawSubtotal     = parseFloat(order.subtotal || 0);
-  const netSettlement   = subtotal - commissionAmt - tcsAmt;
+  const netSettlement   = subtotal - commissionAmt - tdsAmt - gstTcsAmt;
   const deliveryFee = parseFloat(order.delivery_fee || 0);
   const total       = parseFloat(order.total_amount || 0);
   const date        = new Date(order.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -241,7 +243,8 @@ ${order.delivery_address}
             <Text style={[styles.cardTitle, { color: '#16A34A' }]}>₹ Settlement Breakdown</Text>
             <View style={styles.billRow}><Text style={styles.billLabel}>Items Total (incl. GST)</Text><Text style={styles.billValue}>Rs.{subtotal.toFixed(2)}</Text></View>
             <View style={styles.billRow}><Text style={styles.billLabel}>Commission ({commissionRate}%)</Text><Text style={[styles.billValue, { color: '#DC2626' }]}>- Rs.{commissionAmt.toFixed(2)}</Text></View>
-            <View style={styles.billRow}><Text style={styles.billLabel}>TDS (1%)</Text><Text style={[styles.billValue, { color: '#DC2626' }]}>- Rs.{tcsAmt.toFixed(2)}</Text></View>
+            <View style={styles.billRow}><Text style={styles.billLabel}>GST TCS (0.5%)</Text><Text style={[styles.billValue, { color: '#DC2626' }]}>- Rs.{gstTcsAmt.toFixed(2)}</Text></View>
+            <View style={styles.billRow}><Text style={styles.billLabel}>TDS 194-O (1%)</Text><Text style={[styles.billValue, { color: '#DC2626' }]}>- Rs.{tdsAmt.toFixed(2)}</Text></View>
             <View style={styles.divider} />
             <View style={styles.billRow}>
               <Text style={styles.billTotalLabel}>Net Settlement</Text>
