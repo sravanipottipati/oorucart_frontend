@@ -79,6 +79,7 @@ export default function VendorEditShopScreen({ navigation, route }) {
         description:     description.trim(),
         category:        category,
         delivery_radius: parseFloat(deliveryRadius) || 5,
+        min_order:       parseFloat(minOrder) || 100,
         ...(latitude  && { latitude:  parseFloat(latitude)  }),
         ...(longitude && { longitude: parseFloat(longitude) }),
       }, { headers: { Authorization: `Bearer ${token}` } });

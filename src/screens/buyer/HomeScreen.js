@@ -481,7 +481,7 @@ export default function HomeScreen({ navigation, route }) {
             <Text style={styles.trendingBadgeText}>🔥 Trending</Text>
           </View>
           <View style={styles.popularImgBox}>
-            {product.image_url ? <Image source={{ uri: product.image_url }} style={styles.popularImg} resizeMode="cover" /> : <Text style={{ fontSize: 36 }}>🛍️</Text>}
+            {product.image_url ? <Image source={{ uri: product.image_url }} style={styles.popularImg} resizeMode="cover" /> : <Image source={require("../../../assets/default_product.png")} style={styles.popularImg} resizeMode="contain" />}
           </View>
           <Text style={styles.popularName} numberOfLines={2}>{product.name}</Text>
           {product.variants && product.variants.length > 0 && (
