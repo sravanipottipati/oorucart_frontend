@@ -28,6 +28,28 @@ export default function VendorProfileScreen({ navigation }) {
     fetchData();
   }));
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your seller account? This action cannot be undone. We will process your request within 24 hours.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await client.post('/users/delete-account-request/');
+              Alert.alert('Request Submitted', 'Your account deletion request has been submitted. We will delete your account within 24 hours.');
+            } catch (e) {
+              Alert.alert('Error', 'Failed to submit request. Please email contact@univerin.in');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const handleLogout = () => {
     Alert.alert(
       'Logout',
@@ -222,6 +244,10 @@ export default function VendorProfileScreen({ navigation }) {
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={[styles.logoutBtn, { borderColor: '#ef4444', marginTop: 8 }]} onPress={handleDeleteAccount}>
+          <Ionicons name="trash-outline" size={20} color="#ef4444" />
+          <Text style={[styles.logoutText, { color: '#ef4444' }]}>Delete Account</Text>
+        </TouchableOpacity>
         <Text style={styles.version}>Univerin Seller v1.0.0</Text>
 
         <View style={{ height: 100 }} />
