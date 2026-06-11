@@ -54,8 +54,9 @@ export default function CheckoutScreen({ navigation, route }) {
   const [razorpayData, setRazorpayData] = useState(null);
   const [placedOrder, setPlacedOrder]   = useState(null);
 
+  const shopHasGST = !!(shop?.gstin && shop.gstin.trim());
   const cartItems = products.filter(p => cart[p.id] > 0).map(p => ({
-    ...p, qty: cart[p.id], total: cart[p.id] * parseFloat(p.price) * (1 + (parseFloat(p.gst_percentage) || 0) / 100),
+    ...p, qty: cart[p.id], total: cart[p.id] * parseFloat(p.price) * (shopHasGST ? (1 + (parseFloat(p.gst_percentage) || 0) / 100) : 1),
   }));
 
   const subtotal     = cartItems.reduce((sum, item) => sum + item.total, 0);
@@ -407,7 +408,7 @@ export default function CheckoutScreen({ navigation, route }) {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Bill Details</Text>
           <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Items Total (incl. GST)</Text>
+            <Text style={styles.billLabel}>Items Total{shopHasGST ? ' (incl. GST)' : ''}</Text>
             <Text style={styles.billValue}>₹{subtotal % 1 === 0 ? subtotal.toFixed(0) : subtotal.toFixed(1)}</Text>
           </View>
           <View style={styles.billRow}>
