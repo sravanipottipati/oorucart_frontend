@@ -36,6 +36,12 @@ export default function VendorWalletScreen({ navigation }) {
       const downloadRes = await FileSystem.downloadAsync(url, fileUri, {
         headers: { Authorization: token }
       });
+      // Check if response is error (small file = error JSON)
+      const fileInfo = await FileSystem.getInfoAsync(downloadRes.uri);
+      if (fileInfo.size < 1000) {
+        Alert.alert('Not Available', 'TCS Certificate is only available for GST registered sellers.');
+        return;
+      }
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(downloadRes.uri, {
           mimeType: 'application/pdf',
