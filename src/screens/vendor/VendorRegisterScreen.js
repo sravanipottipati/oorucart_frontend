@@ -33,6 +33,7 @@ export default function VendorRegisterScreen({ navigation }) {
   const [town,      setTown]      = useState('');
   const [state,     setState]     = useState('Andhra Pradesh');
   const [gstin,     setGstin]     = useState('');
+  const [gstRegistered, setGstRegistered] = useState(false);
   const [pan,       setPan]       = useState('');
   const [vendorLat, setVendorLat] = useState(null);
   const [vendorLng, setVendorLng] = useState(null);
@@ -237,10 +238,22 @@ export default function VendorRegisterScreen({ navigation }) {
             placeholderTextColor="#9CA3AF" value={state} onChangeText={setState} />
         </View>
         <View style={styles.halfField}>
-          <Text style={styles.label}>GSTIN (optional)</Text>
-          <TextInput style={styles.input} placeholder="15-digit GSTIN"
-            placeholderTextColor="#9CA3AF" value={gstin} onChangeText={setGstin}
-            autoCapitalize="characters" maxLength={15} />
+          <Text style={styles.label}>GST Registered?</Text>
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+            <TouchableOpacity onPress={() => setGstRegistered(true)}
+              style={{ flex:1, padding:10, borderRadius:8, borderWidth:1, borderColor: gstRegistered ? '#1669ef':'#D1D5DB', backgroundColor: gstRegistered ? '#eff6ff':'#fff', alignItems:'center' }}>
+              <Text style={{ color: gstRegistered ? '#1669ef':'#555', fontWeight:'600' }}>Yes</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { setGstRegistered(false); setGstin(''); }}
+              style={{ flex:1, padding:10, borderRadius:8, borderWidth:1, borderColor: !gstRegistered ? '#1669ef':'#D1D5DB', backgroundColor: !gstRegistered ? '#eff6ff':'#fff', alignItems:'center' }}>
+              <Text style={{ color: !gstRegistered ? '#1669ef':'#555', fontWeight:'600' }}>No</Text>
+            </TouchableOpacity>
+          </View>
+          {gstRegistered && (
+            <TextInput style={[styles.input, { marginTop: 8 }]} placeholder="15-digit GSTIN"
+              placeholderTextColor="#9CA3AF" value={gstin} onChangeText={setGstin}
+              autoCapitalize="characters" maxLength={15} />
+          )}
         </View>
       </View>
       <View style={styles.fieldRow}>
