@@ -58,6 +58,50 @@ export default function AdminScreen({ navigation }) {
     }
   };
 
+  const downloadTCSExcel = async () => {
+    try {
+      setDownloading(true);
+      const token = await AsyncStorage.getItem('access_token');
+      const url = `${client.defaults.baseURL}/invoices/export/tcs-excel/?month=${selectedMonth}&year=${selectedYear}`;
+      const fileUri = FileSystem.documentDirectory + `univerin_tcs_${selectedMonth}_${selectedYear}.xlsx`;
+      const downloadRes = await FileSystem.downloadAsync(url, fileUri, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(downloadRes.uri, {
+          mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          dialogTitle: 'Save TCS Report',
+        });
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Download failed. Please try again!');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const downloadTDSExcel = async () => {
+    try {
+      setDownloading(true);
+      const token = await AsyncStorage.getItem('access_token');
+      const url = `${client.defaults.baseURL}/invoices/export/tds-excel/?month=${selectedMonth}&year=${selectedYear}`;
+      const fileUri = FileSystem.documentDirectory + `univerin_tds_${selectedMonth}_${selectedYear}.xlsx`;
+      const downloadRes = await FileSystem.downloadAsync(url, fileUri, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(downloadRes.uri, {
+          mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          dialogTitle: 'Save TDS Report',
+        });
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Download failed. Please try again!');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const StatCard = ({ icon, label, value, color = '#1669ef', bg = '#eff6ff' }) => (
     <View style={[styles.statCard, { backgroundColor: bg }]}>
       <Text style={styles.statIcon}>{icon}</Text>
@@ -173,6 +217,42 @@ export default function AdminScreen({ navigation }) {
                     <Text style={styles.downloadBtnText}>
                       Download {MONTHS[selectedMonth - 1]} {selectedYear} Report
                     </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {/* TCS Export */}
+            <View style={styles.downloadCard}>
+              <Text style={styles.downloadTitle}>📋 TCS Register (GSTR-8)</Text>
+              <Text style={styles.downloadSubtitle}>GST TCS @ 0.5% — GST registered sellers only</Text>
+              <TouchableOpacity
+                style={[styles.downloadBtn, { backgroundColor: '#7c3aed' }, downloading && styles.downloadBtnDisabled]}
+                onPress={downloadTCSExcel}
+                disabled={downloading}
+              >
+                {downloading ? <ActivityIndicator color="#fff" size="small" /> : (
+                  <>
+                    <Ionicons name="download-outline" size={18} color="#fff" />
+                    <Text style={styles.downloadBtnText}>Download TCS {MONTHS[selectedMonth - 1]} {selectedYear}</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {/* TDS Export */}
+            <View style={styles.downloadCard}>
+              <Text style={styles.downloadTitle}>📋 TDS Register (194-O)</Text>
+              <Text style={styles.downloadSubtitle}>TDS @ 1% — All sellers</Text>
+              <TouchableOpacity
+                style={[styles.downloadBtn, { backgroundColor: '#ea580c' }, downloading && styles.downloadBtnDisabled]}
+                onPress={downloadTDSExcel}
+                disabled={downloading}
+              >
+                {downloading ? <ActivityIndicator color="#fff" size="small" /> : (
+                  <>
+                    <Ionicons name="download-outline" size={18} color="#fff" />
+                    <Text style={styles.downloadBtnText}>Download TDS {MONTHS[selectedMonth - 1]} {selectedYear}</Text>
                   </>
                 )}
               </TouchableOpacity>
