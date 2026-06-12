@@ -209,7 +209,7 @@ export default function OrderDetailScreen({ navigation, route }) {
             <Text style={styles.billValue}>₹{subtotal % 1 === 0 ? subtotal.toFixed(0) : subtotal.toFixed(1)}</Text>
           </View>
           <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Delivery Fee (incl. GST)</Text>
+            <Text style={styles.billLabel}>Delivery Fee (incl. 18% GST)</Text>
             {deliveryFee === 0
               ? <Text style={[styles.billValue, { color: '#16A34A' }]}>FREE</Text>
               : <Text style={styles.billValue}>₹{deliveryFee % 1 === 0 ? deliveryFee.toFixed(0) : deliveryFee.toFixed(1)}</Text>
