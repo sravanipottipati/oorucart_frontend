@@ -424,7 +424,7 @@ export default function CheckoutScreen({ navigation, route }) {
             }
           </View>
           <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Platform Fee (incl. GST)</Text>
+            <Text style={styles.billLabel}>Platform Fee (incl. 18% GST)</Text>
             <Text style={styles.billValue}>₹{platformFeeGST}</Text>
           </View>
           <View style={styles.divider} />
