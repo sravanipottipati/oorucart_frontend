@@ -103,7 +103,8 @@ export default function OrderDetailScreen({ navigation, route }) {
   const hasReturn     = order.has_return || false;
   const canCancel     = order.status === 'placed';
   const currentIndex  = STATUSES.indexOf(order.status);
-  const subtotal      = order.items?.reduce((sum, i) => sum + (parseFloat(i.price) * i.quantity * (1 + (parseFloat(i.product_gst || 0) / 100))), 0) || parseFloat(order.subtotal || 0);
+  const shopHasGST    = !!(order.vendor_gstin && order.vendor_gstin.trim());
+  const subtotal      = order.items?.reduce((sum, i) => sum + (parseFloat(i.price) * i.quantity * (shopHasGST ? (1 + (parseFloat(i.product_gst || 0) / 100)) : 1)), 0) || parseFloat(order.subtotal || 0);
   const deliveryFee   = parseFloat(order.delivery_fee || 0) + parseFloat(order.gst_on_delivery || 0);
   const platformFee   = parseFloat((parseFloat(order.platform_fee || 10) * 1.18).toFixed(1));
   const gstOnPlatform = parseFloat(order.gst_on_platform || 0);
@@ -204,7 +205,7 @@ export default function OrderDetailScreen({ navigation, route }) {
           ))}
           <View style={styles.divider} />
           <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Items Total (incl. GST)</Text>
+            <Text style={styles.billLabel}>Items Total{shopHasGST ? ' (incl. GST)' : ''}</Text>
             <Text style={styles.billValue}>₹{subtotal % 1 === 0 ? subtotal.toFixed(0) : subtotal.toFixed(1)}</Text>
           </View>
           <View style={styles.billRow}>
@@ -215,7 +216,7 @@ export default function OrderDetailScreen({ navigation, route }) {
             }
           </View>
           <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Platform Fee (incl. GST)</Text>
+            <Text style={styles.billLabel}>Platform Fee (incl. 18% GST)</Text>
             <Text style={styles.billValue}>₹{platformFee % 1 === 0 ? platformFee.toFixed(0) : platformFee.toFixed(1)}</Text>
           </View>
           <View style={[styles.billRow, styles.billTotal]}>
