@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { Image } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 
 const CATEGORIES = [
   { id: 'restaurant',  label: 'Restaurant',  icon: 'restaurant', color: '#dc2626', bg: '#FEF2F2', commission: 20, mov: 499 },
@@ -36,6 +37,7 @@ export default function VendorRegisterScreen({ navigation }) {
   const [gstRegistered, setGstRegistered] = useState(false);
   const [pan,       setPan]       = useState('');
   const [fssai,     setFssai]     = useState('');
+  const [fssaiCert, setFssaiCert] = useState(null);
   const [vendorLat, setVendorLat] = useState(null);
   const [vendorLng, setVendorLng] = useState(null);
   const [password,  setPassword]  = useState('');
@@ -122,6 +124,19 @@ export default function VendorRegisterScreen({ navigation }) {
   };
 
   // ── Submit ──
+  const pickFssaiCert = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') { Alert.alert('Permission required', 'Please allow access to photos'); return; }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: false,
+        quality: 0.8,
+      });
+      if (!result.canceled) setFssaiCert(result.assets[0]);
+    } catch (err) { Alert.alert('Error', 'Could not pick image'); }
+  };
+
   const handleSubmit = async () => {
     if (!shopName.trim()) return Alert.alert('Error', 'Shop name is required');
     if (!town.trim())     return Alert.alert('Error', 'Town is required');
@@ -160,6 +175,20 @@ export default function VendorRegisterScreen({ navigation }) {
         delivery_radius:         parseFloat(deliveryRadius) || 5.0, // ← NEW
       });
 
+      // Upload FSSAI certificate if provided
+      if (fssaiCert) {
+        try {
+          const formData = new FormData();
+          formData.append('fssai_certificate', {
+            uri: fssaiCert.uri,
+            name: 'fssai_certificate.jpg',
+            type: 'image/jpeg',
+          });
+          await client.patch('/vendors/profile/', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+        } catch (e) { console.log('FSSAI cert upload error:', e.message); }
+      }
       console.log('✅ Vendor registered:', response.data);
 
       Alert.alert(
@@ -270,6 +299,16 @@ export default function VendorRegisterScreen({ navigation }) {
           <TextInput style={styles.input} placeholder="14-digit FSSAI"
             placeholderTextColor="#9CA3AF" value={fssai} onChangeText={setFssai}
             keyboardType="numeric" maxLength={14} />
+      </View>
+      <View style={styles.fieldRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.label}>FSSAI Certificate (optional)</Text>
+          <TouchableOpacity onPress={pickFssaiCert}
+            style={{ borderWidth: 1, borderColor: fssaiCert ? '#16a34a' : '#D1D5DB', borderRadius: 8, padding: 12, alignItems: 'center', backgroundColor: fssaiCert ? '#f0fdf4' : '#fff' }}>
+            <Text style={{ color: fssaiCert ? '#16a34a' : '#9CA3AF', fontWeight: '500' }}>
+              {fssaiCert ? '✅ Certificate selected' : '📎 Upload FSSAI Certificate'}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
       <TouchableOpacity style={styles.gpsBtn} onPress={handleDetectLocation} disabled={gpsLoading}>
