@@ -86,15 +86,38 @@ export default function VendorAddProductScreen({ navigation, route }) {
       const json = await res.json();
       if (json.status === 1) {
         const prod = json.product;
-        if (prod.product_name) setName(prod.product_name);
-        if (prod.brands) setBrand(prod.brands);
-        if (prod.manufacturing_places) setManufacturer(prod.manufacturing_places);
-        if (prod.quantity) setNetWeight(prod.quantity);
-        if (prod.ingredients_text) setIngredients(prod.ingredients_text);
-        if (prod.allergens) setAllergenInfo(prod.allergens.replace(/en:/g, '').replace(/,/g, ', '));
-        Alert.alert('Product Found!', `${prod.product_name || 'Product'} details auto-filled!`);
+        // Product name - prefer English
+        const productName = prod.product_name_en || prod.product_name || '';
+        if (productName) setName(productName);
+        // Brand
+        if (prod.brands) setBrand(prod.brands.split(',')[0].trim());
+        // Manufacturer
+        const mfr = prod.manufacturing_places_tags?.[0] || prod.producer || prod.manufacturing_places || '';
+        if (mfr) setManufacturer(mfr.replace('en:', ''));
+        // Net weight
+        const weight = prod.quantity || prod.net_weight || '';
+        if (weight) setNetWeight(weight);
+        // Ingredients - prefer English
+        const ing = prod.ingredients_text_en || prod.ingredients_text || '';
+        if (ing) setIngredients(ing.substring(0, 500));
+        // Allergens - English only
+        const allergenTags = prod.allergens_tags || [];
+        const allergenEn = allergenTags.map(a => a.replace('en:', '').replace(/-/g, ' ')).join(', ');
+        if (allergenEn) setAllergenInfo(allergenEn);
+        // HSN Code - map category to HSN
+        const categories = prod.categories_tags || [];
+        let hsn = '';
+        if (categories.some(c => c.includes('biscuit') || c.includes('cookie'))) hsn = '1905';
+        else if (categories.some(c => c.includes('chocolate'))) hsn = '1806';
+        else if (categories.some(c => c.includes('dairy') || c.includes('milk'))) hsn = '0401';
+        else if (categories.some(c => c.includes('beverage') || c.includes('drink'))) hsn = '2202';
+        else if (categories.some(c => c.includes('snack') || c.includes('chips'))) hsn = '1905';
+        else if (categories.some(c => c.includes('rice') || c.includes('cereal'))) hsn = '1006';
+        else if (categories.some(c => c.includes('oil'))) hsn = '1511';
+        if (hsn) setHsnCode(hsn);
+        Alert.alert('Product Found!', `${productName || 'Product'} details auto-filled!`);
       } else {
-        Alert.alert('Not Found', 'Product not found. Please fill manually.');
+        Alert.alert('Not Found', 'Product not found in database. Please fill manually.');
       }
     } catch (e) {
       Alert.alert('Error', 'Could not fetch product details.');
