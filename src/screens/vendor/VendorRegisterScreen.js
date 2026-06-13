@@ -35,6 +35,7 @@ export default function VendorRegisterScreen({ navigation }) {
   const [gstin,     setGstin]     = useState('');
   const [gstRegistered, setGstRegistered] = useState(false);
   const [pan,       setPan]       = useState('');
+  const [fssai,     setFssai]     = useState('');
   const [vendorLat, setVendorLat] = useState(null);
   const [vendorLng, setVendorLng] = useState(null);
   const [password,  setPassword]  = useState('');
@@ -149,6 +150,7 @@ export default function VendorRegisterScreen({ navigation }) {
         state:                   state,
         gstin:                   gstin || '',
         pan:                     pan || '',
+        fssai_number:            fssai || '',
         phone_number:            phone,
         address:                 town,
         latitude:                vendorLat || null,
@@ -262,6 +264,12 @@ export default function VendorRegisterScreen({ navigation }) {
           <TextInput style={styles.input} placeholder="10-digit PAN"
             placeholderTextColor="#9CA3AF" value={pan} onChangeText={setPan}
             autoCapitalize="characters" maxLength={10} />
+        </View>
+        <View style={styles.halfField}>
+          <Text style={styles.label}>FSSAI Number (optional)</Text>
+          <TextInput style={styles.input} placeholder="14-digit FSSAI"
+            placeholderTextColor="#9CA3AF" value={fssai} onChangeText={setFssai}
+            keyboardType="numeric" maxLength={14} />
         </View>
       </View>
       <TouchableOpacity style={styles.gpsBtn} onPress={handleDetectLocation} disabled={gpsLoading}>

@@ -32,6 +32,7 @@ export default function VendorEditShopScreen({ navigation, route }) {
   const [state, setState]               = useState(shop?.state || 'Andhra Pradesh');
   const [gstin, setGstin]               = useState(shop?.gstin || '');
   const [pan, setPan]                   = useState(shop?.pan || '');
+  const [fssai, setFssai]               = useState(shop?.fssai_number || '');
   const [phone, setPhone]               = useState(shop?.phone_number || '');
   const [category, setCategory]         = useState(shop?.category || 'restaurant');
   const [deliveryRadius, setDeliveryRadius] = useState(shop?.delivery_radius?.toString() || '5');
@@ -75,6 +76,7 @@ export default function VendorEditShopScreen({ navigation, route }) {
         state:           state.trim(),
         gstin:           gstin.trim(),
         pan:             pan.trim(),
+        fssai_number:    fssai.trim(),
         phone_number:    phone.trim(),
         description:     description.trim(),
         category:        category,
@@ -128,6 +130,8 @@ export default function VendorEditShopScreen({ navigation, route }) {
           <TextInput style={styles.input} value={gstin} onChangeText={setGstin} placeholder="15-digit GSTIN" placeholderTextColor="#9CA3AF" autoCapitalize="characters" maxLength={15} />
         <Text style={styles.label}>PAN (optional)</Text>
           <TextInput style={styles.input} value={pan} onChangeText={setPan} placeholder="10-digit PAN" placeholderTextColor="#9CA3AF" autoCapitalize="characters" maxLength={10} />
+        <Text style={styles.label}>FSSAI Number (optional)</Text>
+          <TextInput style={styles.input} value={fssai} onChangeText={setFssai} placeholder="14-digit FSSAI" placeholderTextColor="#9CA3AF" keyboardType="numeric" maxLength={14} />
         </View>
 
         {/* Category — read only */}
