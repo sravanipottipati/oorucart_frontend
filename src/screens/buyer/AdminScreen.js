@@ -267,6 +267,16 @@ export default function AdminScreen({ navigation }) {
           </View>
         )}
 
+            {/* FSSAI Verification */}
+            <View style={styles.downloadCard}>
+              <Text style={styles.downloadTitle}>🔍 Seller FSSAI Verification</Text>
+              <Text style={styles.downloadSubtitle}>Verify seller FSSAI licenses and approve/reject sellers</Text>
+              <TouchableOpacity style={[styles.downloadBtn, { backgroundColor: '#7c3aed' }]}
+                onPress={() => navigation.navigate('AdminFSSAI')}>
+                <Ionicons name="shield-checkmark-outline" size={18} color="#fff" />
+                <Text style={styles.downloadBtnText}>Open FSSAI Verification Panel</Text>
+              </TouchableOpacity>
+            </View>
         <View style={{ height: 40 }} />
       </ScrollView>
     </View>

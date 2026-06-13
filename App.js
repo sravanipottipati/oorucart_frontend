@@ -26,6 +26,7 @@ import TownSelectionScreen from './src/screens/buyer/TownSelectionScreen';
 import CartScreen from './src/screens/buyer/CartScreen';
 import PrivacyPolicyScreen from './src/screens/buyer/PrivacyPolicyScreen';
 import AdminScreen from './src/screens/buyer/AdminScreen';
+import AdminFSSAIScreen from './src/screens/buyer/AdminFSSAIScreen';
 import TermsAndConditionsScreen from './src/screens/buyer/TermsAndConditionsScreen';
 import RefundPolicyScreen from './src/screens/buyer/RefundPolicyScreen';
 import ContactUsScreen from './src/screens/buyer/ContactUsScreen';
@@ -96,6 +97,7 @@ function AppNavigator() {
         <Stack.Screen name="TownSelection" component={TownSelectionScreen} />
         <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
         <Stack.Screen name="Admin" component={AdminScreen} />
+        <Stack.Screen name="AdminFSSAI" component={AdminFSSAIScreen} />
         <Stack.Screen name="TermsAndConditions" component={TermsAndConditionsScreen} />
         <Stack.Screen name="VendorMapPicker" component={VendorMapPickerScreen} options={{ headerShown: false }} />
         <Stack.Screen name="MapPicker" component={MapPickerScreen} options={{ headerShown: false, presentation: 'fullScreenModal' }} />
