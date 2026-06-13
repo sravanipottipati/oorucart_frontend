@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import client from '../../api/client';
 
@@ -55,6 +56,17 @@ export default function VendorAddProductScreen({ navigation, route }) {
   const [isReturnable, setReturnable] = useState(true);
   const [isCod, setCod]             = useState(true);
   const [image, setImage]           = useState(null);
+  // FSSAI fields
+  const [barcode, setBarcode]         = useState('');
+  const [brand, setBrand]             = useState('');
+  const [manufacturer, setManufacturer] = useState('');
+  const [netWeight, setNetWeight]     = useState('');
+  const [ingredients, setIngredients] = useState('');
+  const [nutritionalInfo, setNutritionalInfo] = useState('');
+  const [allergenInfo, setAllergenInfo] = useState('');
+  const [expiryDate, setExpiryDate]   = useState('');
+  const [showScanner, setShowScanner] = useState(false);
+  const [scannerPermission, requestScannerPermission] = useCameraPermissions();
   const [loading, setLoading]       = useState(false);
   const [variants, setVariants]     = useState([]);
   const [isVeg, setIsVeg]           = useState(true);
@@ -65,6 +77,37 @@ export default function VendorAddProductScreen({ navigation, route }) {
   const addVariant = () => setVariants([...variants, { name: '', mrp: '', price: '', available: true }]);
   const updateVariant = (i, field, val) => { const u = [...variants]; u[i] = { ...u[i], [field]: val }; setVariants(u); };
   const removeVariant = (i) => setVariants(variants.filter((_, idx) => idx !== i));
+
+  const handleBarcodeScanned = async ({ data }) => {
+    setShowScanner(false);
+    setBarcode(data);
+    try {
+      const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${data}.json`);
+      const json = await res.json();
+      if (json.status === 1) {
+        const prod = json.product;
+        if (prod.product_name) setName(prod.product_name);
+        if (prod.brands) setBrand(prod.brands);
+        if (prod.manufacturing_places) setManufacturer(prod.manufacturing_places);
+        if (prod.quantity) setNetWeight(prod.quantity);
+        if (prod.ingredients_text) setIngredients(prod.ingredients_text);
+        if (prod.allergens) setAllergenInfo(prod.allergens.replace(/en:/g, '').replace(/,/g, ', '));
+        Alert.alert('Product Found!', `${prod.product_name || 'Product'} details auto-filled!`);
+      } else {
+        Alert.alert('Not Found', 'Product not found. Please fill manually.');
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Could not fetch product details.');
+    }
+  };
+
+  const openScanner = async () => {
+    if (!scannerPermission?.granted) {
+      const { granted } = await requestScannerPermission();
+      if (!granted) { Alert.alert('Permission required', 'Camera permission needed'); return; }
+    }
+    setShowScanner(true);
+  };
 
   const handlePickImage = async () => {
     Alert.alert('Product Image', 'Choose image source', [
@@ -108,6 +151,10 @@ export default function VendorAddProductScreen({ navigation, route }) {
         gst_percentage: parseFloat(gst) || 0,
         is_available: true, is_returnable: isReturnable,
         is_cod: isCod, is_draft: saveAsDraft, delivery_time: deliveryMins,
+        barcode: barcode || '', brand: brand || '', manufacturer: manufacturer || '',
+        net_weight: netWeight || '', ingredients: ingredients || '',
+        nutritional_info: nutritionalInfo || '', allergen_info: allergenInfo || '',
+        expiry_date: expiryDate || null,
       };
       let productRes;
       if (image) {
@@ -206,6 +253,30 @@ export default function VendorAddProductScreen({ navigation, route }) {
             )}
           </TouchableOpacity>
 
+          {/* Barcode Scanner */}
+          <TouchableOpacity onPress={openScanner}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#eff6ff', borderRadius: 10, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#1669ef' }}>
+            <Ionicons name="barcode-outline" size={22} color="#1669ef" />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: '#1669ef', fontWeight: '700', fontSize: 14 }}>Scan Barcode</Text>
+              <Text style={{ color: '#6b7280', fontSize: 11 }}>{barcode ? `Scanned: ${barcode}` : 'Auto-fill product details from barcode'}</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Barcode Scanner Modal */}
+          {showScanner && (
+            <View style={{ height: 300, borderRadius: 12, overflow: 'hidden', marginBottom: 12 }}>
+              <CameraView style={{ flex: 1 }} facing="back" onBarcodeScanned={handleBarcodeScanned} barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'qr'] }} />
+              <TouchableOpacity onPress={() => setShowScanner(false)}
+                style={{ position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 20, padding: 8 }}>
+                <Ionicons name="close" size={20} color="#fff" />
+              </TouchableOpacity>
+              <View style={{ position: 'absolute', bottom: 8, alignSelf: 'center', backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 8, padding: 8 }}>
+                <Text style={{ color: '#fff', fontSize: 12 }}>Point camera at barcode</Text>
+              </View>
+            </View>
+          )}
+
           {/* Name + HSN */}
           <View style={styles.twoCol}>
             <View style={{ flex: 1 }}>
@@ -221,6 +292,27 @@ export default function VendorAddProductScreen({ navigation, route }) {
           {/* Description */}
           <Text style={styles.fieldLabel}>Short Description</Text>
           <TextInput style={styles.input} placeholder="e.g. Fresh and juicy tomatoes" placeholderTextColor="#9CA3AF" value={description} onChangeText={setDesc} />
+
+          {/* FSSAI Fields */}
+          <Text style={[styles.fieldLabel, { color: '#1669ef', fontWeight: '700', marginTop: 8 }]}>FSSAI Compliance Details</Text>
+          <View style={styles.twoCol}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.fieldLabel}>Brand</Text>
+              <TextInput style={styles.input} placeholder="e.g. Amul" placeholderTextColor="#9CA3AF" value={brand} onChangeText={setBrand} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.fieldLabel}>Net Weight</Text>
+              <TextInput style={styles.input} placeholder="e.g. 500g" placeholderTextColor="#9CA3AF" value={netWeight} onChangeText={setNetWeight} />
+            </View>
+          </View>
+          <Text style={styles.fieldLabel}>Manufacturer</Text>
+          <TextInput style={styles.input} placeholder="e.g. Amul Dairy, Gujarat" placeholderTextColor="#9CA3AF" value={manufacturer} onChangeText={setManufacturer} />
+          <Text style={styles.fieldLabel}>Ingredients</Text>
+          <TextInput style={[styles.input, { height: 60 }]} placeholder="e.g. Milk, Sugar, Cocoa" placeholderTextColor="#9CA3AF" value={ingredients} onChangeText={setIngredients} multiline />
+          <Text style={styles.fieldLabel}>Allergen Info</Text>
+          <TextInput style={styles.input} placeholder="e.g. Contains milk, nuts" placeholderTextColor="#9CA3AF" value={allergenInfo} onChangeText={setAllergenInfo} />
+          <Text style={styles.fieldLabel}>Expiry Date</Text>
+          <TextInput style={styles.input} placeholder="YYYY-MM-DD" placeholderTextColor="#9CA3AF" value={expiryDate} onChangeText={setExpiryDate} />
 
           {/* Category + Subcategory */}
           <View style={styles.twoCol}>
