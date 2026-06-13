@@ -299,6 +299,7 @@ export default function VendorRegisterScreen({ navigation }) {
           <TextInput style={styles.input} placeholder="14-digit FSSAI"
             placeholderTextColor="#9CA3AF" value={fssai} onChangeText={setFssai}
             keyboardType="numeric" maxLength={14} />
+        </View>
       </View>
       <View style={styles.fieldRow}>
         <View style={{ flex: 1 }}>
