@@ -38,6 +38,7 @@ export default function VendorRegisterScreen({ navigation }) {
   const [pan,       setPan]       = useState('');
   const [fssai,     setFssai]     = useState('');
   const [fssaiCert, setFssaiCert] = useState(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [vendorLat, setVendorLat] = useState(null);
   const [vendorLng, setVendorLng] = useState(null);
   const [password,  setPassword]  = useState('');
@@ -140,6 +141,7 @@ export default function VendorRegisterScreen({ navigation }) {
   const handleSubmit = async () => {
     if (!shopName.trim()) return Alert.alert('Error', 'Shop name is required');
     if (!town.trim())     return Alert.alert('Error', 'Town is required');
+    if (!agreedToTerms)   return Alert.alert('Agreement Required', 'Please read and agree to the Seller Agreement before registering.');
 
     setLoading(true);
     try {
@@ -586,14 +588,27 @@ export default function VendorRegisterScreen({ navigation }) {
             <Text style={styles.nextBtnText}>Next →</Text>
           </TouchableOpacity>
         ) : (
+          <>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12, paddingHorizontal: 4 }}>
+            <TouchableOpacity onPress={() => setAgreedToTerms(!agreedToTerms)}
+              style={{ width: 22, height: 22, borderRadius: 4, borderWidth: 2, borderColor: agreedToTerms ? '#1669ef' : '#D1D5DB', backgroundColor: agreedToTerms ? '#1669ef' : '#fff', alignItems: 'center', justifyContent: 'center', marginTop: 2, marginRight: 10 }}>
+              {agreedToTerms && <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>✓</Text>}
+            </TouchableOpacity>
+            <Text style={{ flex: 1, fontSize: 12, color: '#444', lineHeight: 18 }}>
+              I have read and agree to the{' '}
+              <Text style={{ color: '#1669ef', fontWeight: '600' }}>Seller Agreement</Text>
+              {' '}including FSSAI compliance obligations, listing accuracy requirements, and joint liability acknowledgment.
+            </Text>
+          </View>
           <TouchableOpacity
-            style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
-            onPress={handleSubmit} disabled={loading}>
+            style={[styles.submitBtn, (loading || !agreedToTerms) && styles.submitBtnDisabled]}
+            onPress={handleSubmit} disabled={loading || !agreedToTerms}>
             {loading
               ? <ActivityIndicator color="#fff" />
               : <Text style={styles.nextBtnText}>Join as Seller 🎉</Text>
             }
           </TouchableOpacity>
+          </>
         )}
       </View>
 
