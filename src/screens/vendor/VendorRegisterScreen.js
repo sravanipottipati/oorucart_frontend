@@ -7,7 +7,7 @@ import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import { Image } from 'react-native';
+import { Image, Linking } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 const CATEGORIES = [
@@ -596,7 +596,7 @@ export default function VendorRegisterScreen({ navigation }) {
             </TouchableOpacity>
             <Text style={{ flex: 1, fontSize: 12, color: '#444', lineHeight: 18 }}>
               I have read and agree to the{' '}
-              <Text style={{ color: '#1669ef', fontWeight: '600' }}>Seller Agreement</Text>
+              <Text style={{ color: '#1669ef', fontWeight: '600' }} onPress={() => Linking.openURL('https://www.univerin.in/seller-agreement')}>Seller Agreement</Text>
               {' '}including FSSAI compliance obligations, listing accuracy requirements, and joint liability acknowledgment.
             </Text>
           </View>
