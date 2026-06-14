@@ -33,6 +33,7 @@ export default function VendorRegisterScreen({ navigation }) {
   const [phone,     setPhone]     = useState('');
   const [town,      setTown]      = useState('');
   const [state,     setState]     = useState('Andhra Pradesh');
+  const [address,   setAddress]   = useState('');
   const [gstin,     setGstin]     = useState('');
   const [gstRegistered, setGstRegistered] = useState(false);
   const [pan,       setPan]       = useState('');
@@ -88,18 +89,28 @@ export default function VendorRegisterScreen({ navigation }) {
       });
       if (geocode.length > 0) {
         const place = geocode[0];
-        const detectedTown = place.city || place.subregion || place.region || '';
-        if (detectedTown) {
-          setTown(detectedTown);
-          setVendorLat(location.coords.latitude);
-          setVendorLng(location.coords.longitude);
-          Alert.alert('📍 Location Detected!', `Town set to: ${detectedTown}`);
-        } else {
-          Alert.alert('Could not detect town', 'Please enter your town manually.');
-        }
+        const detectedTown    = place.city || place.subregion || place.district || place.region || '';
+        const detectedState   = place.region || '';
+        const detectedAddress = [
+          place.streetNumber,
+          place.street,
+          place.subLocality || place.district,
+          place.postalCode,
+        ].filter(Boolean).join(', ');
+        if (detectedTown)    setTown(detectedTown);
+        if (detectedState)   setState(detectedState);
+        if (detectedAddress) setAddress(detectedAddress);
+        setVendorLat(location.coords.latitude);
+        setVendorLng(location.coords.longitude);
+        Alert.alert(
+          '📍 Location Detected!',
+          `Town: ${detectedTown}\nState: ${detectedState}\nAddress: ${detectedAddress}`
+        );
+      } else {
+        Alert.alert('Could not detect', 'Please enter your address manually.');
       }
     } catch (e) {
-      Alert.alert('Error', 'Could not detect location. Please enter town manually.');
+      Alert.alert('Error', 'Could not detect location. Please enter manually.');
     } finally {
       setGpsLoading(false);
     }
@@ -169,7 +180,7 @@ export default function VendorRegisterScreen({ navigation }) {
         pan:                     pan || '',
         fssai_number:            fssai || '',
         phone_number:            phone,
-        address:                 town,
+        address:                 address || town,
         latitude:                vendorLat || null,
         longitude:               vendorLng || null,
         delivery_type:           deliveryType,
@@ -242,13 +253,13 @@ export default function VendorRegisterScreen({ navigation }) {
       <TextInput style={styles.input} placeholder="Your full name"
         placeholderTextColor="#9CA3AF" value={ownerName} onChangeText={setOwnerName} />
 
+      <TouchableOpacity style={styles.gpsBtn} onPress={handleDetectLocation} disabled={gpsLoading}>
+        {gpsLoading
+          ? <ActivityIndicator color="#1669ef" size="small" />
+          : <Text style={styles.gpsBtnText}>📍 Auto-detect my location</Text>
+        }
+      </TouchableOpacity>
       <View style={styles.row}>
-        <View style={styles.halfField}>
-          <Text style={styles.label}>Mobile *</Text>
-          <TextInput style={styles.input} placeholder="10-digit"
-            placeholderTextColor="#9CA3AF" value={phone} onChangeText={setPhone}
-            keyboardType="phone-pad" maxLength={10} />
-        </View>
         <View style={styles.halfField}>
           <Text style={styles.label}>Town/City *</Text>
           <TextInput
@@ -262,14 +273,19 @@ export default function VendorRegisterScreen({ navigation }) {
             }}
           />
         </View>
-      </View>
-
-      <View style={styles.fieldRow}>
         <View style={styles.halfField}>
           <Text style={styles.label}>State *</Text>
           <TextInput style={styles.input} placeholder="e.g. Andhra Pradesh"
             placeholderTextColor="#9CA3AF" value={state} onChangeText={setState} />
         </View>
+      </View>
+
+      <Text style={styles.label}>Mobile *</Text>
+      <TextInput style={styles.input} placeholder="10-digit"
+        placeholderTextColor="#9CA3AF" value={phone} onChangeText={setPhone}
+        keyboardType="phone-pad" maxLength={10} />
+
+      <View style={styles.fieldRow}>
         <View style={styles.halfField}>
           <Text style={styles.label}>GST Registered?</Text>
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
@@ -314,12 +330,7 @@ export default function VendorRegisterScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       </View>
-      <TouchableOpacity style={styles.gpsBtn} onPress={handleDetectLocation} disabled={gpsLoading}>
-        {gpsLoading
-          ? <ActivityIndicator color="#1669ef" size="small" />
-          : <Text style={styles.gpsBtnText}>📍 Auto-detect my location</Text>
-        }
-      </TouchableOpacity>
+
 
       {town && vendorLat ? (
         <View style={styles.townDetected}>
