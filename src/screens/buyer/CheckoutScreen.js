@@ -147,26 +147,37 @@ export default function CheckoutScreen({ navigation, route }) {
         quantity:   item.qty,
         price:      parseFloat(item.price).toFixed(2),
       }));
-      const res = await client.post('/orders/place/', {
-        vendor_id:        shop.id,
-        items:            orderItems,
-        delivery_address: address,
-        payment_mode:     payment,
-        notes:            note,
-        delivery_fee:     deliveryFeeGST,
-        total:            Math.round(total),
-      });
-      const order = res.data.order;
+
       if (payment === 'online') {
-        // Store order details but show Razorpay first
-        const payRes = await client.post('/orders/payment/create/', { order_id: order.id });
-        setPlacedOrder(order);
+        // For online payment: Create Razorpay order FIRST, no Univerin order yet
+        const payRes = await client.post('/orders/payment/create-razorpay/', {
+          amount: Math.round(total),
+          shop_name: shop.shop_name,
+        });
+        // Store order data to use after payment
+        setPlacedOrder({
+          orderItems,
+          vendor_id: shop.id,
+          delivery_address: address,
+          notes: note,
+          delivery_fee: deliveryFeeGST,
+          total: Math.round(total),
+        });
         setRazorpayData(payRes.data);
         setShowRazorpay(true);
-        // Don't clear cart yet - clear only after payment success
       } else {
+        // COD: Place order directly
+        const res = await client.post('/orders/place/', {
+          vendor_id:        shop.id,
+          items:            orderItems,
+          delivery_address: address,
+          payment_mode:     'cod',
+          notes:            note,
+          delivery_fee:     deliveryFeeGST,
+          total:            Math.round(total),
+        });
         clearShopCart(shop.id);
-        navigation.replace('OrderSuccess', { order, calculatedTotal: total });
+        navigation.replace('OrderSuccess', { order: res.data.order, calculatedTotal: total });
       }
     } catch (e) {
       console.log('ORDER ERROR:', JSON.stringify(e.response?.data), e.message);
@@ -180,25 +191,32 @@ export default function CheckoutScreen({ navigation, route }) {
   const handleRazorpayResponse = async (data) => {
     try {
       if (data.razorpay_payment_id) {
-        await client.post('/orders/payment/verify/', {
+        // Payment success! Now place the order
+        const res = await client.post('/orders/payment/place-after-payment/', {
           razorpay_order_id:   data.razorpay_order_id,
           razorpay_payment_id: data.razorpay_payment_id,
           razorpay_signature:  data.razorpay_signature,
-          order_id:            placedOrder.id,
+          order_data: {
+            vendor_id:        placedOrder.vendor_id,
+            items:            placedOrder.orderItems,
+            delivery_address: placedOrder.delivery_address,
+            notes:            placedOrder.notes,
+            delivery_fee:     placedOrder.delivery_fee,
+            total:            placedOrder.total,
+          },
         });
         clearShopCart(shop.id);
         setShowRazorpay(false);
-        navigation.replace('OrderSuccess', { order: placedOrder, calculatedTotal: total });
+        navigation.replace('OrderSuccess', { order: res.data.order, calculatedTotal: total });
       } else {
-        await client.post('/orders/payment/failed/', { order_id: placedOrder.id });
+        // Payment failed - no order to cancel
         setShowRazorpay(false);
-        Alert.alert('Payment Failed', 'Your payment failed. Order placed as Cash on Delivery.', [
-          { text: 'OK', onPress: () => navigation.replace('OrderSuccess', { order: placedOrder, calculatedTotal: total }) }
-        ]);
+        Alert.alert('Payment Failed', 'Your payment failed. Please try again.');
       }
     } catch (e) {
+      console.log('Razorpay response error:', e.message);
       setShowRazorpay(false);
-      navigation.replace('OrderSuccess', { order: placedOrder, calculatedTotal: total });
+      Alert.alert('Error', 'Something went wrong. Please try again.');
     }
   };
 
@@ -269,12 +287,9 @@ export default function CheckoutScreen({ navigation, route }) {
     return (
       <View style={{ flex: 1 }}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={async () => {
+          <TouchableOpacity onPress={() => {
             setShowRazorpay(false);
-            try {
-              await client.post(`/orders/${placedOrder.id}/cancel/`, { reason: 'Payment cancelled by user' });
-            } catch (e) { console.log('Cancel error:', e.message); }
-            Alert.alert('Payment Cancelled', 'Your order has been cancelled.');
+            Alert.alert('Payment Cancelled', 'Payment was cancelled. No order was placed.');
           }} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color="#111" />
           </TouchableOpacity>
@@ -288,11 +303,7 @@ export default function CheckoutScreen({ navigation, route }) {
               const data = JSON.parse(event.nativeEvent.data);
               if (data.cancelled) {
                 setShowRazorpay(false);
-                // Cancel the order if payment cancelled
-                try {
-                  await client.post(`/orders/${placedOrder.id}/cancel/`, { reason: 'Payment cancelled by user' });
-                } catch (cancelErr) { console.log('Cancel order error:', cancelErr.message); }
-                Alert.alert('Payment Cancelled', 'Your payment was cancelled. Order has been cancelled.');
+                Alert.alert('Payment Cancelled', 'Payment was cancelled. No order was placed.');
               } else {
                 handleRazorpayResponse(data);
               }
