@@ -267,7 +267,13 @@ export default function CheckoutScreen({ navigation, route }) {
     return (
       <View style={{ flex: 1 }}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => setShowRazorpay(false)} style={styles.backBtn}>
+          <TouchableOpacity onPress={async () => {
+            setShowRazorpay(false);
+            try {
+              await client.post(`/orders/${placedOrder.id}/cancel/`, { reason: 'Payment cancelled by user' });
+            } catch (e) { console.log('Cancel error:', e.message); }
+            Alert.alert('Payment Cancelled', 'Your order has been cancelled.');
+          }} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color="#111" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Pay Rs.{total.toFixed(0)}</Text>
@@ -280,7 +286,11 @@ export default function CheckoutScreen({ navigation, route }) {
               const data = JSON.parse(event.nativeEvent.data);
               if (data.cancelled) {
                 setShowRazorpay(false);
-                Alert.alert('Payment Cancelled', 'Your payment was cancelled.');
+                // Cancel the order if payment cancelled
+                try {
+                  await client.post(`/orders/${placedOrder.id}/cancel/`, { reason: 'Payment cancelled by user' });
+                } catch (cancelErr) { console.log('Cancel order error:', cancelErr.message); }
+                Alert.alert('Payment Cancelled', 'Your payment was cancelled. Order has been cancelled.');
               } else {
                 handleRazorpayResponse(data);
               }
