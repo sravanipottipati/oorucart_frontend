@@ -14,10 +14,12 @@ export default function LoginScreen({ navigation }) {
 
   const handleLogin = async () => {
     if (!phone || !password) return Alert.alert('Error', 'Please fill all fields');
-    if (phone.length !== 10) return Alert.alert('Error', 'Enter a valid 10-digit number');
+    const cleanPhone = phone.replace(/^\+91/, '').replace(/\s/g, '');
+    if (cleanPhone.length !== 10) return Alert.alert('Error', 'Enter a valid 10-digit number');
+    const phoneToUse = cleanPhone;
     setLoading(true);
     try {
-      const user = await login(phone, password);
+      const user = await login(phoneToUse, password);
       if (user.user_type === 'vendor') {
         navigation.replace('VendorHome');
       } else if (user.user_type === 'buyer') {
