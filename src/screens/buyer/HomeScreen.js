@@ -239,7 +239,8 @@ export default function HomeScreen({ navigation, route }) {
     useCallback(() => {
       const currentTown = user?.town || 'Nellore';
       if (currentTown !== town) setTown(currentTown);
-      setLoading(true);
+      // Only show loading spinner if no shops loaded yet
+      if (shops.length === 0) setLoading(true);
       fetchShops(currentTown);
       fetchCartFromDb();
       fetchPopularProducts(currentTown);
