@@ -256,7 +256,6 @@ export default function CheckoutScreen({ navigation, route }) {
       }
     };
     var rzp = new Razorpay(options);
-    rzp.open();
     rzp.on('payment.failed', function(response) {
       window.ReactNativeWebView.postMessage(JSON.stringify({ failed: true, error: response.error.description }));
     });
@@ -291,6 +290,10 @@ export default function CheckoutScreen({ navigation, route }) {
           javaScriptEnabled
           domStorageEnabled
           startInLoadingState
+          mixedContentMode="always"
+          originWhitelist={['*']}
+          allowsInlineMediaPlayback
+          mediaPlaybackRequiresUserAction={false}
           renderLoading={() => (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
               <ActivityIndicator size="large" color="#1669ef" />
