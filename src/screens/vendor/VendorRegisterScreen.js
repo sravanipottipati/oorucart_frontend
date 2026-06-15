@@ -156,14 +156,18 @@ export default function VendorRegisterScreen({ navigation }) {
 
     setLoading(true);
     try {
-      // Step 1 — Register user account
-      await client.post('/users/register/', {
-        full_name:    ownerName,
-        phone_number: phone,
-        password:     password,
-        user_type:    'vendor',
-      });
-
+      // Step 1 — Register user account (skip if already exists)
+      try {
+        await client.post('/users/register/', {
+          full_name:    ownerName,
+          phone_number: phone,
+          password:     password,
+          user_type:    'vendor',
+        });
+      } catch (regErr) {
+        const errMsg = JSON.stringify(regErr.response?.data || '');
+        if (!errMsg.includes('already') && !errMsg.includes('exists')) throw regErr;
+      }
       // Step 2 — Login
       await login(phone, password);
 
