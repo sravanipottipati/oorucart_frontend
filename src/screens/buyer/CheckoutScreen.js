@@ -176,6 +176,7 @@ export default function CheckoutScreen({ navigation, route }) {
         });
         setPlacedOrder(order);
         setRazorpayData(payRes.data);
+        console.log('Razorpay data:', JSON.stringify(payRes.data));
         setShowRazorpay(true);
         clearShopCart(shop.id);
       } else {
@@ -221,48 +222,65 @@ export default function CheckoutScreen({ navigation, route }) {
   // ── Razorpay WebView HTML ──────────────────────────────────────────────────
   const getRazorpayHTML = () => {
     if (!razorpayData) return '';
-    return `
-<!DOCTYPE html>
+    return `<!DOCTYPE html>
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #f8f9fa; font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; flex-direction: column; }
+    .loader { text-align: center; padding: 20px; }
+    .loader p { color: #666; font-size: 16px; margin-top: 10px; }
+    .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #1669ef; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
 </head>
-<body style="margin:0;background:#fff;display:flex;align-items:center;justify-content:center;height:100vh;">
-  <div style="text-align:center;font-family:sans-serif;">
-    <p style="color:#666;font-size:16px;">Opening payment...</p>
+<body>
+  <div class="loader">
+    <div class="spinner"></div>
+    <p>Opening payment...</p>
   </div>
   <script>
-    var options = {
-      key:         '${razorpayData.key_id}',
-      amount:      ${razorpayData.amount},
-      currency:    '${razorpayData.currency}',
-      name:        'Univerin',
-      description: 'Order from ${razorpayData.shop_name}',
-      order_id:    '${razorpayData.razorpay_order_id}',
-      prefill: { contact: user?.phone_number || '' },
-      theme: { color: '#1669ef' },
-      handler: function(response) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({
-          razorpay_payment_id: response.razorpay_payment_id,
-          razorpay_order_id:   response.razorpay_order_id,
-          razorpay_signature:  response.razorpay_signature,
-        }));
-      },
-      modal: {
-        ondismiss: function() {
-          window.ReactNativeWebView.postMessage(JSON.stringify({ cancelled: true }));
-        }
-      }
-    };
-    var rzp = new Razorpay(options);
-    rzp.on('payment.failed', function(response) {
-      window.ReactNativeWebView.postMessage(JSON.stringify({ failed: true, error: response.error.description }));
-    });
-    rzp.open();
+    function loadRazorpay() {
+      var script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = function() {
+        var options = {
+          key: '${razorpayData.key_id}',
+          amount: ${razorpayData.amount},
+          currency: '${razorpayData.currency}',
+          name: 'Univerin',
+          description: 'Order from ${razorpayData.shop_name}',
+          order_id: '${razorpayData.razorpay_order_id}',
+          theme: { color: '#1669ef' },
+          handler: function(response) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+            }));
+          },
+          modal: {
+            ondismiss: function() {
+              window.ReactNativeWebView.postMessage(JSON.stringify({ cancelled: true }));
+            }
+          }
+        };
+        var rzp = new Razorpay(options);
+        rzp.on('payment.failed', function(response) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ failed: true, error: response.error.description }));
+        });
+        rzp.open();
+      };
+      script.onerror = function() {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ error: 'Failed to load Razorpay' }));
+      };
+      document.head.appendChild(script);
+    }
+    window.onload = loadRazorpay;
   </script>
 </body>
-</html>`;
+</html>\`;
   };
 
   // ── Razorpay WebView ───────────────────────────────────────────────────────
@@ -279,21 +297,27 @@ export default function CheckoutScreen({ navigation, route }) {
         <WebView
           source={{ html: getRazorpayHTML() }}
           onMessage={(event) => {
-            const data = JSON.parse(event.nativeEvent.data);
-            if (data.cancelled) {
-              setShowRazorpay(false);
-              Alert.alert('Payment Cancelled', 'Your payment was cancelled.');
-            } else {
-              handleRazorpayResponse(data);
-            }
+            try {
+              const data = JSON.parse(event.nativeEvent.data);
+              if (data.cancelled) {
+                setShowRazorpay(false);
+                Alert.alert('Payment Cancelled', 'Your payment was cancelled.');
+              } else {
+                handleRazorpayResponse(data);
+              }
+            } catch(e) { console.log('WebView message error:', e); }
           }}
-          javaScriptEnabled
-          domStorageEnabled
-          startInLoadingState
+          onError={(e) => console.log('WebView error:', e.nativeEvent)}
+          onHttpError={(e) => console.log('WebView HTTP error:', e.nativeEvent)}
+          onLoadEnd={() => console.log('WebView loaded!')}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          startInLoadingState={true}
           mixedContentMode="always"
           originWhitelist={['*']}
-          allowsInlineMediaPlayback
+          allowsInlineMediaPlayback={true}
           mediaPlaybackRequiresUserAction={false}
+          userAgent="Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/91.0.4472.120 Mobile Safari/537.36"
           renderLoading={() => (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
               <ActivityIndicator size="large" color="#1669ef" />
