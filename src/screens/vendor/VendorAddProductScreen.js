@@ -313,28 +313,28 @@ export default function VendorAddProductScreen({ navigation, route }) {
           </View>
 
           {/* Description */}
-          <Text style={styles.fieldLabel}>Short Description</Text>
+          <Text style={styles.fieldLabel}>Short Description <Text style={styles.optional}>(optional)</Text></Text>
           <TextInput style={styles.input} placeholder="e.g. Fresh and juicy tomatoes" placeholderTextColor="#9CA3AF" value={description} onChangeText={setDesc} />
 
           {/* FSSAI Fields */}
           <Text style={[styles.fieldLabel, { color: '#1669ef', fontWeight: '700', marginTop: 8 }]}>FSSAI Compliance Details</Text>
           <View style={styles.twoCol}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.fieldLabel}>Brand</Text>
+              <Text style={styles.fieldLabel}>Brand <Text style={styles.optional}>(optional)</Text></Text>
               <TextInput style={styles.input} placeholder="e.g. Amul" placeholderTextColor="#9CA3AF" value={brand} onChangeText={setBrand} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.fieldLabel}>Net Weight</Text>
+              <Text style={styles.fieldLabel}>Net Weight <Text style={styles.optional}>(optional)</Text></Text>
               <TextInput style={styles.input} placeholder="e.g. 500g" placeholderTextColor="#9CA3AF" value={netWeight} onChangeText={setNetWeight} />
             </View>
           </View>
-          <Text style={styles.fieldLabel}>Manufacturer</Text>
+          <Text style={styles.fieldLabel}>Manufacturer <Text style={styles.optional}>(optional)</Text></Text>
           <TextInput style={styles.input} placeholder="e.g. Amul Dairy, Gujarat" placeholderTextColor="#9CA3AF" value={manufacturer} onChangeText={setManufacturer} />
-          <Text style={styles.fieldLabel}>Ingredients</Text>
+          <Text style={styles.fieldLabel}>Ingredients <Text style={styles.optional}>(optional)</Text></Text>
           <TextInput style={[styles.input, { height: 60 }]} placeholder="e.g. Milk, Sugar, Cocoa" placeholderTextColor="#9CA3AF" value={ingredients} onChangeText={setIngredients} multiline />
-          <Text style={styles.fieldLabel}>Allergen Info</Text>
+          <Text style={styles.fieldLabel}>Allergen Info <Text style={styles.optional}>(optional)</Text></Text>
           <TextInput style={styles.input} placeholder="e.g. Contains milk, nuts" placeholderTextColor="#9CA3AF" value={allergenInfo} onChangeText={setAllergenInfo} />
-          <Text style={styles.fieldLabel}>Expiry Date</Text>
+          <Text style={styles.fieldLabel}>Expiry Date <Text style={styles.optional}>(optional)</Text></Text>
           <TextInput style={styles.input} placeholder="YYYY-MM-DD" placeholderTextColor="#9CA3AF" value={expiryDate} onChangeText={setExpiryDate} />
 
           {/* Category + Subcategory */}
@@ -441,7 +441,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
           </TouchableOpacity>
 
           {/* Delivery Time */}
-          <Text style={styles.fieldLabel}>Delivery Time</Text>
+          <Text style={styles.fieldLabel}>Delivery Time <Text style={styles.optional}>(optional)</Text></Text>
           <TouchableOpacity style={styles.dropdown} onPress={() => setShowTimePicker(!showTimePicker)}>
             <Text style={styles.dropdownText}>{deliveryTime}</Text>
             <Ionicons name="chevron-down" size={16} color="#888" />
