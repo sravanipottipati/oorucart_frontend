@@ -219,13 +219,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
           const mapped = SHOP_TO_PRODUCT_CATEGORY[shopCategory];
           if (mapped) { setCategory(mapped.key); return; }
         }
-        // Try AsyncStorage
-        const stored = await AsyncStorage.getItem('shop_category');
-        if (stored) {
-          const mapped = SHOP_TO_PRODUCT_CATEGORY[stored];
-          if (mapped) { setCategory(mapped.key); return; }
-        }
-        // Fallback: fetch directly
+        // Always fetch fresh from API
         const res = await client.get('/vendors/myshop/');
         const shopCat = res.data.category;
         await AsyncStorage.setItem('shop_category', shopCat || '');
