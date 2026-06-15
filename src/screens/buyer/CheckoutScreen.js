@@ -158,11 +158,12 @@ export default function CheckoutScreen({ navigation, route }) {
       });
       const order = res.data.order;
       if (payment === 'online') {
+        // Store order details but show Razorpay first
         const payRes = await client.post('/orders/payment/create/', { order_id: order.id });
         setPlacedOrder(order);
         setRazorpayData(payRes.data);
         setShowRazorpay(true);
-        clearShopCart(shop.id);
+        // Don't clear cart yet - clear only after payment success
       } else {
         clearShopCart(shop.id);
         navigation.replace('OrderSuccess', { order, calculatedTotal: total });
@@ -185,6 +186,7 @@ export default function CheckoutScreen({ navigation, route }) {
           razorpay_signature:  data.razorpay_signature,
           order_id:            placedOrder.id,
         });
+        clearShopCart(shop.id);
         setShowRazorpay(false);
         navigation.replace('OrderSuccess', { order: placedOrder, calculatedTotal: total });
       } else {
