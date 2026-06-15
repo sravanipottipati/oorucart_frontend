@@ -194,11 +194,15 @@ export default function VendorAddProductScreen({ navigation, route }) {
         const productId = productRes.data.product.id;
         for (const v of variants) {
           if (v.name.trim() && v.price.trim()) {
-            await client.post(`/vendors/products/${productId}/variants/`, {
-              name: v.name.trim(), price: parseFloat(v.price),
-              mrp: v.mrp ? parseFloat(v.mrp) : null,
-              stock_quantity: v.available ? 100 : 0, is_available: v.available,
-            }, { headers: { Authorization: `Bearer ${token}` } });
+            try {
+              await client.post(`/vendors/products/${productId}/variants/`, {
+                name: v.name.trim(), price: parseFloat(v.price),
+                mrp: v.mrp ? parseFloat(v.mrp) : null,
+                stock_quantity: v.available ? 100 : 0, is_available: v.available,
+              }, { headers: { Authorization: `Bearer ${token}` } });
+            } catch (variantErr) {
+              console.log('Variant save error:', variantErr.message);
+            }
           }
         }
       }
@@ -207,7 +211,8 @@ export default function VendorAddProductScreen({ navigation, route }) {
         { text: 'OK', onPress: () => { if (onGoBack) onGoBack(); navigation.goBack(); } },
       ]);
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.error || 'Failed to save product');
+      console.log('Product save error:', JSON.stringify(e.response?.data), e.message);
+      Alert.alert('Error', e.response?.data?.error || e.response?.data?.price?.[0] || 'Failed to save product');
     } finally { setLoading(false); }
   };
 
