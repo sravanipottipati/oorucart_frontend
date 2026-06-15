@@ -182,7 +182,14 @@ export default function VendorAddProductScreen({ navigation, route }) {
       let productRes;
       if (image) {
         const formData = new FormData();
-        Object.entries(productData).forEach(([k, v]) => { if (v !== null && v !== undefined) formData.append(k, String(v)); });
+        Object.entries(productData).forEach(([k, v]) => { 
+          if (v !== null && v !== undefined && v !== '') {
+            // Ensure numeric fields are sent correctly
+            if (typeof v === 'number') formData.append(k, v.toString());
+            else if (typeof v === 'boolean') formData.append(k, v ? 'true' : 'false');
+            else formData.append(k, String(v));
+          }
+        });
         formData.append('image', { uri: image.uri, name: 'product_image.jpg', type: 'image/jpeg' });
         productRes = await client.post('/vendors/products/add/', formData, {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
