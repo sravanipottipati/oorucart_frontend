@@ -323,10 +323,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
               <Text style={styles.fieldLabel}>Brand <Text style={styles.optional}>(optional)</Text></Text>
               <TextInput style={styles.input} placeholder="e.g. Amul" placeholderTextColor="#9CA3AF" value={brand} onChangeText={setBrand} />
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.fieldLabel}>Net Weight <Text style={styles.optional}>(optional)</Text></Text>
-              <TextInput style={styles.input} placeholder="e.g. 500g" placeholderTextColor="#9CA3AF" value={netWeight} onChangeText={setNetWeight} />
-            </View>
+
           </View>
           <Text style={styles.fieldLabel}>Manufacturer <Text style={styles.optional}>(optional)</Text></Text>
           <TextInput style={styles.input} placeholder="e.g. Amul Dairy, Gujarat" placeholderTextColor="#9CA3AF" value={manufacturer} onChangeText={setManufacturer} />
