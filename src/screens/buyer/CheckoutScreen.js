@@ -256,6 +256,7 @@ export default function CheckoutScreen({ navigation, route }) {
       }
     };
     var rzp = new Razorpay(options);
+    rzp.open();
     rzp.on('payment.failed', function(response) {
       window.ReactNativeWebView.postMessage(JSON.stringify({ failed: true, error: response.error.description }));
     });
