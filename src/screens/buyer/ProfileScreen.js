@@ -169,6 +169,7 @@ export default function ProfileScreen({ navigation }) {
     }
   };
 
+  const isAdmin = user?.is_staff || user?.is_superuser || false;
   const menuItems = [
     { icon: '👤', label: 'Edit Profile',   screen: 'EditProfile' },
     { icon: '📍', label: 'My Addresses',   screen: 'Address'     },
@@ -178,6 +179,7 @@ export default function ProfileScreen({ navigation }) {
     { icon: '📋', label: 'Terms & Conditions', screen: 'TermsAndConditions' },
     { icon: '↩️', label: 'Refund Policy', screen: 'RefundPolicy' },
     { icon: '📞', label: 'Contact Us', screen: 'ContactUs' },
+    ...(isAdmin ? [{ icon: '🛡️', label: 'Admin Panel', screen: 'Admin' }] : []),
   ];
 
   return (
