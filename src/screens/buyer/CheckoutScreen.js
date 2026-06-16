@@ -289,7 +289,9 @@ export default function CheckoutScreen({ navigation, route }) {
         <View style={styles.header}>
           <TouchableOpacity onPress={() => {
             setShowRazorpay(false);
-            Alert.alert('Payment Cancelled', 'Payment was cancelled. No order was placed.');
+            Alert.alert('Payment Cancelled', 'Payment was cancelled. No order was placed.', [
+              { text: 'OK', onPress: () => navigation.goBack() }
+            ]);
           }} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color="#111" />
           </TouchableOpacity>
@@ -303,7 +305,9 @@ export default function CheckoutScreen({ navigation, route }) {
               const data = JSON.parse(event.nativeEvent.data);
               if (data.cancelled) {
                 setShowRazorpay(false);
-                Alert.alert('Payment Cancelled', 'Payment was cancelled. No order was placed.');
+                Alert.alert('Payment Cancelled', 'Payment was cancelled. No order was placed.', [
+                  { text: 'OK', onPress: () => navigation.goBack() }
+                ]);
               } else {
                 handleRazorpayResponse(data);
               }
