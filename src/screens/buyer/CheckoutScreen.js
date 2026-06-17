@@ -163,7 +163,13 @@ export default function CheckoutScreen({ navigation, route }) {
           delivery_fee: deliveryFeeGST,
           total: Math.round(total),
         });
-        setRazorpayData(payRes.data);
+        console.log('USER OBJECT:', JSON.stringify(user));
+        console.log('PREFILL CONTACT:', user?.phone_number);
+        setRazorpayData({
+          ...payRes.data,
+          prefill_contact: user?.phone_number || '',
+          prefill_name: user?.full_name || '',
+        });
         setShowRazorpay(true);
       } else {
         // COD: Place order directly
@@ -222,6 +228,7 @@ export default function CheckoutScreen({ navigation, route }) {
 
   const getRazorpayHTML = () => {
     if (!razorpayData) return '';
+    console.log('RAZORPAY DATA:', JSON.stringify(razorpayData));
     return `<!DOCTYPE html>
 <html>
 <head>
@@ -253,6 +260,10 @@ export default function CheckoutScreen({ navigation, route }) {
           description: 'Order from ${razorpayData.shop_name}',
           order_id: '${razorpayData.razorpay_order_id}',
           theme: { color: '#1669ef' },
+          prefill: {
+            contact: '${razorpayData.prefill_contact || ""}',
+            name: '${razorpayData.prefill_name || ""}',
+          },
           handler: function(response) {
             window.ReactNativeWebView.postMessage(JSON.stringify({
               razorpay_payment_id: response.razorpay_payment_id,

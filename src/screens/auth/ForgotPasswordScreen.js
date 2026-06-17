@@ -60,13 +60,7 @@ export default function ForgotPasswordScreen({ navigation }) {
     if (val && index < 5) {
       otpRefs.current[index + 1]?.focus();
     }
-    // Auto submit when all 6 digits filled
-    if (val && index === 5) {
-      const fullOtp = [...newOtp].join('');
-      if (fullOtp.length === 6) {
-        setStep(3);
-      }
-    }
+
   };
 
   const handleOtpKeyPress = (e, index) => {
@@ -91,6 +85,7 @@ export default function ForgotPasswordScreen({ navigation }) {
 
   const handleResetPassword = async () => {
     const otpCode = otp.join('');
+    console.log('OTP being sent:', otpCode, 'Phone:', phone);
     if (otpCode.length !== 6) return alert('Please enter the complete OTP');
     if (!newPassword.trim() || newPassword.length < 6) return alert('Password must be at least 6 characters');
     if (newPassword !== confirmPassword) return alert('Passwords do not match');
@@ -195,10 +190,14 @@ export default function ForgotPasswordScreen({ navigation }) {
 
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={() => setStep(3)}
+              onPress={() => {
+                const otpCode = otp.join('');
+                if (otpCode.length !== 6) return alert('Please enter complete OTP');
+                setStep(3);
+              }}
               disabled={loading || otp.join('').length !== 6}
             >
-              <Text style={styles.buttonText}>Verify OTP</Text>
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Verify OTP</Text>}
             </TouchableOpacity>
 
             {/* Resend Timer */}

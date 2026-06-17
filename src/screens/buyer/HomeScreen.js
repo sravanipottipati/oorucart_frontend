@@ -146,6 +146,8 @@ export default function HomeScreen({ navigation, route }) {
   const [showProductModal, setShowProductModal] = useState(false);
   const bannerRef                     = useRef(null);
   const isFetchingRef                 = useRef(false);
+  const lastFetchRef                  = useRef(null);
+  const lastTownRef                   = useRef(null);
 
   const { user }                                 = useAuth();
   const { shop: cartShop, cartCount, cartTotal, fetchCartFromDb, carts, addToCart, removeFromCart } = useCart();
@@ -239,11 +241,19 @@ export default function HomeScreen({ navigation, route }) {
     useCallback(() => {
       const currentTown = user?.town || 'Nellore';
       if (currentTown !== town) setTown(currentTown);
-      // Only show loading spinner if no shops loaded yet
-      if (shops.length === 0) setLoading(true);
-      fetchShops(currentTown);
       fetchCartFromDb();
-      fetchPopularProducts(currentTown);
+
+      const now = Date.now();
+      const townChanged = lastTownRef.current !== currentTown;
+      const cacheExpired = !lastFetchRef.current || (now - lastFetchRef.current) > 5 * 60 * 1000;
+
+      if (townChanged || cacheExpired || shops.length === 0) {
+        if (shops.length === 0) setLoading(true);
+        lastTownRef.current = currentTown;
+        lastFetchRef.current = now;
+        fetchShops(currentTown);
+        fetchPopularProducts(currentTown);
+      }
     }, [user?.town])
   );
 

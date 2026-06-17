@@ -32,6 +32,14 @@
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.READ_MEDIA_IMAGES"
       ],
       "config": {
@@ -45,14 +53,15 @@
     },
     "extra": {
       "eas": {
-        "projectId": "0685df21-5304-446c-b78b-1387b0c5abb9"
+        "projectId": "e96e707f-3017-41db-bc6e-40d2eb791084"
       }
     },
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/0685df21-5304-446c-b78b-1387b0c5abb9"
-    }
+      "url": "https://u.expo.dev/e96e707f-3017-41db-bc6e-40d2eb791084"
+    },
+    "owner": "univerin-app"
   }
 }
