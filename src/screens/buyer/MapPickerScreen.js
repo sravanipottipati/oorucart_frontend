@@ -68,16 +68,12 @@ export default function MapPickerScreen({ navigation, route }) {
     if (!marker) { Alert.alert('Error', 'Please select a location on map first'); return; }
     const { isHomeScreen } = route.params || {};
     if (isHomeScreen) {
+      globalStore.homeLocation = {
+        lat: marker.latitude,
+        lng: marker.longitude,
+        address: address,
+      };
       navigation.goBack();
-      setTimeout(() => {
-        navigation.navigate('Home', {
-          selectedLocation: {
-            lat: marker.latitude,
-            lng: marker.longitude,
-            address: address,
-          }
-        });
-      }, 300);
       return;
     }
     const { isCheckout } = route.params || {};

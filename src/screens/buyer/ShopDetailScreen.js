@@ -365,18 +365,24 @@ export default function ShopDetailScreen({ navigation, route }) {
     }).catch(() => {});
   }, []);
 
-  const handleWishlist = async (product) => {
-    try {
-      await client.post('/vendors/wishlist/', { product_id: product.id });
-      const isWishlisted = wishlistedIds.includes(product.id);
-      if (isWishlisted) {
-        setWishlistedIds(wishlistedIds.filter(id => id !== product.id));
-      } else {
-        setWishlistedIds([...wishlistedIds, product.id]);
-      }
-    } catch (e) {
-      console.log('Wishlist error:', e.message);
+  const handleWishlist = (product) => {
+    const isWishlisted = wishlistedIds.includes(product.id);
+    // Update UI instantly (optimistic update)
+    if (isWishlisted) {
+      setWishlistedIds(prev => prev.filter(id => id !== product.id));
+    } else {
+      setWishlistedIds(prev => [...prev, product.id]);
     }
+    // Sync with backend in background
+    client.post('/vendors/wishlist/', { product_id: product.id }).catch((e) => {
+      console.log('Wishlist error:', e.message);
+      // Revert UI on failure
+      if (isWishlisted) {
+        setWishlistedIds(prev => [...prev, product.id]);
+      } else {
+        setWishlistedIds(prev => prev.filter(id => id !== product.id));
+      }
+    });
   };
   const { carts, addToCart, removeFromCart, cartCount } = useCart();
 

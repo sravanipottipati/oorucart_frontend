@@ -34,13 +34,13 @@ export default function WishlistScreen({ navigation }) {
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Remove', style: 'destructive',
-        onPress: async () => {
-          try {
-            await client.post('/vendors/wishlist/', { product_id: productId });
-            fetchWishlist();
-          } catch (e) {
-            Alert.alert('Error', 'Could not remove from wishlist');
-          }
+        onPress: () => {
+          // Remove from UI instantly
+          setWishlist(prev => prev.filter(item => item.product_id !== productId));
+          // Sync with backend in background
+          client.post('/vendors/wishlist/', { product_id: productId }).catch((e) => {
+            console.log('Wishlist remove error:', e.message);
+          });
         },
       },
     ]);

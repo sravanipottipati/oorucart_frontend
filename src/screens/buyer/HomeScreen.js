@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import client from '../../api/client';
+import { globalStore } from '../../utils/globalStore';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 const DEFAULT_PRODUCT_IMG = require('../../../assets/default_product.png');
@@ -239,9 +240,22 @@ export default function HomeScreen({ navigation, route }) {
 
   useFocusEffect(
     useCallback(() => {
+      fetchCartFromDb();
+
+      if (globalStore.homeLocation) {
+        const loc = globalStore.homeLocation;
+        globalStore.homeLocation = null;
+        const shortAddress = loc.address?.split(',').slice(0, 2).join(',') || 'Selected Location';
+        setTown(shortAddress);
+        setLoading(true);
+        lastFetchRef.current = Date.now();
+        fetchShops(null, loc.lat, loc.lng);
+        fetchPopularProducts(shortAddress);
+        return;
+      }
+
       const currentTown = user?.town || 'Nellore';
       if (currentTown !== town) setTown(currentTown);
-      fetchCartFromDb();
 
       const now = Date.now();
       const townChanged = lastTownRef.current !== currentTown;
@@ -527,13 +541,13 @@ export default function HomeScreen({ navigation, route }) {
               const qty = carts[vendorId]?.items?.[product.id] || 0;
               if (qty > 0) {
                 return (
-                  <View style={{flexDirection:'row', alignItems:'center', backgroundColor:'#1669ef', borderRadius:20, paddingHorizontal:8, paddingVertical:6, gap:8}}>
-                    <TouchableOpacity hitSlop={{top:10,bottom:10,left:10,right:10}} onPress={() => removeFromCart(product, vendorId)}>
-                      <Text style={{color:'#fff', fontSize:18, fontWeight:'bold'}}>−</Text>
+                  <View style={{flexDirection:'row', alignItems:'center', backgroundColor:'#1669ef', borderRadius:14, paddingHorizontal:4, paddingVertical:3, gap:4, maxWidth:80}}>
+                    <TouchableOpacity hitSlop={{top:8,bottom:8,left:6,right:6}} onPress={() => removeFromCart(product, vendorId)}>
+                      <Text style={{color:'#fff', fontSize:14, fontWeight:'bold', width:14, textAlign:'center'}}>−</Text>
                     </TouchableOpacity>
-                    <Text style={{color:'#fff', fontSize:14, fontWeight:'bold', minWidth:16, textAlign:'center'}}>{qty}</Text>
-                    <TouchableOpacity hitSlop={{top:10,bottom:10,left:10,right:10}} onPress={() => addToCart(product, { id: vendorId, shop_name: product.shop_name })}>
-                      <Text style={{color:'#fff', fontSize:18, fontWeight:'bold'}}>+</Text>
+                    <Text style={{color:'#fff', fontSize:12, fontWeight:'bold', minWidth:12, textAlign:'center'}}>{qty}</Text>
+                    <TouchableOpacity hitSlop={{top:8,bottom:8,left:6,right:6}} onPress={() => addToCart(product, { id: vendorId, shop_name: product.shop_name })}>
+                      <Text style={{color:'#fff', fontSize:14, fontWeight:'bold', width:14, textAlign:'center'}}>+</Text>
                     </TouchableOpacity>
                   </View>
                 );
