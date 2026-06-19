@@ -62,6 +62,15 @@
     "updates": {
       "url": "https://u.expo.dev/e96e707f-3017-41db-bc6e-40d2eb791084"
     },
-    "owner": "univerin-app"
+    "owner": "univerin-app",
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/app-icon.png",
+          "color": "#1669ef"
+        }
+      ]
+    ]
   }
 }
