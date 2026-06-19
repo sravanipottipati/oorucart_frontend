@@ -34,7 +34,11 @@ export default function RegisterScreen({ navigation }) {
       await register(fullName, phone, password, userType === 'seller' ? 'vendor' : 'buyer');
       navigation.replace('TownSelection');
     } catch (e) {
-      const msg = e.response?.data?.phone_number?.[0] || 'Registration failed';
+      const data = e.response?.data;
+      const msg = data?.phone_number?.[0]
+        || data?.error
+        || (typeof data === 'object' && data ? Object.values(data).flat().join(' ') : null)
+        || 'Registration failed. Please try again.';
       Alert.alert('Error', msg);
     } finally {
       setLoading(false);
