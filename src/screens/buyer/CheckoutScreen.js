@@ -82,7 +82,20 @@ export default function CheckoutScreen({ navigation, route }) {
         const data = Array.isArray(res.data) ? res.data : [];
         setAddresses(data);
         const defaultAddr = data.find(a => a.is_default);
-        if (defaultAddr) { setSelectedAddr(defaultAddr); setAddress(defaultAddr.full_address); }
+        if (defaultAddr) {
+          setSelectedAddr(defaultAddr);
+          setAddress(defaultAddr.full_address);
+        } else if (globalStore.lastPickedLocation) {
+          // No saved address - fall back to last location picked on Home/Map Picker
+          setAddress(globalStore.lastPickedLocation.address);
+          if (globalStore.lastPickedLocation.lat && shop?.latitude) {
+            const dist = calculateDistance(
+              globalStore.lastPickedLocation.lat, globalStore.lastPickedLocation.lng,
+              parseFloat(shop.latitude), parseFloat(shop.longitude)
+            );
+            setCalcDistance(dist);
+          }
+        }
       } catch (e) { console.log('Address fetch error:', e.message); }
     };
     fetchAddresses();

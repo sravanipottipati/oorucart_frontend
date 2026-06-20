@@ -253,6 +253,8 @@ export default function HomeScreen({ navigation, route }) {
         const shortAddress = loc.address?.split(',').slice(0, 2).join(',') || 'Selected Location';
         hasCustomLocationRef.current = true;
         setLocationDenied(false);
+        // Save persistently so Checkout can use it as a fallback address
+        globalStore.lastPickedLocation = { lat: loc.lat, lng: loc.lng, address: loc.address };
         setTown(shortAddress);
         setLoading(true);
         lastFetchRef.current = Date.now();
