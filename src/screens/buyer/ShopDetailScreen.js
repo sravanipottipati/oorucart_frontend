@@ -194,7 +194,12 @@ const ProductCard = ({ product, cart, onAdd, onRemove, shopColor, wishlistedIds,
     <View style={[styles.gridCard, isOutOfStock && { opacity: 0.85 }]}>
 
       {/* ── Large Image ── */}
-      <TouchableOpacity activeOpacity={0.85} onPress={() => onViewDetail && onViewDetail(product)} style={[styles.gridImageBox, { backgroundColor: shopColor + '15' }]}>
+      <TouchableOpacity activeOpacity={0.85} onPress={() => onViewDetail && onViewDetail({
+        ...product,
+        price: selectedVariant ? selectedVariant.price : product.price,
+        mrp: selectedVariant ? selectedVariant.mrp : product.mrp,
+        name: selectedVariant ? `${product.name} (${selectedVariant.name})` : product.name,
+      })} style={[styles.gridImageBox, { backgroundColor: shopColor + '15' }]}>
         {product.image_url ? (
           <Image source={{ uri: product.image_url }} onError={(e) => console.log('Image error:', e.nativeEvent.error)}
             style={[styles.gridImage, isOutOfStock && { opacity: 0.4 }]}
