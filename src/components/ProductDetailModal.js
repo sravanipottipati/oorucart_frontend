@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import client from '../api/client';
 import { useCart } from '../context/CartContext';
 const TEAL = '#1669ef';
+const DEFAULT_PRODUCT_IMG = require('../../assets/default_product.png');
 export default function ProductDetailModal({ product, visible, onClose, navigation }) {
   const [moreProducts, setMoreProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -30,7 +31,7 @@ export default function ProductDetailModal({ product, visible, onClose, navigati
         <View style={styles.handle} />
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.imgBox}>
-            {getImg(product) ? <Image source={{ uri: getImg(product) }} style={styles.img} resizeMode="contain" /> : <Ionicons name="cube-outline" size={60} color="#9CA3AF" />}
+            {getImg(product) ? <Image source={{ uri: getImg(product) }} style={styles.img} resizeMode="contain" /> : <Image source={DEFAULT_PRODUCT_IMG} style={[styles.img, { opacity: 0.65 }]} resizeMode="contain" />}
           </View>
           <View style={styles.infoBox}>
             <Text style={styles.productName}>{product.name}</Text>
@@ -90,7 +91,7 @@ export default function ProductDetailModal({ product, visible, onClose, navigati
                   return (
                     <View key={p.id} style={styles.moreCard}>
                       <View style={styles.moreImgBox}>
-                        {getImg(p) ? <Image source={{ uri: getImg(p) }} style={styles.moreImg} resizeMode="contain" /> : <Text style={{ fontSize: 28 }}>🛍</Text>}
+                        {getImg(p) ? <Image source={{ uri: getImg(p) }} style={styles.moreImg} resizeMode="contain" /> : <Image source={DEFAULT_PRODUCT_IMG} style={[styles.moreImg, { opacity: 0.65 }]} resizeMode="contain" />}
                       </View>
                       <Text style={styles.moreName} numberOfLines={2}>{p.name}</Text>
                       <Text style={styles.morePrice}>Rs.{parseFloat(p.price).toFixed(0)}</Text>
