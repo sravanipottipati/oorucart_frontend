@@ -37,10 +37,28 @@ export default function ProductDetailModal({ product, visible, onClose, navigati
             {product.description ? <Text style={styles.productDesc}>{product.description}</Text> : null}
             <View style={styles.priceRow}>
               <Text style={styles.price}>Rs.{parseFloat(product.price).toFixed(0)}</Text>
+              {product.mrp && parseFloat(product.mrp) > parseFloat(product.price) && (
+                <Text style={{ fontSize: 14, color: '#9CA3AF', textDecorationLine: 'line-through', marginLeft: 8 }}>
+                  Rs.{parseFloat(product.mrp).toFixed(0)}
+                </Text>
+              )}
               <View style={styles.shopTag}>
                 <Ionicons name="storefront-outline" size={12} color={TEAL} />
                 <Text style={styles.shopTagText}>{product.shop_name}</Text>
               </View>
+            </View>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+              {product.gst_percentage > 0 && (
+                <View style={{ backgroundColor: '#EFF6FF', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
+                  <Text style={{ fontSize: 11, color: '#1669ef', fontWeight: '600' }}>GST {product.gst_percentage}%</Text>
+                </View>
+              )}
+              {product.fssai_number && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F0FDF4', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#BBF7D0' }}>
+                  <Ionicons name="shield-checkmark" size={11} color="#16A34A" />
+                  <Text style={{ fontSize: 11, color: '#16A34A', fontWeight: '600' }}>FSSAI: {product.fssai_number}</Text>
+                </View>
+              )}
             </View>
           </View>
           <View style={styles.cartSection}>

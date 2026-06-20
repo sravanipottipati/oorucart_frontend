@@ -6,6 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
 import { useCart } from '../../context/CartContext';
+import ProductDetailModal from '../../components/ProductDetailModal';
 const DEFAULT_PRODUCT_IMG = require('../../../assets/default_product.png');
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -158,7 +159,7 @@ const formatPrice = (price) => {
 };
 
 // ─── GRID PRODUCT CARD ────────────────────────────────────────────────────────
-const ProductCard = ({ product, cart, onAdd, onRemove, shopColor, wishlistedIds, handleWishlist }) => {
+const ProductCard = ({ product, cart, onAdd, onRemove, shopColor, wishlistedIds, handleWishlist, onViewDetail }) => {
   const [showVariants, setShowVariants] = useState(false);
   const hasVariants = product.variants && product.variants.length > 0;
   const lowestVariant = hasVariants
@@ -193,7 +194,7 @@ const ProductCard = ({ product, cart, onAdd, onRemove, shopColor, wishlistedIds,
     <View style={[styles.gridCard, isOutOfStock && { opacity: 0.85 }]}>
 
       {/* ── Large Image ── */}
-      <View style={[styles.gridImageBox, { backgroundColor: shopColor + '15' }]}>
+      <TouchableOpacity activeOpacity={0.85} onPress={() => onViewDetail && onViewDetail(product)} style={[styles.gridImageBox, { backgroundColor: shopColor + '15' }]}>
         {product.image_url ? (
           <Image source={{ uri: product.image_url }} onError={(e) => console.log('Image error:', e.nativeEvent.error)}
             style={[styles.gridImage, isOutOfStock && { opacity: 0.4 }]}
@@ -230,7 +231,7 @@ const ProductCard = ({ product, cart, onAdd, onRemove, shopColor, wishlistedIds,
             color={wishlistedIds.includes(product.id) ? '#EF4444' : '#111'}
           />
         </TouchableOpacity>
-      </View>
+      </TouchableOpacity>
 
       {/* ── Info ── */}
       <View style={styles.gridInfo}>
@@ -351,6 +352,13 @@ const ProductCard = ({ product, cart, onAdd, onRemove, shopColor, wishlistedIds,
           <View style={{ height: 20 }} />
         </View>
       </Modal>
+
+      <ProductDetailModal
+        product={detailProduct}
+        visible={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        navigation={navigation}
+      />
     </View>
   );
 };
@@ -365,6 +373,8 @@ export default function ShopDetailScreen({ navigation, route }) {
   const [activeSubcategory, setActiveSubcategory] = useState('all');
   const [wishlistedIds, setWishlistedIds] = useState([]);
   const [showReviews, setShowReviews] = useState(false);
+  const [detailProduct, setDetailProduct] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const fetchReviews = async () => {
@@ -578,7 +588,11 @@ export default function ShopDetailScreen({ navigation, route }) {
               {row.map(product => (
                 <ProductCard key={product.id} product={product}
                   cart={cart}
-                  onAdd={handleAddToCart} onRemove={removeFromCart} shopColor={shopColor} wishlistedIds={wishlistedIds} handleWishlist={handleWishlist} />
+                  onAdd={handleAddToCart} onRemove={removeFromCart} shopColor={shopColor} wishlistedIds={wishlistedIds} handleWishlist={handleWishlist}
+                  onViewDetail={(p) => {
+                    setDetailProduct({ ...p, vendor_id: vendorId, shop_name: shop?.shop_name, fssai_number: shop?.fssai_number });
+                    setShowDetailModal(true);
+                  }} />
               ))}
               {row.length === 1 && <View style={{ width: CARD_WIDTH }} />}
             </View>
@@ -675,6 +689,13 @@ export default function ShopDetailScreen({ navigation, route }) {
           </View>
         </View>
       </Modal>
+
+      <ProductDetailModal
+        product={detailProduct}
+        visible={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        navigation={navigation}
+      />
     </View>
   );
 }
