@@ -142,6 +142,7 @@ export default function HomeScreen({ navigation, route }) {
   const [subcategory, setSubcategory] = useState('all');
   const [bannerIndex, setBannerIndex] = useState(0);
   const [isOffline, setIsOffline]     = useState(false);
+  const [locationDenied, setLocationDenied] = useState(false);
   const [popularProducts, setPopularProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showProductModal, setShowProductModal] = useState(false);
@@ -201,20 +202,18 @@ export default function HomeScreen({ navigation, route }) {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(
-          'Location Permission',
-          'Please allow location access to see nearby shops',
-          [{ text: 'OK' }]
-        );
+        setLocationDenied(true);
+        setLoading(false);
+        isFetchingRef.current = false;
+        return;
       }
-      if (status === 'granted') {
-        const loc = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Low,
-          timeInterval: 5000,
-        });
-        const { latitude: lat, longitude: lng } = loc.coords;
-        gpsCoords = isCoordInIndia(lat, lng) ? { lat, lng } : townCoords;
-      }
+      setLocationDenied(false);
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Low,
+        timeInterval: 5000,
+      });
+      const { latitude: lat, longitude: lng } = loc.coords;
+      gpsCoords = isCoordInIndia(lat, lng) ? { lat, lng } : townCoords;
     } catch (e) {
       gpsCoords = townCoords;
     }
@@ -577,7 +576,19 @@ export default function HomeScreen({ navigation, route }) {
           <Text style={styles.shopCount}>{filteredShops.length} shops</Text>
         </View>
 
-        {loading ? (
+        {locationDenied ? (
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIconCircle}>
+              <Ionicons name="location-outline" size={40} color="#1669ef" />
+            </View>
+            <Text style={styles.emptyTitle}>Turn On Location</Text>
+            <Text style={styles.emptySubtitle}>We need your location to show nearby shops. Please allow location access or pick your location on the map.</Text>
+            <TouchableOpacity style={styles.emptyBtn} onPress={() => navigation.navigate('MapPicker', { isHomeScreen: true, onLocationSelected: null })}>
+              <Ionicons name="map-outline" size={16} color="#fff" />
+              <Text style={styles.emptyBtnText}>Pick Location on Map</Text>
+            </TouchableOpacity>
+          </View>
+        ) : loading ? (
           <>{[1,2,3,4].map(i => <ShopCardSkeleton key={i} />)}</>
         ) : filteredShops.length === 0 ? (
           <EmptyState />
