@@ -24,6 +24,8 @@ export default function MapPickerScreen({ navigation, route }) {
   const [landmark, setLandmark]   = useState('');
   const [loading, setLoading]     = useState(false);
   const [locating, setLocating]   = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [searching, setSearching]   = useState(false);
 
   useEffect(() => { getCurrentLocation(); }, []);
 
@@ -56,6 +58,29 @@ export default function MapPickerScreen({ navigation, route }) {
       }
     } catch (e) {
     } finally { setLoading(false); }
+  };
+
+  const handleSearchAddress = async () => {
+    if (!searchText.trim()) return;
+    setSearching(true);
+    try {
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchText)}&key=${GOOGLE_API_KEY}`
+      );
+      const data = await res.json();
+      if (data.results && data.results.length > 0) {
+        const { lat, lng } = data.results[0].geometry.location;
+        const newRegion = { latitude: lat, longitude: lng, latitudeDelta: 0.01, longitudeDelta: 0.01 };
+        setRegion(newRegion);
+        setMarker({ latitude: lat, longitude: lng });
+        mapRef.current?.animateToRegion(newRegion, 500);
+        setAddress(data.results[0].formatted_address);
+      } else {
+        Alert.alert('Not Found', 'Could not find that location. Try a different search.');
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Search failed. Please try again.');
+    } finally { setSearching(false); }
   };
 
   const handleMapPress = async (e) => {
@@ -118,6 +143,27 @@ export default function MapPickerScreen({ navigation, route }) {
         {marker && <Marker coordinate={marker} />}
       </MapView>
 
+      {/* Search Bar */}
+      <View style={styles.searchBarWrapper}>
+        <Ionicons name="search-outline" size={18} color="#9CA3AF" />
+        <TextInput
+          style={styles.searchBarInput}
+          placeholder="Search for area, street name..."
+          placeholderTextColor="#9CA3AF"
+          value={searchText}
+          onChangeText={setSearchText}
+          onSubmitEditing={handleSearchAddress}
+          returnKeyType="search"
+        />
+        {searching ? (
+          <ActivityIndicator size="small" color="#1669ef" />
+        ) : searchText.length > 0 ? (
+          <TouchableOpacity onPress={() => setSearchText('')}>
+            <Ionicons name="close-circle" size={18} color="#9CA3AF" />
+          </TouchableOpacity>
+        ) : null}
+      </View>
+
       {/* Current Location Button */}
       <TouchableOpacity style={styles.locationBtn} onPress={getCurrentLocation} disabled={locating}>
         {locating
@@ -164,7 +210,14 @@ const styles = StyleSheet.create({
   backBtn:      { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   headerTitle:  { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center' },
   map:          { position: 'absolute', top: 90, left: 0, right: 0, bottom: 0 },
-  locationBtn:  { position: 'absolute', right: 16, top: 130, backgroundColor: '#fff', width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 4 },
+  locationBtn:  { position: 'absolute', right: 16, top: 170, backgroundColor: '#fff', width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 4 },
+  searchBarWrapper: {
+    position: 'absolute', top: 102, left: 16, right: 16,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 5,
+  },
+  searchBarInput: { flex: 1, fontSize: 14, color: '#111' },
   card:         { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', padding: 16, paddingBottom: 34, borderTopLeftRadius: 20, borderTopRightRadius: 20, shadowColor: '#000', shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 8 },
   addressText:  { fontSize: 14, color: '#111', marginBottom: 12, fontWeight: '500' },
   input:        { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, padding: 12, fontSize: 14, color: '#111', marginBottom: 10 },
