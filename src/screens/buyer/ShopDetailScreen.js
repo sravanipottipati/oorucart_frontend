@@ -170,8 +170,8 @@ const ProductCard = ({ product, cart, onAdd, onRemove, shopColor, wishlistedIds,
   const isOutOfStock          = productOutOfStock || allVariantsOutOfStock;
   const handleAddPress = () => {
     if (isOutOfStock) return;
-    if (hasVariants) {
-      setShowVariants(true);
+    if (hasVariants && !selectedVariant) {
+      Alert.alert('Select an option', 'Please choose a size/weight before adding to cart.');
       return;
     }
     onAdd(product, selectedVariant);
