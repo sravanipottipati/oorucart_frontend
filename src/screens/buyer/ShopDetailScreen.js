@@ -357,6 +357,20 @@ export default function ShopDetailScreen({ navigation, route }) {
   const [loading, setLoading]               = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
   const [wishlistedIds, setWishlistedIds] = useState([]);
+  const [showReviews, setShowReviews] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const fetchReviews = async () => {
+    setReviewsLoading(true);
+    try {
+      const res = await client.get(`/vendors/${vendorId}/reviews/`);
+      setReviews(res.data.reviews || []);
+    } catch (e) {
+      console.log('Reviews fetch error:', e.message);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
 
   useEffect(() => {
     client.get('/vendors/wishlist/').then(res => {
@@ -462,11 +476,11 @@ export default function ShopDetailScreen({ navigation, route }) {
         </View>
         <View style={styles.shopMeta}>
           {shop?.rating > 0 ? (
-            <View style={styles.ratingBox}>
+            <TouchableOpacity style={styles.ratingBox} onPress={() => { setShowReviews(true); fetchReviews(); }}>
               <Text style={styles.ratingStars}>★</Text>
               <Text style={styles.ratingText}>{parseFloat(shop.rating).toFixed(1)}</Text>
               {shop?.total_reviews > 0 && <Text style={styles.reviewCount}>({shop.total_reviews})</Text>}
-            </View>
+            </TouchableOpacity>
           ) : (
             <View style={styles.ratingBox}>
               <Text style={styles.ratingStars}>★</Text>
@@ -575,6 +589,51 @@ export default function ShopDetailScreen({ navigation, route }) {
           <Text style={styles.tabLabel}>Profile</Text>
         </TouchableOpacity>
       </View>
+
+      {/* ── Reviews Modal ── */}
+      <Modal visible={showReviews} animationType="slide" transparent onRequestClose={() => setShowReviews(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '75%', paddingTop: 16 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#111' }}>
+                Reviews {shop?.total_reviews > 0 ? `(${shop.total_reviews})` : ''}
+              </Text>
+              <TouchableOpacity onPress={() => setShowReviews(false)}>
+                <Ionicons name="close" size={26} color="#111" />
+              </TouchableOpacity>
+            </View>
+            {reviewsLoading ? (
+              <View style={{ padding: 40, alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#1669ef" />
+              </View>
+            ) : reviews.length === 0 ? (
+              <View style={{ padding: 40, alignItems: 'center' }}>
+                <Ionicons name="chatbubble-ellipses-outline" size={40} color="#D1D5DB" />
+                <Text style={{ marginTop: 12, color: '#888', fontSize: 14 }}>No reviews yet</Text>
+              </View>
+            ) : (
+              <ScrollView style={{ paddingHorizontal: 20 }}>
+                {reviews.map(r => (
+                  <View key={r.id} style={{ paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#111' }}>{r.buyer_name}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                        <Text style={{ color: '#F59E0B', fontSize: 13 }}>★</Text>
+                        <Text style={{ fontSize: 13, fontWeight: '700', color: '#111' }}>{r.rating}</Text>
+                      </View>
+                    </View>
+                    {r.comment ? <Text style={{ fontSize: 13, color: '#555', lineHeight: 19 }}>{r.comment}</Text> : null}
+                    <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>
+                      {new Date(r.created_at).toLocaleDateString()}
+                    </Text>
+                  </View>
+                ))}
+                <View style={{ height: 30 }} />
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
