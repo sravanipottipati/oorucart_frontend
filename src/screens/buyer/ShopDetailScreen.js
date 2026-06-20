@@ -171,7 +171,7 @@ const ProductCard = ({ product, cart, onAdd, onRemove, shopColor, wishlistedIds,
   const handleAddPress = () => {
     if (isOutOfStock) return;
     if (hasVariants && !selectedVariant) {
-      Alert.alert('Select an option', 'Please choose a size/weight before adding to cart.');
+      setShowVariants(true);
       return;
     }
     onAdd(product, selectedVariant);
