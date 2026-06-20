@@ -353,12 +353,6 @@ const ProductCard = ({ product, cart, onAdd, onRemove, shopColor, wishlistedIds,
         </View>
       </Modal>
 
-      <ProductDetailModal
-        product={detailProduct}
-        visible={showDetailModal}
-        onClose={() => setShowDetailModal(false)}
-        navigation={navigation}
-      />
     </View>
   );
 };
