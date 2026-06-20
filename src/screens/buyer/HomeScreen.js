@@ -162,18 +162,6 @@ export default function HomeScreen({ navigation, route }) {
   );
   const [town, setTown]                          = useState(user?.town || 'Nellore');
 
-  // Handle location from MapPicker
-  useEffect(() => {
-    if (route?.params?.selectedLocation) {
-      const loc = route.params.selectedLocation;
-      // Update location text
-      const shortAddress = loc.address?.split(',').slice(0, 2).join(',') || 'Selected Location';
-      setTown(shortAddress);
-      fetchShops(null, loc.lat, loc.lng);
-      navigation.setParams({ selectedLocation: undefined });
-    }
-  }, [route?.params?.selectedLocation]);
-
   useEffect(() => {
     const timer = setInterval(() => {
       setBannerIndex(prev => {
