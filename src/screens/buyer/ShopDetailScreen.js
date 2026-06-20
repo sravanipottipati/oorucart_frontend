@@ -362,6 +362,7 @@ export default function ShopDetailScreen({ navigation, route }) {
   const [products, setProducts]             = useState([]);
   const [loading, setLoading]               = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
+  const [activeSubcategory, setActiveSubcategory] = useState('all');
   const [wishlistedIds, setWishlistedIds] = useState([]);
   const [showReviews, setShowReviews] = useState(false);
   const [reviews, setReviews] = useState([]);
@@ -439,9 +440,13 @@ export default function ShopDetailScreen({ navigation, route }) {
 
   const productCategories = ['all', ...new Set(products.map(p => p.category))];
   const visibleProducts   = products.filter(p => p.is_available !== false).sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-  const filteredProducts  = activeCategory === 'all'
+  const categoryProducts  = activeCategory === 'all'
     ? visibleProducts
     : visibleProducts.filter(p => p.category === activeCategory);
+  const subcategories = [...new Set(categoryProducts.map(p => p.subcategory).filter(s => s && s.trim()))];
+  const filteredProducts  = activeSubcategory === 'all'
+    ? categoryProducts
+    : categoryProducts.filter(p => p.subcategory === activeSubcategory);
 
   // Build 2-column grid rows
   const gridRows = [];
@@ -523,7 +528,7 @@ export default function ShopDetailScreen({ navigation, route }) {
               return (
                 <TouchableOpacity key={cat}
                   style={[styles.categoryTab, isActive && { borderBottomColor: shopColor, borderBottomWidth: 2 }]}
-                  onPress={() => setActiveCategory(cat)}>
+                  onPress={() => { setActiveCategory(cat); setActiveSubcategory('all'); }}>
                   <Text style={styles.categoryTabEmoji}>{emoji}</Text>
                   <Text style={[styles.categoryTabText, isActive && { color: shopColor, fontWeight: '700' }]}>{label}</Text>
                 </TouchableOpacity>
@@ -531,6 +536,26 @@ export default function ShopDetailScreen({ navigation, route }) {
             })}
           </ScrollView>
         </View>
+      )}
+
+      {subcategories.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}
+          style={{ marginTop: 4, marginBottom: 4 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
+          <TouchableOpacity
+            style={[styles.subcatChip, activeSubcategory === 'all' && { backgroundColor: shopColor, borderColor: shopColor }]}
+            onPress={() => setActiveSubcategory('all')}>
+            <Text style={[styles.subcatChipText, activeSubcategory === 'all' && { color: '#fff' }]}>All</Text>
+          </TouchableOpacity>
+          {subcategories.map(sub => (
+            <TouchableOpacity key={sub}
+              style={[styles.subcatChip, activeSubcategory === sub && { backgroundColor: shopColor, borderColor: shopColor }]}
+              onPress={() => setActiveSubcategory(sub)}>
+              <Text style={[styles.subcatChipText, activeSubcategory === sub && { color: '#fff' }]}>
+                {sub.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       )}
 
       {/* Products Grid */}
@@ -684,6 +709,11 @@ const styles = StyleSheet.create({
   categoryTabs:        { paddingVertical: 4 },
   categoryTab:         { alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, marginRight: 4, borderBottomWidth: 2, borderBottomColor: 'transparent', gap: 4 },
   categoryTabEmoji:    { fontSize: 18 },
+  subcatChip: {
+    paddingHorizontal: 14, paddingVertical: 7, borderRadius: 18,
+    backgroundColor: '#F9FAFB', borderWidth: 1.5, borderColor: '#E5E7EB',
+  },
+  subcatChipText: { fontSize: 12, fontWeight: '600', color: '#555' },
   categoryTabText:     { fontSize: 12, color: '#888', fontWeight: '500' },
   productsList:        { flex: 1 },
   itemsCount:          { fontSize: 12, color: '#888', fontWeight: '500', paddingBottom: 8 },
