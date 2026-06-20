@@ -164,12 +164,16 @@ const ProductCard = ({ product, cart, onAdd, onRemove, shopColor, wishlistedIds,
   const lowestVariant = hasVariants
     ? [...product.variants].filter(v => v.stock_quantity > 0).sort((a,b) => parseFloat(a.price) - parseFloat(b.price))[0] || product.variants[0]
     : null;
-  const [selectedVariant, setSelectedVariant] = useState(lowestVariant);
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const productOutOfStock     = !hasVariants && product.stock_quantity === 0;
   const allVariantsOutOfStock = hasVariants && product.variants.every(v => v.stock_quantity === 0);
   const isOutOfStock          = productOutOfStock || allVariantsOutOfStock;
   const handleAddPress = () => {
     if (isOutOfStock) return;
+    if (hasVariants) {
+      setShowVariants(true);
+      return;
+    }
     onAdd(product, selectedVariant);
   };
   const handleVariantSelect = (variant) => {
