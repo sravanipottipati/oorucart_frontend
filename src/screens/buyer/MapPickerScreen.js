@@ -107,6 +107,18 @@ export default function MapPickerScreen({ navigation, route }) {
       navigation.goBack();
       return;
     }
+    const { isTownSelection } = route.params || {};
+    if (isTownSelection) {
+      const townGuess = address.split(',').slice(-3, -2)[0]?.trim() || address.split(',')[0]?.trim() || '';
+      globalStore.townSelectionLocation = {
+        lat: marker.latitude,
+        lng: marker.longitude,
+        address: address,
+        town: townGuess,
+      };
+      navigation.goBack();
+      return;
+    }
     if (!houseNo.trim()) { Alert.alert('Error', 'Please enter house/flat number'); return; }
     const fullAddress = `${houseNo}${landmark ? ', ' + landmark : ''}, ${address}`;
     navigation.navigate('Address', {
@@ -178,7 +190,7 @@ export default function MapPickerScreen({ navigation, route }) {
           ? <ActivityIndicator size="small" color="#1669ef" style={{ marginBottom: 8 }} />
           : <Text style={styles.addressText} numberOfLines={2}>{address || 'Tap on map to select location'}</Text>
         }
-        {!route.params?.isHomeScreen && !route.params?.isCheckout && (
+        {!route.params?.isHomeScreen && !route.params?.isCheckout && !route.params?.isTownSelection && (
           <>
             <TextInput
               style={styles.input}
@@ -197,7 +209,7 @@ export default function MapPickerScreen({ navigation, route }) {
           </>
         )}
         <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirm}>
-          <Text style={styles.confirmBtnText}>{route.params?.isHomeScreen ? 'Set Location' : route.params?.isCheckout ? 'Use This Address' : 'Confirm Location'}</Text>
+          <Text style={styles.confirmBtnText}>{route.params?.isHomeScreen ? 'Set Location' : route.params?.isCheckout ? 'Use This Address' : route.params?.isTownSelection ? 'Confirm This Location' : 'Confirm Location'}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
