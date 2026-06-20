@@ -150,6 +150,7 @@ export default function HomeScreen({ navigation, route }) {
   const isFetchingRef                 = useRef(false);
   const lastFetchRef                  = useRef(null);
   const lastTownRef                   = useRef(null);
+  const hasCustomLocationRef          = useRef(false);
 
   const { user }                                 = useAuth();
   const { shop: cartShop, cartCount, cartTotal, fetchCartFromDb, carts, addToCart, removeFromCart } = useCart();
@@ -199,6 +200,10 @@ export default function HomeScreen({ navigation, route }) {
     const townCoords = getTownCoords(t);
     let   gpsCoords  = townCoords;
 
+    if (overrideLat != null && overrideLng != null) {
+      gpsCoords = { lat: overrideLat, lng: overrideLng };
+      setLocationDenied(false);
+    } else {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -216,6 +221,7 @@ export default function HomeScreen({ navigation, route }) {
       gpsCoords = isCoordInIndia(lat, lng) ? { lat, lng } : townCoords;
     } catch (e) {
       gpsCoords = townCoords;
+    }
     }
 
     try {
@@ -245,6 +251,8 @@ export default function HomeScreen({ navigation, route }) {
         const loc = globalStore.homeLocation;
         globalStore.homeLocation = null;
         const shortAddress = loc.address?.split(',').slice(0, 2).join(',') || 'Selected Location';
+        hasCustomLocationRef.current = true;
+        setLocationDenied(false);
         setTown(shortAddress);
         setLoading(true);
         lastFetchRef.current = Date.now();
@@ -254,7 +262,7 @@ export default function HomeScreen({ navigation, route }) {
       }
 
       const currentTown = user?.town || 'Nellore';
-      if (currentTown !== town) setTown(currentTown);
+      if (!hasCustomLocationRef.current && currentTown !== town) setTown(currentTown);
 
       const now = Date.now();
       const townChanged = lastTownRef.current !== currentTown;
