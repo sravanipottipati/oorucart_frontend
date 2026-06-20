@@ -13,8 +13,6 @@ const TEAL = '#1669ef';
 export default function CartScreen({ navigation }) {
   const { carts, addToCart, removeFromCart, cartCount, fetchCartFromDb } = useCart();
 
-  useEffect(() => { fetchCartFromDb(); }, []);
-
   useFocusEffect(
     useCallback(() => {
       fetchCartFromDb();

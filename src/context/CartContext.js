@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import client from '../api/client';
 
@@ -8,6 +8,8 @@ export const CartProvider = ({ children }) => {
   // carts = { vendorId: { shop: { id, shop_name }, items: { productId: qty }, products: [] } }
   const [carts, setCarts]   = useState({});
   const [loading, setLoading] = useState(false);
+  const inFlightRequest = useRef(null);
+  const lastFetchTime = useRef(0);
 
   useEffect(() => { fetchCartFromDb(); }, []);
 
@@ -18,6 +20,22 @@ export const CartProvider = ({ children }) => {
 
   // ── Fetch all cart items from DB and group by vendor ──────────────────────
   const fetchCartFromDb = async () => {
+    if (inFlightRequest.current) return inFlightRequest.current;
+    const now = Date.now();
+    if (lastFetchTime.current !== 0 && now - lastFetchTime.current < 2000) {
+      return Promise.resolve();
+    }
+    const requestPromise = _doFetchCartFromDb();
+    inFlightRequest.current = requestPromise;
+    try {
+      await requestPromise;
+    } finally {
+      inFlightRequest.current = null;
+      lastFetchTime.current = Date.now();
+    }
+  };
+
+  const _doFetchCartFromDb = async () => {
     try {
       setLoading(true);
       const headers = await getHeaders();
