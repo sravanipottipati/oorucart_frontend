@@ -623,7 +623,7 @@ export default function HomeScreen({ navigation, route }) {
       </ScrollView>
 
       {/* ── Floating Cart Bar ── */}
-      {cartCount > 0 && (
+      {cartCount > 0 && Object.keys(carts).length === 1 && (
         <TouchableOpacity
           style={styles.cartBar}
           onPress={() => navigation.navigate('ShopDetail', {
