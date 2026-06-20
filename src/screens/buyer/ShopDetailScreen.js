@@ -476,6 +476,12 @@ export default function ShopDetailScreen({ navigation, route }) {
             <Text style={styles.shopInfoCategory}>
               {({'restaurant':'Restaurant','supermarket':'Supermarket','bakery':'Bakery','veg_fruits':'Veg & Fruits'}[shop?.category] || shop?.category)} • {shop?.town}
             </Text>
+            {shop?.fssai_number ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6, backgroundColor: '#F0FDF4', alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1, borderColor: '#BBF7D0' }}>
+                <Ionicons name="shield-checkmark" size={12} color="#16A34A" />
+                <Text style={{ fontSize: 10, color: '#16A34A', fontWeight: '600' }}>FSSAI: {shop.fssai_number}</Text>
+              </View>
+            ) : null}
           </View>
           <View style={[styles.shopOpenBadge, { backgroundColor: shop?.is_open ? '#DCFCE7' : '#F3F4F6' }]}>
             <View style={[styles.shopOpenDot, { backgroundColor: shop?.is_open ? '#16A34A' : '#9CA3AF' }]} />
