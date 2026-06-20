@@ -189,9 +189,9 @@ export default function SearchScreen({ navigation }) {
             autoCorrect={false}
             autoCapitalize="none"
             returnKeyType="search"
-            selectionColor="transparent"
+            selectionColor={TEAL}
             underlineColorAndroid="transparent"
-            cursorColor="transparent"
+            cursorColor={TEAL}
           />
           {query.length > 0 && (
             <TouchableOpacity
