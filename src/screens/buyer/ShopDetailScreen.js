@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, Modal, Image, Dimensions,
+  ScrollView, ActivityIndicator, Modal, Image, Dimensions, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
@@ -421,6 +421,10 @@ export default function ShopDetailScreen({ navigation, route }) {
   useEffect(() => { fetchShopData(); }, []);
 
   const handleAddToCart = (product, variant = null) => {
+    if (shop?.is_open === false) {
+      Alert.alert('Shop Closed', 'This shop is currently closed and not accepting orders. Please check back later.');
+      return;
+    }
     const productToAdd = variant
       ? { ...product, id: `${product.id}_${variant.id}`, price: variant.price, mrp: variant.mrp, name: `${product.name} (${variant.name})`, variant_id: variant.id, base_product_id: product.id }
       : product;
