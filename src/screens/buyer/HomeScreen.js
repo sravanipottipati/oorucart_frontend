@@ -219,6 +219,17 @@ export default function HomeScreen({ navigation, route }) {
       });
       const { latitude: lat, longitude: lng } = loc.coords;
       gpsCoords = isCoordInIndia(lat, lng) ? { lat, lng } : townCoords;
+      // Save GPS location as a fallback for Checkout if no saved address exists
+      if (isCoordInIndia(lat, lng) || true) {
+        try {
+          const geoRes = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${gpsCoords.lat},${gpsCoords.lng}&key=AIzaSyCS_YRu6O61LCZn_QlypzjcjSdeRqbQaDI`);
+          const geoData = await geoRes.json();
+          const fullAddress = geoData.results?.[0]?.formatted_address || t;
+          globalStore.lastPickedLocation = { lat: gpsCoords.lat, lng: gpsCoords.lng, address: fullAddress };
+        } catch (geoErr) {
+          globalStore.lastPickedLocation = { lat: gpsCoords.lat, lng: gpsCoords.lng, address: t };
+        }
+      }
     } catch (e) {
       gpsCoords = townCoords;
     }
