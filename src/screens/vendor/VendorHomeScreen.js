@@ -61,6 +61,10 @@ export default function VendorHomeScreen({ navigation }) {
       setUnreadCount(notifs.filter(n => !n.is_read).length);
     } catch (e) {
       console.log('Error:', e.message);
+      if (e.response?.status === 404) {
+        navigation.replace('VendorRegister');
+        return;
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);

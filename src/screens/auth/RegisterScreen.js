@@ -32,7 +32,11 @@ export default function RegisterScreen({ navigation }) {
     setLoading(true);
     try {
       await register(fullName, phone, password, userType === 'seller' ? 'vendor' : 'buyer');
-      navigation.replace('TownSelection');
+      if (userType === 'seller') {
+        navigation.replace('VendorRegister');
+      } else {
+        navigation.replace('TownSelection');
+      }
     } catch (e) {
       const data = e.response?.data;
       const msg = data?.phone_number?.[0]
