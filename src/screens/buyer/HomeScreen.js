@@ -861,7 +861,7 @@ const styles = StyleSheet.create({
   popularImg: { width: '100%', height: '100%' },
   popularName: { fontSize: 12, fontWeight: '600', color: '#111', marginBottom: 3, lineHeight: 16 },
   popularShop: { fontSize: 10, color: '#888', marginBottom: 6 },
-  popularBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  popularBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 4 },
   popularPrice: { fontSize: 14, fontWeight: '800', color: '#1669ef' },
   popularAddBtn: { width: 26, height: 26, backgroundColor: '#1669ef', borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
   popularAddBtnText: { color: '#fff', fontSize: 18, fontWeight: '700', lineHeight: 22 },
