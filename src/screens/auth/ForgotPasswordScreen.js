@@ -191,18 +191,22 @@ export default function ForgotPasswordScreen({ navigation }) {
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}
               onPress={async () => {
-                const otpCode = otp.join('');
+                const otpCode = otp.join('').trim().replace(/[^0-9]/g, '');
+                const phoneTrimmed = phone.trim();
                 if (otpCode.length !== 6) return alert('Please enter complete OTP');
                 setLoading(true);
                 try {
-                  await client.post('/users/verify-otp/', { phone_number: phone, otp: otpCode });
+                  await client.post('/users/verify-otp/', { phone_number: phoneTrimmed, otp: otpCode });
                   setStep(3);
                 } catch (e) {
                   const backendMsg = e.response?.data?.error;
-                  const msg = backendMsg
-                    ? `${backendMsg} [You entered: ${otpCode}]`
-                    : `Network/Connection issue. [Entered: ${otpCode}] [${e.message}]`;
-                  alert(msg);
+                  if (backendMsg && backendMsg.toLowerCase().includes('expired')) {
+                    alert('Your OTP expired. Please tap Resend OTP to get a new one.');
+                  } else if (backendMsg && backendMsg.toLowerCase().includes('invalid')) {
+                    alert('Incorrect OTP. Please check the SMS and try again, or tap Resend OTP.');
+                  } else {
+                    alert(backendMsg || 'Something went wrong. Please try again.');
+                  }
                 } finally { setLoading(false); }
               }}
               disabled={loading || otp.join('').length !== 6}
