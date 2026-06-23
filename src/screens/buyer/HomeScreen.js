@@ -262,8 +262,12 @@ export default function HomeScreen({ navigation, route }) {
         return;
       }
 
+      if (hasCustomLocationRef.current) {
+        return;
+      }
+
       const currentTown = user?.town || 'Nellore';
-      if (!hasCustomLocationRef.current && currentTown !== town) setTown(currentTown);
+      if (currentTown !== town) setTown(currentTown);
 
       const now = Date.now();
       const townChanged = lastTownRef.current !== currentTown;
