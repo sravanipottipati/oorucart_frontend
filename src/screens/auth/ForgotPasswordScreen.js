@@ -198,7 +198,10 @@ export default function ForgotPasswordScreen({ navigation }) {
                   await client.post('/users/verify-otp/', { phone_number: phone, otp: otpCode });
                   setStep(3);
                 } catch (e) {
-                  const msg = e.response?.data?.error || 'Invalid OTP. Please try again.';
+                  const backendMsg = e.response?.data?.error;
+                  const msg = backendMsg
+                    ? `${backendMsg} [You entered: ${otpCode}]`
+                    : `Network/Connection issue. [Entered: ${otpCode}] [${e.message}]`;
                   alert(msg);
                 } finally { setLoading(false); }
               }}
