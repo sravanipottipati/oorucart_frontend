@@ -624,28 +624,6 @@ export default function HomeScreen({ navigation, route }) {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* ── Floating Cart Bar ── */}
-      {cartCount > 0 && Object.keys(carts).length === 1 && (
-        <TouchableOpacity
-          style={styles.cartBar}
-          onPress={() => navigation.navigate('ShopDetail', {
-            vendorId: cartShop?.id,
-            shopName: cartShop?.shop_name || cartShop?.name,
-          })}
-          activeOpacity={0.9}
-        >
-          <View style={styles.cartBarLeft}>
-            <View style={styles.cartBadge}>
-              <Text style={styles.cartBadgeText}>{cartCount}</Text>
-            </View>
-            <Text style={styles.cartBarItems}>{cartCount} item{cartCount > 1 ? 's' : ''} added</Text>
-          </View>
-          <View style={styles.cartBarRight}>
-            <Text style={styles.cartBarShop}>{cartShop?.shop_name || cartShop?.name}</Text>
-            <Text style={styles.cartBarTotal}>₹{cartTotal.toFixed(0)} →</Text>
-          </View>
-        </TouchableOpacity>
-      )}
 
       <ProductDetailModal product={selectedProduct} visible={showProductModal} onClose={() => setShowProductModal(false)} navigation={navigation} />
 
