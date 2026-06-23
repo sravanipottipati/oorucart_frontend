@@ -160,7 +160,7 @@ export default function HomeScreen({ navigation, route }) {
       client.get('/vendors/wishlist/').then(res => setWishlistCount((res.data.wishlist || []).length)).catch(() => {});
     }, [])
   );
-  const [town, setTown]                          = useState(user?.town || 'Nellore');
+  const [town, setTown]                          = useState(globalStore.hasCustomLocation && globalStore.lastPickedLocation ? (globalStore.lastPickedLocation.address?.split(',').slice(0, 2).join(',') || 'Selected Location') : (user?.town || 'Nellore'));
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -251,6 +251,7 @@ export default function HomeScreen({ navigation, route }) {
         globalStore.homeLocation = null;
         const shortAddress = loc.address?.split(',').slice(0, 2).join(',') || 'Selected Location';
         hasCustomLocationRef.current = true;
+        globalStore.hasCustomLocation = true;
         setLocationDenied(false);
         // Save persistently so Checkout can use it as a fallback address
         globalStore.lastPickedLocation = { lat: loc.lat, lng: loc.lng, address: loc.address };
@@ -262,7 +263,16 @@ export default function HomeScreen({ navigation, route }) {
         return;
       }
 
-      if (hasCustomLocationRef.current) {
+      if (globalStore.hasCustomLocation && globalStore.lastPickedLocation) {
+        hasCustomLocationRef.current = true;
+        if (shops.length === 0) {
+          const loc = globalStore.lastPickedLocation;
+          const shortAddress = loc.address?.split(',').slice(0, 2).join(',') || 'Selected Location';
+          setTown(shortAddress);
+          setLoading(true);
+          fetchShops(null, loc.lat, loc.lng);
+          fetchPopularProducts(shortAddress);
+        }
         return;
       }
 
