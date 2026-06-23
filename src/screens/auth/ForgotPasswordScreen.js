@@ -54,13 +54,27 @@ export default function ForgotPasswordScreen({ navigation }) {
   };
 
   const handleOtpChange = (val, index) => {
+    // Handle SMS autofill / paste that may insert the full code into one box
+    const digitsOnly = val.replace(/[^0-9]/g, '');
+    if (digitsOnly.length > 1) {
+      const newOtp = [...otp];
+      for (let i = 0; i < 6; i++) {
+        newOtp[i] = digitsOnly[i] || '';
+      }
+      setOtp(newOtp);
+      const lastFilledIndex = Math.min(digitsOnly.length, 6) - 1;
+      otpRefs.current[Math.min(lastFilledIndex, 5)]?.focus();
+      if (digitsOnly.length >= 6) {
+        otpRefs.current[5]?.blur();
+      }
+      return;
+    }
     const newOtp = [...otp];
-    newOtp[index] = val;
+    newOtp[index] = digitsOnly;
     setOtp(newOtp);
-    if (val && index < 5) {
+    if (digitsOnly && index < 5) {
       otpRefs.current[index + 1]?.focus();
     }
-
   };
 
   const handleOtpKeyPress = (e, index) => {
@@ -179,7 +193,7 @@ export default function ForgotPasswordScreen({ navigation }) {
                   ref={ref => otpRefs.current[index] = ref}
                   style={[styles.otpBox, digit && styles.otpBoxFilled]}
                   value={digit}
-                  onChangeText={val => handleOtpChange(val.slice(-1), index)}
+                  onChangeText={val => handleOtpChange(val, index)}
                   onKeyPress={e => handleOtpKeyPress(e, index)}
                   keyboardType="numeric"
                   maxLength={1}
