@@ -49,7 +49,6 @@ export default function CheckoutScreen({ navigation, route }) {
   const [note, setNote]                 = useState('');
   const [loading, setLoading]           = useState(false);
   const [locatingCurrent, setLocatingCurrent] = useState(false);
-  const [locatingCurrent, setLocatingCurrent] = useState(false);
   const [payment, setPayment]           = useState('cod');
   const [addresses, setAddresses]       = useState([]);
   const [selectedAddr, setSelectedAddr] = useState(null);
