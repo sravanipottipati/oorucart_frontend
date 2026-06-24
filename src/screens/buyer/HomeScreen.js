@@ -536,50 +536,48 @@ export default function HomeScreen({ navigation, route }) {
           )}
           <Text style={styles.popularShop} numberOfLines={1}>🏬 {product.shop_name}</Text>
           <View style={styles.popularBottom}>
-            <View>
-              {(() => {
-                const price = product.variants && product.variants.length > 0
-                  ? parseFloat(product.variants[0].price)
-                  : parseFloat(product.price);
-                const mrp = product.variants && product.variants.length > 0
-                  ? parseFloat(product.variants[0].mrp || 0)
-                  : parseFloat(product.mrp || 0);
-                const discountPct = mrp > price ? Math.round((1 - price/mrp) * 100) : 0;
-                return (
-                  <View>
-                    <Text style={styles.popularPrice}>From ₹{price.toFixed(0)}</Text>
-                    {mrp > price && (
-                      <View style={{flexDirection:'row', alignItems:'center', gap:4}}>
-                        <Text style={{fontSize:10, color:'#9CA3AF', textDecorationLine:'line-through'}}>₹{mrp.toFixed(0)}</Text>
-                        <Text style={{fontSize:10, color:'#16A34A', fontWeight:'700'}}>{discountPct}% OFF</Text>
-                      </View>
-                    )}
-                  </View>
-                );
-              })()}
-            </View>
+            {(() => {
+              const price = product.variants && product.variants.length > 0
+                ? parseFloat(product.variants[0].price)
+                : parseFloat(product.price);
+              const mrp = product.variants && product.variants.length > 0
+                ? parseFloat(product.variants[0].mrp || 0)
+                : parseFloat(product.mrp || 0);
+              const discountPct = mrp > price ? Math.round((1 - price/mrp) * 100) : 0;
+              return (
+                <View style={{ marginBottom: 8 }}>
+                  <Text style={styles.popularPrice}>From ₹{price.toFixed(0)}</Text>
+                  {mrp > price && (
+                    <View style={{flexDirection:'row', alignItems:'center', gap:4, marginTop: 2}}>
+                      <Text style={{fontSize:11, color:'#9CA3AF', textDecorationLine:'line-through'}}>₹{mrp.toFixed(0)}</Text>
+                      <Text style={{fontSize:11, color:'#16A34A', fontWeight:'700'}}>{discountPct}% OFF</Text>
+                    </View>
+                  )}
+                </View>
+              );
+            })()}
             {(() => {
               const vendorId = product.vendor_id;
               const qty = carts[vendorId]?.items?.[product.id] || 0;
               if (qty > 0) {
                 return (
-                  <View style={{flexDirection:'row', alignItems:'center', backgroundColor:'#1669ef', borderRadius:14, paddingHorizontal:4, paddingVertical:3, gap:4, maxWidth:80}}>
-                    <TouchableOpacity hitSlop={{top:8,bottom:8,left:6,right:6}} onPress={() => removeFromCart(product, vendorId)}>
-                      <Text style={{color:'#fff', fontSize:14, fontWeight:'bold', width:14, textAlign:'center'}}>−</Text>
+                  <View style={styles.popularQtyControl}>
+                    <TouchableOpacity style={styles.popularQtyBtn} onPress={() => removeFromCart(product, vendorId)}>
+                      <Text style={styles.popularQtyBtnText}>−</Text>
                     </TouchableOpacity>
-                    <Text style={{color:'#fff', fontSize:12, fontWeight:'bold', minWidth:12, textAlign:'center'}}>{qty}</Text>
-                    <TouchableOpacity hitSlop={{top:8,bottom:8,left:6,right:6}} onPress={() => addToCart(product, { id: vendorId, shop_name: product.shop_name })}>
-                      <Text style={{color:'#fff', fontSize:14, fontWeight:'bold', width:14, textAlign:'center'}}>+</Text>
+                    <Text style={styles.popularQtyText}>{qty}</Text>
+                    <TouchableOpacity style={styles.popularQtyBtn} onPress={() => addToCart(product, { id: vendorId, shop_name: product.shop_name })}>
+                      <Text style={styles.popularQtyBtnText}>+</Text>
                     </TouchableOpacity>
                   </View>
                 );
               }
               return (
-                <TouchableOpacity 
-                  style={styles.popularAddBtn}
+                <TouchableOpacity
+                  style={styles.popularAddBtnFull}
                   onPress={() => addToCart(product, { id: product.vendor_id, shop_name: product.shop_name })}
                 >
-                  <Text style={styles.popularAddBtnText}>+</Text>
+                  <Text style={styles.popularAddBtnFullText}>ADD</Text>
                 </TouchableOpacity>
               );
             })()}
@@ -839,8 +837,12 @@ const styles = StyleSheet.create({
   popularImg: { width: '100%', height: '100%' },
   popularName: { fontSize: 12, fontWeight: '600', color: '#111', marginBottom: 3, lineHeight: 16 },
   popularShop: { fontSize: 10, color: '#888', marginBottom: 6 },
-  popularBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 4 },
+  popularBottom: {},
   popularPrice: { fontSize: 14, fontWeight: '800', color: '#1669ef' },
-  popularAddBtn: { width: 26, height: 26, backgroundColor: '#1669ef', borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
-  popularAddBtnText: { color: '#fff', fontSize: 18, fontWeight: '700', lineHeight: 22 },
+  popularAddBtnFull: { backgroundColor: '#1669ef', borderRadius: 10, paddingVertical: 8, alignItems: 'center', justifyContent: 'center' },
+  popularAddBtnFullText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  popularQtyControl: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#1669ef', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7 },
+  popularQtyBtn: { paddingHorizontal: 4 },
+  popularQtyBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  popularQtyText: { color: '#fff', fontSize: 13, fontWeight: 'bold' },
 });
