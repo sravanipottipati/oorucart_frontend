@@ -35,11 +35,18 @@ export default function RegisterScreen({ navigation }) {
     try {
       await register(fullName, phone, password, userType === 'seller' ? 'vendor' : 'buyer');
       registrationSucceeded = true;
-      if (userType === 'seller') {
-        navigation.replace('VendorRegister');
-      } else {
-        navigation.replace('TownSelection');
-      }
+      Alert.alert('Registration Successful!', 'Your account has been created successfully.', [
+        {
+          text: 'OK',
+          onPress: () => {
+            if (userType === 'seller') {
+              navigation.replace('VendorRegister');
+            } else {
+              navigation.replace('TownSelection');
+            }
+          }
+        }
+      ]);
     } catch (e) {
       if (registrationSucceeded) {
         // Account was created successfully - this error happened only during navigation,
