@@ -78,15 +78,16 @@ export default function CheckoutScreen({ navigation, route }) {
   useFocusEffect(useCallback(() => {
     if (globalStore.checkoutAddress) {
       setAddress(globalStore.checkoutAddress);
-      globalStore.checkoutAddress = null;
       if (globalStore.checkoutCoords && shop?.latitude && shop?.longitude) {
         const dist = calculateDistance(
           globalStore.checkoutCoords.lat, globalStore.checkoutCoords.lng,
           parseFloat(shop.latitude), parseFloat(shop.longitude)
         );
         setCalcDistance(dist);
-        globalStore.checkoutCoords = null;
       }
+      // Don't clear globalStore here - keep it so address persists correctly
+      // across screen remounts (tab switches). It only gets cleared when the
+      // user explicitly picks a different address or a new location.
       return;
     }
     const fetchAddresses = async () => {
