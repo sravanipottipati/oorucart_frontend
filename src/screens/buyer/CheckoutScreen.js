@@ -77,6 +77,7 @@ export default function CheckoutScreen({ navigation, route }) {
 
   useFocusEffect(useCallback(() => {
     if (globalStore.checkoutAddress) {
+      console.log('Checkout focus - shop coords:', shop?.latitude, shop?.longitude, '| globalStore.checkoutCoords:', JSON.stringify(globalStore.checkoutCoords));
       setAddress(globalStore.checkoutAddress);
       if (globalStore.checkoutCoords && shop?.latitude && shop?.longitude) {
         const dist = calculateDistance(
