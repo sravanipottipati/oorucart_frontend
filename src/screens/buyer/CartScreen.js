@@ -2,7 +2,7 @@ import React, { useEffect, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, Image,
+  ScrollView, Image, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 const DEFAULT_PRODUCT_IMG = require('../../../assets/default_product.png');
@@ -11,7 +11,7 @@ import { useCart } from '../../context/CartContext';
 const TEAL = '#1669ef';
 
 export default function CartScreen({ navigation }) {
-  const { carts, addToCart, removeFromCart, cartCount, fetchCartFromDb } = useCart();
+  const { carts, addToCart, removeFromCart, cartCount, fetchCartFromDb, clearShopCart } = useCart();
 
   useFocusEffect(
     useCallback(() => {
@@ -122,6 +122,21 @@ export default function CartScreen({ navigation }) {
                   <Text style={styles.itemCountText}>{itemCount} items</Text>
                 </View>
               </View>
+              <TouchableOpacity
+                style={{ alignSelf: 'flex-end', marginTop: -8, marginBottom: 8, paddingHorizontal: 4, paddingVertical: 4 }}
+                onPress={() => {
+                  Alert.alert(
+                    'Clear Cart',
+                    `Remove all items from ${shop.shop_name}?`,
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      { text: 'Clear', style: 'destructive', onPress: () => clearShopCart(vid) },
+                    ]
+                  );
+                }}
+              >
+                <Text style={{ fontSize: 12, color: '#EF4444', fontWeight: '600' }}>Clear Cart</Text>
+              </TouchableOpacity>
 
               {/* Items */}
               {products.map((product, i) => {
