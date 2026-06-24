@@ -213,13 +213,16 @@ export default function ForgotPasswordScreen({ navigation }) {
                   await client.post('/users/verify-otp/', { phone_number: phoneTrimmed, otp: otpCode });
                   setStep(3);
                 } catch (e) {
+                  console.log('OTP verify error:', e.message, '| response:', JSON.stringify(e.response?.data), '| code entered:', otpCode);
                   const backendMsg = e.response?.data?.error;
-                  if (backendMsg && backendMsg.toLowerCase().includes('expired')) {
+                  if (!e.response) {
+                    alert('Network error. Please check your internet connection and try again.');
+                  } else if (backendMsg && backendMsg.toLowerCase().includes('expired')) {
                     alert('Your OTP expired. Please tap Resend OTP to get a new one.');
                   } else if (backendMsg && backendMsg.toLowerCase().includes('invalid')) {
                     alert('Incorrect OTP. Please check the SMS and try again, or tap Resend OTP.');
                   } else {
-                    alert(backendMsg || 'Something went wrong. Please try again.');
+                    alert(backendMsg || 'Something went wrong. Please check your connection and try again.');
                   }
                 } finally { setLoading(false); }
               }}
