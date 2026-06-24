@@ -166,6 +166,7 @@ export default function CheckoutScreen({ navigation, route }) {
   };
 
   const handlePlaceOrder = async () => {
+    console.log('handlePlaceOrder - deliveryInfo:', JSON.stringify(deliveryInfo), '| calcDistance:', calcDistance, '| distance:', distance);
     if (deliveryInfo.outOfRange) {
       Alert.alert('Outside Delivery Area', 'Sorry, this shop does not deliver to your location. Maximum delivery range is 6 km.');
       return;
