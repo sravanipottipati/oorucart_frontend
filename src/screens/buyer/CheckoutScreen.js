@@ -22,17 +22,21 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 };
 
 const getDeliveryInfo = (distanceKm, subtotal, mov) => {
+  const distanceUnknown = distanceKm === null || distanceKm === undefined || isNaN(parseFloat(distanceKm));
   const dist = parseFloat(distanceKm) || 0;
   const minOrderValue = parseFloat(mov) || 0;
   let fee = 0, slab = '', outOfRange = false;
-  if (dist <= 2)      { fee = 25; slab = '0-2 km'; }
+  if (distanceUnknown) {
+    // Don't assume safe distance when we genuinely don't know it yet
+    slab = 'calculating'; outOfRange = false;
+  } else if (dist <= 2)      { fee = 25; slab = '0-2 km'; }
   else if (dist <= 4) { fee = 35; slab = '2-4 km'; }
   else if (dist <= 6) { fee = 45; slab = '4-6 km'; }
   else                { fee = 0; slab = '>6 km'; outOfRange = true; }
   const isFree = !outOfRange && minOrderValue > 0 && subtotal >= minOrderValue;
   if (isFree) fee = 0;
   const amountLeft = minOrderValue > 0 ? Math.max(0, minOrderValue - subtotal) : 0;
-  return { fee, slab, outOfRange, deliveryFee: fee, isFree, amountLeft, mov: minOrderValue };
+  return { fee, slab, outOfRange, distanceUnknown, deliveryFee: fee, isFree, amountLeft, mov: minOrderValue };
 };
 
 export default function CheckoutScreen({ navigation, route }) {
@@ -146,6 +150,10 @@ export default function CheckoutScreen({ navigation, route }) {
   const handlePlaceOrder = async () => {
     if (deliveryInfo.outOfRange) {
       Alert.alert('Outside Delivery Area', 'Sorry, this shop does not deliver to your location. Maximum delivery range is 6 km.');
+      return;
+    }
+    if (deliveryInfo.distanceUnknown) {
+      Alert.alert('Calculating Distance', 'Please wait a moment while we confirm your delivery distance, then try again.');
       return;
     }
     if (!address.trim()) {
