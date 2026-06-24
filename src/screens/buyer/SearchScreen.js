@@ -56,6 +56,7 @@ export default function SearchScreen({ navigation }) {
   const { user }    = useAuth();
   const town        = user?.town || '';
   const [gpsCoords, setGpsCoords] = React.useState(null);
+  const [isOffline, setIsOffline] = React.useState(false);
 
   React.useEffect(() => {
     const getGPS = async () => {
@@ -141,8 +142,10 @@ export default function SearchScreen({ navigation }) {
       if (filters.maxPrice) url += `&max_price=${filters.maxPrice}`;
       const res = await client.get(url);
       setResults(res.data);
+      setIsOffline(false);
     } catch (e) {
       console.log('Search error:', e.message);
+      setIsOffline(e.message === 'Network Error' || !e.response);
     } finally {
       setLoading(false);
     }
@@ -329,6 +332,17 @@ export default function SearchScreen({ navigation }) {
           </View>
         </ScrollView>
 
+      ) : isOffline ? (
+        <View style={styles.emptyState}>
+          <View style={styles.emptyIconBox}>
+            <Ionicons name="wifi-outline" size={40} color={GRAY} />
+          </View>
+          <Text style={styles.emptyTitle}>No Internet Connection</Text>
+          <Text style={styles.emptySubtitle}>Please check your WiFi or mobile data and try again</Text>
+          <TouchableOpacity style={styles.clearFiltersBtn} onPress={() => doSearch(query)}>
+            <Text style={styles.clearFiltersBtnText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
       ) : results && totalResults === 0 ? (
         <View style={styles.emptyState}>
           <View style={styles.emptyIconBox}>
