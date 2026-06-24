@@ -207,7 +207,7 @@ export default function CheckoutScreen({ navigation, route }) {
           items:            orderItems,
           delivery_address: address,
           payment_mode:     'cod',
-          notes:            note,
+          instructions:     note,
           delivery_fee:     deliveryFeeGST,
           total:            Math.round(total),
         });
