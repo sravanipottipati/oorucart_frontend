@@ -32,13 +32,20 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (full_name, phone_number, password, user_type) => {
+    // Step 1: Create the account on the server - if this fails, it's a real registration error
     const response = await client.post('/users/register/', {
       full_name, phone_number, password, user_type,
     });
     const { user, tokens } = response.data;
-    await AsyncStorage.setItem('access_token', tokens.access);
-    await AsyncStorage.setItem('refresh_token', tokens.refresh);
-    await AsyncStorage.setItem('user', JSON.stringify(user));
+    // Step 2: Save locally - even if storage hiccups, the account was already created successfully,
+    // so we don't want a storage error to look like a "registration failed" error to the user
+    try {
+      await AsyncStorage.setItem('access_token', tokens.access);
+      await AsyncStorage.setItem('refresh_token', tokens.refresh);
+      await AsyncStorage.setItem('user', JSON.stringify(user));
+    } catch (storageErr) {
+      console.log('Storage write error after successful registration:', storageErr.message);
+    }
     setUser(user);
     return user;
   };

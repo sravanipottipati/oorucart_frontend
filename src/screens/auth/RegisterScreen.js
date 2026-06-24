@@ -30,20 +30,28 @@ export default function RegisterScreen({ navigation }) {
     if (!agreedToTerms)
       return Alert.alert('Error', 'Please agree to Terms & Conditions and Privacy Policy');
     setLoading(true);
+    let registrationSucceeded = false;
     try {
       await register(fullName, phone, password, userType === 'seller' ? 'vendor' : 'buyer');
+      registrationSucceeded = true;
       if (userType === 'seller') {
         navigation.replace('VendorRegister');
       } else {
         navigation.replace('TownSelection');
       }
     } catch (e) {
-      const data = e.response?.data;
-      const msg = data?.phone_number?.[0]
-        || data?.error
-        || (typeof data === 'object' && data ? Object.values(data).flat().join(' ') : null)
-        || 'Registration failed. Please try again.';
-      Alert.alert('Error', msg);
+      if (registrationSucceeded) {
+        // Account was created successfully - this error happened only during navigation,
+        // so don't confuse the user with a "registration failed" message
+        console.log('Post-registration navigation error:', e.message);
+      } else {
+        const data = e.response?.data;
+        const msg = data?.phone_number?.[0]
+          || data?.error
+          || (typeof data === 'object' && data ? Object.values(data).flat().join(' ') : null)
+          || 'Registration failed. Please try again.';
+        Alert.alert('Error', msg);
+      }
     } finally {
       setLoading(false);
     }
