@@ -123,6 +123,9 @@ export const CartProvider = ({ children }) => {
     const vid = vendorId || Object.keys(carts).find(k => carts[k].items[product.id]);
     if (!vid) return;
 
+    const currentLocalQty = carts[vid]?.items?.[product.id] || 1;
+    const newLocalQty = currentLocalQty - 1;
+
     setCarts(prev => {
       const existing = prev[vid];
       if (!existing) return prev;
@@ -154,11 +157,10 @@ export const CartProvider = ({ children }) => {
         (variantId ? i.variant_id === variantId : !i.variant_id)
       );
       if (dbItem) {
-        const newQty = (dbItem.quantity || 1) - 1;
-        if (newQty <= 0) {
+        if (newLocalQty <= 0) {
           await client.delete(`/orders/cart/remove/${dbItem.id}/`, { headers });
         } else {
-          await client.patch(`/orders/cart/update/${dbItem.id}/`, { quantity: newQty }, { headers });
+          await client.patch(`/orders/cart/update/${dbItem.id}/`, { quantity: newLocalQty }, { headers });
         }
         lastFetchTime.current = 0;
       }
