@@ -19,6 +19,7 @@ export default function RegisterScreen({ navigation }) {
   const { register }                          = useAuth();
 
   const handleRegister = async () => {
+    if (loading) return; // Prevent double-submission
     if (!fullName || !phone || !password || !confirmPassword)
       return Alert.alert('Error', 'Please fill all fields');
     if (phone.length !== 10)
@@ -186,6 +187,7 @@ export default function RegisterScreen({ navigation }) {
           <TouchableOpacity
             style={[styles.button, (loading || !agreedToTerms) && styles.buttonDisabled]}
             onPress={handleRegister}
+            disabled={loading || !agreedToTerms}
             disabled={loading || !agreedToTerms}
           >
             {loading
