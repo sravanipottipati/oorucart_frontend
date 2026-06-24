@@ -578,9 +578,9 @@ export default function CheckoutScreen({ navigation, route }) {
             <Text style={styles.footerTotalLabel}>Total</Text>
           </View>
           <TouchableOpacity
-            style={[styles.placeOrderBtn, (deliveryInfo.outOfRange || deliveryInfo.distanceUnknown) && styles.placeOrderBtnDisabled]}
+            style={styles.placeOrderBtn}
             onPress={handlePlaceOrder}
-            disabled={loading || deliveryInfo.outOfRange}
+            disabled={loading}
           >
             {loading
               ? <ActivityIndicator color="#fff" />
