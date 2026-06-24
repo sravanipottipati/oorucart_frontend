@@ -236,7 +236,14 @@ export default function CartScreen({ navigation }) {
           <Text style={styles.tabLabel}>Home</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem}>
-          <Ionicons name="cart" size={22} color={TEAL} />
+          <View style={{ position: 'relative' }}>
+            <Ionicons name="cart" size={22} color={TEAL} />
+            {cartCount > 0 && (
+              <View style={styles.cartTabBadge}>
+                <Text style={styles.cartTabBadgeText}>{cartCount > 99 ? '99+' : cartCount}</Text>
+              </View>
+            )}
+          </View>
           <Text style={styles.tabLabelActive}>Cart</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate('MyOrders')}>
@@ -399,4 +406,12 @@ const styles = StyleSheet.create({
   tabItem:        { flex: 1, alignItems: 'center', gap: 3 },
   tabLabel:       { fontSize: 11, color: '#9CA3AF' },
   tabLabelActive: { fontSize: 11, color: TEAL, fontWeight: 'bold' },
+  cartTabBadge: {
+    position: 'absolute', top: -5, right: -8,
+    backgroundColor: '#EF4444', borderRadius: 9,
+    minWidth: 16, height: 16, justifyContent: 'center',
+    alignItems: 'center', paddingHorizontal: 3,
+    borderWidth: 1.5, borderColor: '#fff',
+  },
+  cartTabBadgeText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
 });
