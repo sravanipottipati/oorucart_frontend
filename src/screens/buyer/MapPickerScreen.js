@@ -104,6 +104,7 @@ export default function MapPickerScreen({ navigation, route }) {
     const { isCheckout } = route.params || {};
     if (isCheckout) {
       globalStore.checkoutAddress = address;
+      globalStore.checkoutCoords = { lat: marker.latitude, lng: marker.longitude };
       navigation.goBack();
       return;
     }

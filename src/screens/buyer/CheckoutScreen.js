@@ -78,6 +78,14 @@ export default function CheckoutScreen({ navigation, route }) {
     if (globalStore.checkoutAddress) {
       setAddress(globalStore.checkoutAddress);
       globalStore.checkoutAddress = null;
+      if (globalStore.checkoutCoords && shop?.latitude && shop?.longitude) {
+        const dist = calculateDistance(
+          globalStore.checkoutCoords.lat, globalStore.checkoutCoords.lng,
+          parseFloat(shop.latitude), parseFloat(shop.longitude)
+        );
+        setCalcDistance(dist);
+        globalStore.checkoutCoords = null;
+      }
       return;
     }
     const fetchAddresses = async () => {
