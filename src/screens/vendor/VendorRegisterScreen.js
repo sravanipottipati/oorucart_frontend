@@ -152,6 +152,7 @@ export default function VendorRegisterScreen({ navigation }) {
   const handleSubmit = async () => {
     if (!shopName.trim()) return Alert.alert('Error', 'Shop name is required');
     if (!town.trim())     return Alert.alert('Error', 'Town is required');
+    if (!fssai.trim())    return Alert.alert('FSSAI Number Required', 'Please enter your FSSAI license number to register your shop. This is mandatory for selling food/grocery items.');
     if (!agreedToTerms)   return Alert.alert('Agreement Required', 'Please read and agree to the Seller Agreement before registering.');
 
     setLoading(true);
@@ -317,8 +318,8 @@ export default function VendorRegisterScreen({ navigation }) {
             autoCapitalize="characters" maxLength={10} />
         </View>
         <View style={styles.halfField}>
-          <Text style={styles.label}>FSSAI Number (optional)</Text>
-          <TextInput style={styles.input} placeholder="14-digit FSSAI"
+          <Text style={styles.label}>FSSAI Number *</Text>
+          <TextInput style={styles.input} placeholder="14-digit FSSAI (required)"
             placeholderTextColor="#9CA3AF" value={fssai} onChangeText={setFssai}
             keyboardType="numeric" maxLength={14} />
         </View>
