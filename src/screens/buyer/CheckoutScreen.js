@@ -481,6 +481,17 @@ export default function CheckoutScreen({ navigation, route }) {
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Bill Details</Text>
+            {shopHasGST ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                <Ionicons name="checkmark-circle" size={14} color="#16A34A" />
+                <Text style={{ fontSize: 12, color: '#16A34A', fontWeight: '600' }}>GST Registered Shop · GSTIN: {shop.gstin}</Text>
+              </View>
+            ) : (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                <Ionicons name="information-circle-outline" size={14} color="#9CA3AF" />
+                <Text style={{ fontSize: 12, color: '#9CA3AF', fontWeight: '500' }}>This shop is not GST registered</Text>
+              </View>
+            )}
             <View style={styles.billRow}>
               <Text style={styles.billLabel}>Items Total{shopHasGST ? ' (incl. GST)' : ''}</Text>
               <Text style={styles.billValue}>Rs.{subtotal % 1 === 0 ? subtotal.toFixed(0) : subtotal.toFixed(1)}</Text>
