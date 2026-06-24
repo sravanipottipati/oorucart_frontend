@@ -56,6 +56,13 @@ export default function OrderSuccessScreen({ navigation, route }) {
               Order #{order?.order_number || order?.id?.slice(0, 8).toUpperCase() || '—'}
             </Text>
           </View>
+          {/* Estimated Delivery Time */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, backgroundColor: '#EFF6FF', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 }}>
+            <Ionicons name="time-outline" size={16} color="#1669ef" />
+            <Text style={{ fontSize: 13, color: '#1669ef', fontWeight: '700' }}>
+              Estimated Delivery: {order?.estimated_delivery_time || 30}-{(order?.estimated_delivery_time || 30) + 15} mins
+            </Text>
+          </View>
         </View>
 
         {/* ── Order Details ── */}
