@@ -211,6 +211,7 @@ export default function ForgotPasswordScreen({ navigation }) {
                 setLoading(true);
                 try {
                   await client.post('/users/verify-otp/', { phone_number: phoneTrimmed, otp: otpCode });
+                  alert('OTP verified successfully!');
                   setStep(3);
                 } catch (e) {
                   console.log('OTP verify error:', e.message, '| response:', JSON.stringify(e.response?.data), '| code entered:', otpCode);
