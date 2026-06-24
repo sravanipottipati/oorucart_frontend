@@ -112,7 +112,7 @@ export const CartProvider = ({ children }) => {
         quantity:   1,
         price:      product.price,
       }, { headers });
-      // No need to re-fetch immediately - local optimistic state is already correct
+      lastFetchTime.current = 0; // ensure next focus re-syncs with backend, not skipped by dedupe
     } catch (err) {
       console.log('addToCart error:', err?.response?.data || err.message);
     }
@@ -160,7 +160,7 @@ export const CartProvider = ({ children }) => {
         } else {
           await client.patch(`/orders/cart/update/${dbItem.id}/`, { quantity: newQty }, { headers });
         }
-        // No need to re-fetch immediately - local optimistic state is already correct
+        lastFetchTime.current = 0;
       }
     } catch (err) {
       console.log('removeFromCart error:', err?.response?.data || err.message);
@@ -178,6 +178,7 @@ export const CartProvider = ({ children }) => {
       const headers = await getHeaders();
       if (!headers.Authorization) return;
       await client.delete(`/orders/cart/clear/?vendor_id=${vendorId}`, { headers });
+      lastFetchTime.current = 0; // ensure next focus actually re-syncs with backend
     } catch (err) {
       console.log('clearShopCart error:', err?.response?.data || err.message);
     }
@@ -190,6 +191,7 @@ export const CartProvider = ({ children }) => {
       const headers = await getHeaders();
       if (!headers.Authorization) return;
       await client.delete('/orders/cart/clear/', { headers });
+      lastFetchTime.current = 0;
     } catch (err) {
       console.log('clearCart error:', err?.response?.data || err.message);
     }
