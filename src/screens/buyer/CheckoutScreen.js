@@ -171,7 +171,7 @@ export default function CheckoutScreen({ navigation, route }) {
       return;
     }
     if (deliveryInfo.distanceUnknown) {
-      Alert.alert('Calculating Distance', 'Please wait a moment while we confirm your delivery distance, then try again.');
+      // Button is already visually disabled in this state - no need for a popup
       return;
     }
     if (!address.trim()) {
@@ -448,9 +448,17 @@ export default function CheckoutScreen({ navigation, route }) {
           {deliveryInfo.outOfRange && (
             <View style={styles.outOfRangeBanner}>
               <Ionicons name="alert-circle" size={18} color="#dc2626" />
-              <Text style={styles.outOfRangeText}>
-                Outside delivery area — {calcDistance ? `${calcDistance} km` : 'too far'}. Max range is 6 km.
-              </Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.outOfRangeText}>
+                  Outside delivery area — {calcDistance ? `${calcDistance} km` : 'too far'}. Max range is 6 km.
+                </Text>
+                <TouchableOpacity
+                  style={{ marginTop: 8, alignSelf: 'flex-start' }}
+                  onPress={() => navigation.navigate('MapPicker', { isCheckout: true, onLocationSelected: null })}
+                >
+                  <Text style={{ color: '#1669ef', fontWeight: '700', fontSize: 13 }}>Change Delivery Location →</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
 
@@ -570,7 +578,7 @@ export default function CheckoutScreen({ navigation, route }) {
             <Text style={styles.footerTotalLabel}>Total</Text>
           </View>
           <TouchableOpacity
-            style={[styles.placeOrderBtn, deliveryInfo.outOfRange && styles.placeOrderBtnDisabled]}
+            style={[styles.placeOrderBtn, (deliveryInfo.outOfRange || deliveryInfo.distanceUnknown) && styles.placeOrderBtnDisabled]}
             onPress={handlePlaceOrder}
             disabled={loading || deliveryInfo.outOfRange}
           >
