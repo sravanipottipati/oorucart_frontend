@@ -549,7 +549,7 @@ export default function ShopDetailScreen({ navigation, route }) {
 
       {subcategories.length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false}
-          style={{ marginTop: 4, marginBottom: 4 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
+          style={{ maxHeight: 50, marginTop: 4, marginBottom: 4 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8, alignItems: 'center' }}>
           <TouchableOpacity
             style={[styles.subcatChip, activeSubcategory === 'all' && { backgroundColor: shopColor, borderColor: shopColor }]}
             onPress={() => setActiveSubcategory('all')}>
