@@ -277,6 +277,15 @@ ${order.delivery_address}
           <Text style={styles.cardTitle}>Delivery Address</Text>
           {order.buyer_name && <View style={styles.buyerRow}><Ionicons name="person-outline" size={16} color="#888" /><Text style={styles.buyerName}>{order.buyer_name}</Text></View>}
           <Text style={styles.addressText}>{order.delivery_address}</Text>
+          {order.instructions ? (
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 12, backgroundColor: '#FFFBEB', padding: 10, borderRadius: 10, borderWidth: 1, borderColor: '#FDE68A' }}>
+              <Ionicons name="chatbox-ellipses-outline" size={16} color="#D97706" />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: '#D97706', marginBottom: 2 }}>Special Instructions</Text>
+                <Text style={{ fontSize: 13, color: '#92400E' }}>{order.instructions}</Text>
+              </View>
+            </View>
+          ) : null}
           <View style={styles.addressBtns}>
             <TouchableOpacity style={styles.mapsBtn} onPress={handleShareOrder}>
               <Ionicons name="share-social-outline" size={16} color="#1669ef" /><Text style={styles.mapsBtnText}>Share Order</Text>
