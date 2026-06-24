@@ -48,6 +48,8 @@ export default function CheckoutScreen({ navigation, route }) {
   const [calcDistance, setCalcDistance] = useState(null);
   const [note, setNote]                 = useState('');
   const [loading, setLoading]           = useState(false);
+  const [locatingCurrent, setLocatingCurrent] = useState(false);
+  const [locatingCurrent, setLocatingCurrent] = useState(false);
   const [payment, setPayment]           = useState('cod');
   const [addresses, setAddresses]       = useState([]);
   const [selectedAddr, setSelectedAddr] = useState(null);
@@ -130,6 +132,7 @@ export default function CheckoutScreen({ navigation, route }) {
   }, []);
 
   const useCurrentLocation = async () => {
+    setLocatingCurrent(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') return;
@@ -137,8 +140,15 @@ export default function CheckoutScreen({ navigation, route }) {
       const { latitude, longitude } = loc.coords;
       const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyCS_YRu6O61LCZn_QlypzjcjSdeRqbQaDI`);
       const data = await res.json();
-      if (data.results?.[0]) setAddress(data.results[0].formatted_address);
+      if (data.results?.[0]) {
+        setAddress(data.results[0].formatted_address);
+        if (shop?.latitude && shop?.longitude) {
+          const dist = calculateDistance(latitude, longitude, parseFloat(shop.latitude), parseFloat(shop.longitude));
+          setCalcDistance(dist);
+        }
+      }
     } catch (e) { Alert.alert('Error', 'Could not get location'); }
+    finally { setLocatingCurrent(false); }
   };
 
   const geocodeAndSetDistance = async (addressText) => {
@@ -412,9 +422,12 @@ export default function CheckoutScreen({ navigation, route }) {
               </ScrollView>
             )}
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
-              <TouchableOpacity style={styles.locationQuickBtn} onPress={useCurrentLocation}>
-                <Ionicons name="locate-outline" size={16} color="#1669ef" />
-                <Text style={styles.locationQuickText}>Current Location</Text>
+              <TouchableOpacity style={styles.locationQuickBtn} onPress={useCurrentLocation} disabled={locatingCurrent}>
+                {locatingCurrent
+                  ? <ActivityIndicator size="small" color="#1669ef" />
+                  : <Ionicons name="locate-outline" size={16} color="#1669ef" />
+                }
+                <Text style={styles.locationQuickText}>{locatingCurrent ? 'Locating...' : 'Current Location'}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.locationQuickBtn} onPress={() => navigation.navigate('MapPicker', { isCheckout: true, onLocationSelected: null })}>
                 <Ionicons name="map-outline" size={16} color="#1669ef" />
