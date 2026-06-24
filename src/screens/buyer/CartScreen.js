@@ -118,25 +118,22 @@ export default function CartScreen({ navigation }) {
                   <Text style={styles.shopName}>{shop.shop_name}</Text>
                   <Text style={styles.shopMeta}>{itemCount} item{itemCount !== 1 ? 's' : ''}</Text>
                 </View>
-                <View style={styles.itemCountBadge}>
-                  <Text style={styles.itemCountText}>{itemCount} items</Text>
-                </View>
+                <TouchableOpacity
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  onPress={() => {
+                    Alert.alert(
+                      'Clear Cart',
+                      `Remove all items from ${shop.shop_name}?`,
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Clear', style: 'destructive', onPress: () => clearShopCart(vid) },
+                      ]
+                    );
+                  }}
+                >
+                  <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                style={{ alignSelf: 'flex-end', marginTop: -8, marginBottom: 8, paddingHorizontal: 4, paddingVertical: 4 }}
-                onPress={() => {
-                  Alert.alert(
-                    'Clear Cart',
-                    `Remove all items from ${shop.shop_name}?`,
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      { text: 'Clear', style: 'destructive', onPress: () => clearShopCart(vid) },
-                    ]
-                  );
-                }}
-              >
-                <Text style={{ fontSize: 12, color: '#EF4444', fontWeight: '600' }}>Clear Cart</Text>
-              </TouchableOpacity>
 
               {/* Items */}
               {products.map((product, i) => {
