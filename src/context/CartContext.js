@@ -112,7 +112,7 @@ export const CartProvider = ({ children }) => {
         quantity:   1,
         price:      product.price,
       }, { headers });
-      await fetchCartFromDb();
+      // No need to re-fetch immediately - local optimistic state is already correct
     } catch (err) {
       console.log('addToCart error:', err?.response?.data || err.message);
     }
@@ -160,7 +160,7 @@ export const CartProvider = ({ children }) => {
         } else {
           await client.patch(`/orders/cart/update/${dbItem.id}/`, { quantity: newQty }, { headers });
         }
-        await fetchCartFromDb();
+        // No need to re-fetch immediately - local optimistic state is already correct
       }
     } catch (err) {
       console.log('removeFromCart error:', err?.response?.data || err.message);
