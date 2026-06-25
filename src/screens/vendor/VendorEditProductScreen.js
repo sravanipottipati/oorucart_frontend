@@ -42,6 +42,14 @@ export default function VendorEditProductScreen({ navigation, route }) {
 
   const [name, setName]             = useState(product?.name || '');
   const [hsnCode, setHsnCode]       = useState(product?.hsn_code || '');
+  const [barcode, setBarcode]         = useState(product?.barcode || '');
+  const [brand, setBrand]             = useState(product?.brand || '');
+  const [manufacturer, setManufacturer] = useState(product?.manufacturer || '');
+  const [netWeight, setNetWeight]     = useState(product?.net_weight || '');
+  const [ingredients, setIngredients] = useState(product?.ingredients || '');
+  const [nutritionalInfo, setNutritionalInfo] = useState(product?.nutritional_info || '');
+  const [allergenInfo, setAllergenInfo] = useState(product?.allergen_info || '');
+  const [expiryDate, setExpiryDate]   = useState(product?.expiry_date || '');
   const [price, setPrice]           = useState(product?.price?.toString() || '');
   const [mrp, setMrp]               = useState((product?.mrp && parseFloat(product.mrp) > 0) ? parseFloat(product.mrp).toString() : '');
   const [description, setDesc]      = useState(product?.description || '');
@@ -115,6 +123,10 @@ export default function VendorEditProductScreen({ navigation, route }) {
         gst_percentage: parseFloat(gst) || 0,
         is_available: isAvailable, is_returnable: isReturnable,
         is_cod: isCod, delivery_time: deliveryMins,
+        barcode: barcode.trim(), brand: brand.trim(),
+        manufacturer: manufacturer.trim(), net_weight: netWeight.trim(),
+        ingredients: ingredients.trim(), nutritional_info: nutritionalInfo.trim(),
+        allergen_info: allergenInfo.trim(), expiry_date: expiryDate.trim() || null,
       };
       if (image) {
         const formData = new FormData();
@@ -242,6 +254,24 @@ export default function VendorEditProductScreen({ navigation, route }) {
           {/* Description */}
           <Text style={styles.fieldLabel}>Short Description</Text>
           <TextInput style={styles.input} placeholder="e.g. Fresh and juicy tomatoes" placeholderTextColor="#9CA3AF" value={description} onChangeText={setDesc} />
+          {/* FSSAI Fields */}
+          <Text style={[styles.fieldLabel, { color: '#1669ef', fontWeight: '700', marginTop: 8 }]}>FSSAI Compliance Details</Text>
+          <View style={styles.twoCol}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.fieldLabel}>Brand <Text style={styles.optional}>(optional)</Text></Text>
+              <TextInput style={styles.input} placeholder="e.g. Amul" placeholderTextColor="#9CA3AF" value={brand} onChangeText={setBrand} />
+            </View>
+          </View>
+          <Text style={styles.fieldLabel}>Manufacturer <Text style={styles.optional}>(optional)</Text></Text>
+          <TextInput style={styles.input} placeholder="e.g. Amul Dairy, Gujarat" placeholderTextColor="#9CA3AF" value={manufacturer} onChangeText={setManufacturer} />
+          <Text style={styles.fieldLabel}>Ingredients <Text style={styles.optional}>(optional)</Text></Text>
+          <TextInput style={[styles.input, { height: 60 }]} placeholder="e.g. Milk, Sugar, Cocoa" placeholderTextColor="#9CA3AF" value={ingredients} onChangeText={setIngredients} multiline />
+          <Text style={styles.fieldLabel}>Allergen Info <Text style={styles.optional}>(optional)</Text></Text>
+          <TextInput style={styles.input} placeholder="e.g. Contains milk, nuts" placeholderTextColor="#9CA3AF" value={allergenInfo} onChangeText={setAllergenInfo} />
+          <Text style={styles.fieldLabel}>Expiry Date <Text style={styles.optional}>(optional)</Text></Text>
+          <TextInput style={styles.input} placeholder="YYYY-MM-DD" placeholderTextColor="#9CA3AF" value={expiryDate} onChangeText={setExpiryDate} />
+          <Text style={styles.fieldLabel}>Net Weight <Text style={styles.optional}>(optional)</Text></Text>
+          <TextInput style={styles.input} placeholder="e.g. 500g" placeholderTextColor="#9CA3AF" value={netWeight} onChangeText={setNetWeight} />
 
           {/* Veg / Non-veg */}
           <Text style={styles.fieldLabel}>Food Type <Text style={styles.required}>*</Text></Text>
