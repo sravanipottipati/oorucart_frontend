@@ -50,6 +50,17 @@ export default function VendorEditProductScreen({ navigation, route }) {
   const [nutritionalInfo, setNutritionalInfo] = useState(product?.nutritional_info || '');
   const [allergenInfo, setAllergenInfo] = useState(product?.allergen_info || '');
   const [expiryDate, setExpiryDate]   = useState(product?.expiry_date || '');
+  const handleExpiryDateChange = (text) => {
+    const digitsOnly = text.replace(/[^0-9]/g, '');
+    let formatted = digitsOnly;
+    if (digitsOnly.length > 4) {
+      formatted = digitsOnly.slice(0, 4) + '-' + digitsOnly.slice(4);
+    }
+    if (digitsOnly.length > 6) {
+      formatted = digitsOnly.slice(0, 4) + '-' + digitsOnly.slice(4, 6) + '-' + digitsOnly.slice(6, 8);
+    }
+    setExpiryDate(formatted);
+  };
   const [price, setPrice]           = useState(product?.price?.toString() || '');
   const [mrp, setMrp]               = useState((product?.mrp && parseFloat(product.mrp) > 0) ? parseFloat(product.mrp).toString() : '');
   const [description, setDesc]      = useState(product?.description || '');
@@ -269,7 +280,7 @@ export default function VendorEditProductScreen({ navigation, route }) {
           <Text style={styles.fieldLabel}>Allergen Info <Text style={styles.optional}>(optional)</Text></Text>
           <TextInput style={styles.input} placeholder="e.g. Contains milk, nuts" placeholderTextColor="#9CA3AF" value={allergenInfo} onChangeText={setAllergenInfo} />
           <Text style={styles.fieldLabel}>Expiry Date <Text style={styles.optional}>(optional)</Text></Text>
-          <TextInput style={styles.input} placeholder="YYYY-MM-DD" placeholderTextColor="#9CA3AF" value={expiryDate} onChangeText={setExpiryDate} />
+          <TextInput style={styles.input} placeholder="YYYY-MM-DD" placeholderTextColor="#9CA3AF" value={expiryDate} onChangeText={handleExpiryDateChange} keyboardType="numeric" maxLength={10} />
           <Text style={styles.fieldLabel}>Net Weight <Text style={styles.optional}>(optional)</Text></Text>
           <TextInput style={styles.input} placeholder="e.g. 500g" placeholderTextColor="#9CA3AF" value={netWeight} onChangeText={setNetWeight} />
 

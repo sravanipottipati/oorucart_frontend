@@ -65,6 +65,17 @@ export default function VendorAddProductScreen({ navigation, route }) {
   const [nutritionalInfo, setNutritionalInfo] = useState('');
   const [allergenInfo, setAllergenInfo] = useState('');
   const [expiryDate, setExpiryDate]   = useState('');
+  const handleExpiryDateChange = (text) => {
+    const digitsOnly = text.replace(/[^0-9]/g, '');
+    let formatted = digitsOnly;
+    if (digitsOnly.length > 4) {
+      formatted = digitsOnly.slice(0, 4) + '-' + digitsOnly.slice(4);
+    }
+    if (digitsOnly.length > 6) {
+      formatted = digitsOnly.slice(0, 4) + '-' + digitsOnly.slice(4, 6) + '-' + digitsOnly.slice(6, 8);
+    }
+    setExpiryDate(formatted);
+  };
   const [showScanner, setShowScanner] = useState(false);
   const [scannerPermission, requestScannerPermission] = useCameraPermissions();
   const [loading, setLoading]       = useState(false);
@@ -339,7 +350,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
           <Text style={styles.fieldLabel}>Allergen Info <Text style={styles.optional}>(optional)</Text></Text>
           <TextInput style={styles.input} placeholder="e.g. Contains milk, nuts" placeholderTextColor="#9CA3AF" value={allergenInfo} onChangeText={setAllergenInfo} />
           <Text style={styles.fieldLabel}>Expiry Date <Text style={styles.optional}>(optional)</Text></Text>
-          <TextInput style={styles.input} placeholder="YYYY-MM-DD" placeholderTextColor="#9CA3AF" value={expiryDate} onChangeText={setExpiryDate} />
+          <TextInput style={styles.input} placeholder="YYYY-MM-DD" placeholderTextColor="#9CA3AF" value={expiryDate} onChangeText={handleExpiryDateChange} keyboardType="numeric" maxLength={10} />
 
           {/* Category + Subcategory */}
           <View style={styles.twoCol}>
