@@ -34,7 +34,12 @@ export default function ProductDetailModal({ product, visible, onClose, navigati
             {getImg(product) ? <Image source={{ uri: getImg(product) }} style={styles.img} resizeMode="contain" /> : <Image source={DEFAULT_PRODUCT_IMG} style={[styles.img, { opacity: 0.65 }]} resizeMode="contain" />}
           </View>
           <View style={styles.infoBox}>
-            <Text style={styles.productName}>{product.name}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={[styles.vegDot, product.is_veg === false && styles.nonVegDot]}>
+                <View style={[styles.vegDotInner, product.is_veg === false && styles.nonVegDotInner]} />
+              </View>
+              <Text style={styles.productName}>{product.name}</Text>
+            </View>
             {product.description ? <Text style={styles.productDesc}>{product.description}</Text> : null}
             <View style={styles.priceRow}>
               <Text style={styles.price}>Rs.{parseFloat(product.price).toFixed(0)}</Text>
@@ -54,14 +59,55 @@ export default function ProductDetailModal({ product, visible, onClose, navigati
                   <Text style={{ fontSize: 11, color: '#1669ef', fontWeight: '600' }}>GST {product.gst_percentage}%</Text>
                 </View>
               )}
-              {product.fssai_number && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F0FDF4', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#BBF7D0' }}>
-                  <Ionicons name="shield-checkmark" size={11} color="#16A34A" />
-                  <Text style={{ fontSize: 11, color: '#16A34A', fontWeight: '600' }}>FSSAI: {product.fssai_number}</Text>
-                </View>
-              )}
             </View>
           </View>
+            {(product.brand || product.manufacturer || product.ingredients || product.allergen_info || product.expiry_date || product.net_weight || product.nutritional_info) && (
+              <View style={styles.detailsBox}>
+                <Text style={styles.detailsTitle}>Product Details</Text>
+                {product.brand ? (
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Brand</Text>
+                    <Text style={styles.detailValue}>{product.brand}</Text>
+                  </View>
+                ) : null}
+                {product.manufacturer ? (
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Manufacturer</Text>
+                    <Text style={styles.detailValue}>{product.manufacturer}</Text>
+                  </View>
+                ) : null}
+                {product.net_weight ? (
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Net Weight</Text>
+                    <Text style={styles.detailValue}>{product.net_weight}</Text>
+                  </View>
+                ) : null}
+                {product.expiry_date ? (
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Expiry Date</Text>
+                    <Text style={styles.detailValue}>{product.expiry_date}</Text>
+                  </View>
+                ) : null}
+                {product.ingredients ? (
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Ingredients</Text>
+                    <Text style={styles.detailValue}>{product.ingredients}</Text>
+                  </View>
+                ) : null}
+                {product.allergen_info ? (
+                  <View style={styles.detailRow}>
+                    <Text style={[styles.detailLabel, { color: '#DC2626' }]}>Allergen Info</Text>
+                    <Text style={[styles.detailValue, { color: '#DC2626' }]}>{product.allergen_info}</Text>
+                  </View>
+                ) : null}
+                {product.nutritional_info ? (
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Nutritional Info</Text>
+                    <Text style={styles.detailValue}>{product.nutritional_info}</Text>
+                  </View>
+                ) : null}
+              </View>
+            )}
           <View style={styles.cartSection}>
             {qty === 0 ? (
               <TouchableOpacity style={styles.addBtn} onPress={() => addToCart({ id: product.id, name: product.name, price: product.price, image: getImg(product) }, shopData)}>
@@ -130,12 +176,21 @@ const styles = StyleSheet.create({
   imgBox: { height: 200, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8F9FA', marginHorizontal: 16, borderRadius: 16, marginBottom: 16 },
   img: { width: 160, height: 160 },
   infoBox: { paddingHorizontal: 16, marginBottom: 16 },
-  productName: { fontSize: 18, fontWeight: '800', color: '#111', marginBottom: 6 },
+  productName: { fontSize: 18, fontWeight: '800', color: '#111' },
+  vegDot:      { width: 18, height: 18, borderRadius: 3, borderWidth: 1.5, borderColor: '#16A34A', backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', marginBottom: 6 },
+  nonVegDot:   { borderColor: '#dc2626' },
+  vegDotInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#16A34A' },
+  nonVegDotInner: { backgroundColor: '#dc2626' },
   productDesc: { fontSize: 13, color: '#888', lineHeight: 20, marginBottom: 10 },
   priceRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   price: { fontSize: 22, fontWeight: '900', color: '#111' },
   shopTag: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#eff6ff', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
   shopTagText: { fontSize: 12, color: TEAL, fontWeight: '600' },
+  detailsBox: { marginHorizontal: 16, marginBottom: 16, backgroundColor: '#F9FAFB', borderRadius: 12, paddingVertical: 12, paddingHorizontal: 14 },
+  detailsTitle: { fontSize: 13, fontWeight: '800', color: '#111', marginBottom: 8 },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
+  detailLabel: { fontSize: 12, color: '#888', fontWeight: '600', flex: 1 },
+  detailValue: { fontSize: 12, color: '#333', flex: 1.5, textAlign: 'right' },
   cartSection: { paddingHorizontal: 16, marginBottom: 16 },
   addBtn: { backgroundColor: TEAL, borderRadius: 14, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   addBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
