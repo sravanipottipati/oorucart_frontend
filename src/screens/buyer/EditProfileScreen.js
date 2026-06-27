@@ -33,6 +33,7 @@ export default function EditProfileScreen({ navigation }) {
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
     } catch (e) {
+      console.log('EDIT PROFILE ERROR:', e.message, 'STATUS:', e.response?.status, 'DATA:', JSON.stringify(e.response?.data));
       Alert.alert('Error', 'Failed to update profile. Please try again.');
     } finally {
       setLoading(false);

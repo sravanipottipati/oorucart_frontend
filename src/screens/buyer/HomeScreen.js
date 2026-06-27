@@ -155,9 +155,11 @@ export default function HomeScreen({ navigation, route }) {
   const { user }                                 = useAuth();
   const { shop: cartShop, cartCount, cartTotal, fetchCartFromDb, carts, addToCart, removeFromCart } = useCart();
   const [wishlistCount, setWishlistCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
   useFocusEffect(
     React.useCallback(() => {
       client.get('/vendors/wishlist/').then(res => setWishlistCount((res.data.wishlist || []).length)).catch(() => {});
+      client.get('/orders/notifications/').then(res => setUnreadCount(res.data.unread || 0)).catch(() => {});
     }, [])
   );
   const [town, setTown]                          = useState(globalStore.hasCustomLocation && globalStore.lastPickedLocation ? (globalStore.lastPickedLocation.address?.split(',').slice(0, 2).join(',') || 'Selected Location') : (user?.town || 'Nellore'));
@@ -444,6 +446,11 @@ export default function HomeScreen({ navigation, route }) {
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Notifications')}>
             <Ionicons name="notifications-outline" size={22} color="#444" />
+            {unreadCount > 0 && (
+              <View style={styles.tabBadge}>
+                <Text style={styles.tabBadgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
       </View>

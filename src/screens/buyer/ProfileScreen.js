@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import {
   View, Text, TouchableOpacity, StyleSheet,
@@ -14,6 +14,12 @@ export default function ProfileScreen({ navigation }) {
   const { user, logout, setUser } = useAuth();
   const isFocused = useIsFocused();
   const [uploading, setUploading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  useEffect(() => {
+    if (isFocused) {
+      client.get('/orders/notifications/').then(res => setUnreadCount(res.data.unread || 0)).catch(() => {});
+    }
+  }, [isFocused]);
 
   const initials = user?.full_name
     ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -22,7 +28,7 @@ export default function ProfileScreen({ navigation }) {
   const handleDeleteAccount = () => {
     Alert.alert(
       'Delete Account',
-      'Are you sure you want to delete your account? This action cannot be undone. We will process your request within 24 hours.',
+      'Are you sure you want to delete your account? This action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -196,6 +202,11 @@ export default function ProfileScreen({ navigation }) {
           onPress={() => navigation.navigate('Notifications')}
         >
           <Ionicons name="notifications-outline" size={24} color="#111" />
+          {unreadCount > 0 && (
+            <View style={styles.notifBadge}>
+              <Text style={styles.notifBadgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -326,7 +337,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center', marginLeft: 36 },
-  bellBtn:     { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
+  bellBtn:     { width: 36, height: 36, justifyContent: 'center', alignItems: 'center', position: 'relative' },
+  notifBadge:     { position: 'absolute', top: 2, right: 2, backgroundColor: '#EF4444', borderRadius: 9, minWidth: 16, height: 16, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 3 },
+  notifBadgeText: { color: '#fff', fontSize: 9, fontWeight: '800' },
   bellIcon:    { fontSize: 22 },
 
   profileCard: {
