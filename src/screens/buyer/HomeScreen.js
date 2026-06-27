@@ -439,13 +439,13 @@ export default function HomeScreen({ navigation, route }) {
         </View>
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Wishlist')}>
-            <Ionicons name="heart-outline" size={22} color="#444" />
+            <Ionicons name="heart-outline" size={18} color="#444" />
             {wishlistCount > 0 && (
               <View style={styles.wishlistDot} />
             )}
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Notifications')}>
-            <Ionicons name="notifications-outline" size={22} color="#444" />
+            <Ionicons name="notifications-outline" size={18} color="#444" />
             {unreadCount > 0 && (
               <View style={styles.tabBadge}>
                 <Text style={styles.tabBadgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
@@ -673,7 +673,7 @@ const styles = StyleSheet.create({
     width: 10, height: 10,
   },
   iconBtn: { position: 'relative',
-    width: 40, height: 40, borderRadius: 20,
+    width: 32, height: 32, borderRadius: 16,
     backgroundColor: '#F8F9FA', justifyContent: 'center', alignItems: 'center',
     borderWidth: 1, borderColor: '#EFEFEF',
   },

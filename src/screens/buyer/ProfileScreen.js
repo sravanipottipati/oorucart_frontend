@@ -201,7 +201,7 @@ export default function ProfileScreen({ navigation }) {
           style={styles.bellBtn}
           onPress={() => navigation.navigate('Notifications')}
         >
-          <Ionicons name="notifications-outline" size={24} color="#111" />
+          <Ionicons name="notifications-outline" size={19} color="#111" />
           {unreadCount > 0 && (
             <View style={styles.notifBadge}>
               <Text style={styles.notifBadgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center', marginLeft: 36 },
-  bellBtn:     { width: 36, height: 36, justifyContent: 'center', alignItems: 'center', position: 'relative' },
+  bellBtn:     { width: 30, height: 30, justifyContent: 'center', alignItems: 'center', position: 'relative' },
   notifBadge:     { position: 'absolute', top: 2, right: 2, backgroundColor: '#EF4444', borderRadius: 9, minWidth: 16, height: 16, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 3 },
   notifBadgeText: { color: '#fff', fontSize: 9, fontWeight: '800' },
   bellIcon:    { fontSize: 22 },

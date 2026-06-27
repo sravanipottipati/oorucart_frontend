@@ -58,7 +58,10 @@ export default function AddressScreen({ navigation, route }) {
       setFullAddr(loc.full_address);
       if (loc.town) setTown(loc.town);
       if (loc.pincode) setPincode(loc.pincode);
-      setEdit(null);
+      // NOTE: do NOT reset editAddress here — if the user was editing an
+      // existing address and used "pick on map" to refine the location,
+      // this would wrongly clear the edit context and cause Save to
+      // create a brand new address (POST) instead of updating (PATCH).
       setModal(true);
     }
   }, [route?.params?.selectedLocation]);
