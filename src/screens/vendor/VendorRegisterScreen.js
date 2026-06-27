@@ -153,6 +153,7 @@ export default function VendorRegisterScreen({ navigation }) {
     if (!shopName.trim()) return Alert.alert('Error', 'Shop name is required');
     if (!town.trim())     return Alert.alert('Error', 'Town is required');
     if (!fssai.trim())    return Alert.alert('FSSAI Number Required', 'Please enter your FSSAI license number to register your shop. This is mandatory for selling food/grocery items.');
+    if (!fssaiCert)       return Alert.alert('FSSAI Certificate Required', 'Please upload a photo of your FSSAI certificate to register your shop. This is mandatory for selling food/grocery items.');
     if (!agreedToTerms)   return Alert.alert('Agreement Required', 'Please read and agree to the Seller Agreement before registering.');
 
     setLoading(true);
@@ -326,7 +327,7 @@ export default function VendorRegisterScreen({ navigation }) {
       </View>
       <View style={styles.fieldRow}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.label}>FSSAI Certificate (optional)</Text>
+          <Text style={styles.label}>FSSAI Certificate *</Text>
           <TouchableOpacity onPress={pickFssaiCert}
             style={{ borderWidth: 1, borderColor: fssaiCert ? '#16a34a' : '#D1D5DB', borderRadius: 8, padding: 12, alignItems: 'center', backgroundColor: fssaiCert ? '#f0fdf4' : '#fff' }}>
             <Text style={{ color: fssaiCert ? '#16a34a' : '#9CA3AF', fontWeight: '500' }}>
