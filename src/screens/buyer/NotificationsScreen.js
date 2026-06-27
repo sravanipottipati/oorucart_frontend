@@ -98,7 +98,6 @@ export default function NotificationsScreen({ navigation }) {
             <Text style={{ color: '#EF4444', fontSize: 11, fontWeight: '700' }}>Clear</Text>
           </TouchableOpacity>
         </View>
-        )}
       </View>
 
       {loading ? (

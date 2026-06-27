@@ -447,7 +447,7 @@ export default function HomeScreen({ navigation, route }) {
           <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Notifications')}>
             <Ionicons name="notifications-outline" size={18} color="#444" />
             {unreadCount > 0 && (
-              <View style={styles.tabBadge}>
+              <View style={styles.headerBadge}>
                 <Text style={styles.tabBadgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
               </View>
             )}
@@ -668,9 +668,10 @@ const styles = StyleSheet.create({
   locationText: { fontSize: 16, fontWeight: '800', color: DARK },
   headerRight:  { flexDirection: 'row', gap: 8 },
   wishlistDot: {
-    position: 'absolute', top: 0, right: 0,
+    position: 'absolute', top: -2, right: -2,
     backgroundColor: '#EF4444', borderRadius: 5,
     width: 10, height: 10,
+    borderWidth: 1.5, borderColor: '#fff',
   },
   iconBtn: { position: 'relative',
     width: 32, height: 32, borderRadius: 16,
@@ -829,6 +830,13 @@ const styles = StyleSheet.create({
   tabIconWrap:    { position: 'relative' },
   tabLabel:       { fontSize: 10.5, color: GRAY, fontWeight: '500' },
   tabLabelActive: { color: TEAL, fontWeight: '700' },
+  headerBadge: {
+    position: 'absolute', top: -4, right: -4,
+    backgroundColor: '#EF4444', borderRadius: 9,
+    minWidth: 16, height: 16, justifyContent: 'center',
+    alignItems: 'center', paddingHorizontal: 3,
+    borderWidth: 1.5, borderColor: '#fff',
+  },
   tabBadge: {
     position: 'absolute', top: -5, right: -8,
     backgroundColor: '#EF4444', borderRadius: 9,

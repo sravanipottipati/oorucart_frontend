@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, textAlign: 'center', marginLeft: 36 },
   bellBtn:     { width: 30, height: 30, justifyContent: 'center', alignItems: 'center', position: 'relative' },
-  notifBadge:     { position: 'absolute', top: 2, right: 2, backgroundColor: '#EF4444', borderRadius: 9, minWidth: 16, height: 16, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 3 },
+  notifBadge:     { position: 'absolute', top: -4, right: -4, backgroundColor: '#EF4444', borderRadius: 9, minWidth: 16, height: 16, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 3, borderWidth: 1.5, borderColor: '#fff' },
   notifBadgeText: { color: '#fff', fontSize: 9, fontWeight: '800' },
   bellIcon:    { fontSize: 22 },
 
