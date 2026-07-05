@@ -217,13 +217,14 @@ export default function ForgotPasswordScreen({ navigation }) {
                   console.log('OTP verify error:', e.message, '| response:', JSON.stringify(e.response?.data), '| code entered:', otpCode);
                   const backendMsg = e.response?.data?.error;
                   if (!e.response) {
-                    alert('Network error. Please check your internet connection and try again.');
+                    // Network error - could be slow mobile data. Give helpful message.
+                    alert('Connection issue. Please check your mobile data and tap Verify OTP again. If the problem continues, tap Resend OTP.');
                   } else if (backendMsg && backendMsg.toLowerCase().includes('expired')) {
                     alert('Your OTP expired. Please tap Resend OTP to get a new one.');
                   } else if (backendMsg && backendMsg.toLowerCase().includes('invalid')) {
                     alert('Incorrect OTP. Please check the SMS and try again, or tap Resend OTP.');
                   } else {
-                    alert(backendMsg || 'Something went wrong. Please check your connection and try again.');
+                    alert(backendMsg || 'Something went wrong. Please tap Verify OTP again.');
                   }
                 } finally { setLoading(false); }
               }}
