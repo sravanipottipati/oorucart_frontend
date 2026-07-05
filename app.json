@@ -51,18 +51,13 @@
     "web": {
       "favicon": "./assets/app-icon.png"
     },
-    "extra": {
-      "eas": {
-        "projectId": "e96e707f-3017-41db-bc6e-40d2eb791084"
-      }
-    },
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
       "url": "https://u.expo.dev/e96e707f-3017-41db-bc6e-40d2eb791084"
     },
-    "owner": "univerin-app",
+    "owner": "thanurvika",
     "plugins": [
       [
         "expo-notifications",
@@ -71,6 +66,11 @@
           "color": "#1669ef"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "0685df21-5304-446c-b78b-1387b0c5abb9"
+      }
+    }
   }
 }
