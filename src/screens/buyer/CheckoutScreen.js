@@ -99,6 +99,7 @@ export default function CheckoutScreen({ navigation, route }) {
         if (defaultAddr) {
           setSelectedAddr(defaultAddr);
           setAddress(defaultAddr.full_address);
+          geocodeAndSetDistance(defaultAddr.full_address);
         } else if (globalStore.lastPickedLocation) {
           // No saved address - fall back to last location picked on Home/Map Picker
           setAddress(globalStore.lastPickedLocation.address);
