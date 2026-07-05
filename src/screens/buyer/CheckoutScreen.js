@@ -69,7 +69,7 @@ export default function CheckoutScreen({ navigation, route }) {
     return sum + (mrp > price ? mrp * item.qty : price * item.qty);
   }, 0);
   const totalSavings  = Math.round(totalMrp - subtotal);
-  const deliveryInfo  = getDeliveryInfo(calcDistance || distance, subtotal, shop?.min_order_value);
+  const deliveryInfo  = getDeliveryInfo(calcDistance !== null ? calcDistance : distance, subtotal, shop?.min_order_value);
   const platformFee   = 10;
   const platformFeeGST = parseFloat((platformFee * 1.18).toFixed(1));
   const deliveryFeeGST = deliveryInfo.deliveryFee;
@@ -386,8 +386,8 @@ export default function CheckoutScreen({ navigation, route }) {
   }
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-      <View style={styles.container}>
+    <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+      <View style={[styles.container, { flex: 1 }]}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color="#111" />
