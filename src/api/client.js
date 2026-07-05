@@ -6,7 +6,7 @@ const BASE_URL = 'https://api.univerin.in/api';
 const client = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 15000, // 15 seconds timeout
+  timeout: 30000, // 30 seconds timeout (Railway cold start can take 20+ seconds)
 });
 
 // Auto-attach JWT token to every request
@@ -16,10 +16,17 @@ client.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Handle slow network / timeout errors
+// Handle slow network / timeout errors + auto-retry once on network failure (Railway cold start)
 client.interceptors.response.use(
   response => response,
-  error => {
+  async error => {
+    const config = error.config;
+    if (!error.response && !config._retry) {
+      config._retry = true;
+      console.log('Network error - retrying request once after 3s delay...');
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      return client(config);
+    }
     if (error.code === 'ECONNABORTED') {
       error.message = 'Request timed out. Please check your internet connection.';
     } else if (!error.response) {
