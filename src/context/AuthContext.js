@@ -50,6 +50,14 @@ export const AuthProvider = ({ children }) => {
     return user;
   };
 
+  const loginWithTokens = async (tokens, userData) => {
+    await AsyncStorage.setItem('access_token', tokens.access);
+    await AsyncStorage.setItem('refresh_token', tokens.refresh);
+    await AsyncStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+    return userData;
+  };
+
   const logout = async () => {
     await AsyncStorage.removeItem('access_token');
     await AsyncStorage.removeItem('refresh_token');
@@ -58,7 +66,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, setUser, loading, login, loginWithTokens, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

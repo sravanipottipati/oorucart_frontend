@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "487427248155",
+    "project_id": "univerin-84d69",
+    "storage_bucket": "univerin-84d69.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:487427248155:android:f7cb24a1a3d770b8e728be",
+        "android_client_info": {
+          "package_name": "com.univerin.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-qkmKMJfLeG4guwYgiXocQyKS33qD-lY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

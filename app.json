@@ -46,7 +46,8 @@
         "googleMaps": {
           "apiKey": "AIzaSyCS_YRu6O61LCZn_QlypzjcjSdeRqbQaDI"
         }
-      }
+      },
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/app-icon.png"
@@ -65,7 +66,9 @@
           "icon": "./assets/app-icon.png",
           "color": "#1669ef"
         }
-      ]
+      ],
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth"
     ],
     "extra": {
       "eas": {
