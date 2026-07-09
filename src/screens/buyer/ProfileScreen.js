@@ -37,7 +37,9 @@ export default function ProfileScreen({ navigation }) {
           onPress: async () => {
             try {
               await client.post('/users/delete-account-request/');
-              Alert.alert('Request Submitted', 'Your account deletion request has been submitted. We will delete your account within 24 hours.');
+              Alert.alert('Account Deleted', 'Your account has been deleted successfully.', [
+                { text: 'OK', onPress: () => logout() }
+              ]);
             } catch (e) {
               Alert.alert('Error', 'Failed to submit request. Please email contact@univerin.in');
             }
