@@ -1,216 +1,234 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image,
 } from 'react-native';
+import auth from '@react-native-firebase/auth';
+import client from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function RegisterScreen({ navigation }) {
-  const [fullName, setFullName]               = useState('');
-  const [phone, setPhone]                     = useState('');
-  const [password, setPassword]               = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword]       = useState(false);
-  const [showConfirm, setShowConfirm]         = useState(false);
-  const [userType, setUserType]               = useState('buyer');
-  const [loading, setLoading]                 = useState(false);
-  const [agreedToTerms, setAgreedToTerms]     = useState(false); // ← NEW
-  const { register }                          = useAuth();
+  const [fullName, setFullName]           = useState('');
+  const [phone, setPhone]                 = useState('');
+  const [otp, setOtp]                     = useState(['', '', '', '', '', '']);
+  const [step, setStep]                   = useState(1);
+  const [loading, setLoading]             = useState(false);
+  const [confirm, setConfirm]             = useState(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [resendTimer, setResendTimer]     = useState(30);
+  const [canResend, setCanResend]         = useState(false);
+  const otpRefs = useRef([]);
+  const { loginWithTokens } = useAuth();
 
-  const handleRegister = async () => {
-    if (loading) return; // Prevent double-submission
-    if (!fullName || !phone || !password || !confirmPassword)
-      return Alert.alert('Error', 'Please fill all fields');
-    if (phone.length !== 10)
-      return Alert.alert('Error', 'Enter a valid 10-digit number');
-    if (password.length < 6)
-      return Alert.alert('Error', 'Password must be at least 6 characters');
-    if (password !== confirmPassword)
-      return Alert.alert('Error', 'Passwords do not match');
-    if (!agreedToTerms)
-      return Alert.alert('Error', 'Please agree to Terms & Conditions and Privacy Policy');
+  const startTimer = () => {
+    setResendTimer(30);
+    setCanResend(false);
+    const interval = setInterval(() => {
+      setResendTimer(prev => {
+        if (prev <= 1) { clearInterval(interval); setCanResend(true); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleSendOTP = async () => {
+    if (!fullName.trim()) return Alert.alert('Error', 'Please enter your full name');
+    if (phone.length !== 10) return Alert.alert('Error', 'Enter a valid 10-digit number');
+    if (!agreedToTerms) return Alert.alert('Error', 'Please agree to Terms & Conditions and Privacy Policy');
     setLoading(true);
-    let registrationSucceeded = false;
     try {
-      await register(fullName, phone, password, userType === 'seller' ? 'vendor' : 'buyer');
-      registrationSucceeded = true;
-      Alert.alert('Registration Successful!', 'Your account has been created successfully.', [
-        {
-          text: 'OK',
-          onPress: () => {
-            if (userType === 'seller') {
-              navigation.replace('VendorRegister');
-            } else {
-              navigation.replace('TownSelection');
-            }
-          }
-        }
-      ]);
+      const confirmation = await auth().signInWithPhoneNumber('+91' + phone);
+      setConfirm(confirmation);
+      setStep(2);
+      startTimer();
+      setTimeout(() => otpRefs.current[0]?.focus(), 300);
     } catch (e) {
-      if (registrationSucceeded) {
-        // Account was created successfully - this error happened only during navigation,
-        // so don't confuse the user with a "registration failed" message
-        console.log('Post-registration navigation error:', e.message);
-      } else {
-        const data = e.response?.data;
-        const msg = data?.phone_number?.[0]
-          || data?.error
-          || (typeof data === 'object' && data ? Object.values(data).flat().join(' ') : null)
-          || 'Registration failed. Please try again.';
-        Alert.alert('Error', msg);
-      }
+      Alert.alert('Error', 'Failed to send OTP. Please try again.');
+      console.log('Firebase OTP error:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpChange = (val, index) => {
+    const digitsOnly = val.replace(/[^0-9]/g, '');
+    if (digitsOnly.length > 1) {
+      const newOtp = [...otp];
+      for (let i = 0; i < 6; i++) newOtp[i] = digitsOnly[i] || '';
+      setOtp(newOtp);
+      const lastIdx = Math.min(digitsOnly.length, 6) - 1;
+      otpRefs.current[Math.min(lastIdx, 5)]?.focus();
+      if (digitsOnly.length >= 6) otpRefs.current[5]?.blur();
+      return;
+    }
+    const newOtp = [...otp];
+    newOtp[index] = digitsOnly;
+    setOtp(newOtp);
+    if (digitsOnly && index < 5) otpRefs.current[index + 1]?.focus();
+  };
+
+  const handleOtpKeyPress = (e, index) => {
+    if (e.nativeEvent.key === 'Backspace' && !otp[index] && index > 0)
+      otpRefs.current[index - 1]?.focus();
+  };
+
+  const handleVerifyAndRegister = async () => {
+    const otpCode = otp.join('');
+    if (otpCode.length !== 6) return Alert.alert('Error', 'Please enter the complete OTP');
+    setLoading(true);
+    try {
+      const result = await confirm.confirm(otpCode);
+      const idToken = await result.user.getIdToken();
+      const res = await client.post('/users/firebase-login/', {
+        id_token: idToken,
+        user_type: 'buyer',
+        full_name: fullName,
+      });
+      await loginWithTokens(res.data.tokens, res.data.user);
+      navigation.replace('TownSelection');
+    } catch (e) {
+      console.log('OTP verify error:', e);
+      Alert.alert('Error', 'Incorrect OTP. Please check and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!canResend) return;
+    setLoading(true);
+    try {
+      const confirmation = await auth().signInWithPhoneNumber('+91' + phone);
+      setConfirm(confirmation);
+      setOtp(['', '', '', '', '', '']);
+      startTimer();
+      setTimeout(() => otpRefs.current[0]?.focus(), 300);
+    } catch (e) {
+      Alert.alert('Error', 'Failed to resend OTP. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        contentContainerStyle={styles.inner}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Logo */}
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView contentContainerStyle={styles.inner} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.logoSection}>
-          <Image
-            source={require('../../../assets/app-logo-full.png')}
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
+          <Image source={require('../../../assets/app-logo-full.png')} style={styles.logoImage} resizeMode="contain" />
         </View>
 
-        {/* Buyer / Seller Toggle */}
         <View style={styles.toggleContainer}>
-          <TouchableOpacity
-            style={[styles.toggleBtn, userType === 'buyer' && styles.toggleBtnActiveBuyer]}
-            onPress={() => setUserType('buyer')}
-          >
+          <TouchableOpacity style={[styles.toggleBtn, styles.toggleBtnActiveBuyer]}>
             <View style={{flexDirection:'row',alignItems:'center',gap:6}}>
-              <Ionicons name="cart-outline" size={16} color={userType === 'buyer' ? '#1669ef' : '#6B7280'} />
-              <Text style={[styles.toggleText, userType === 'buyer' && styles.toggleTextActiveBuyer]}>Buyer</Text>
+              <Ionicons name="cart-outline" size={16} color="#1669ef" />
+              <Text style={[styles.toggleText, styles.toggleTextActiveBuyer]}>Buyer</Text>
             </View>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.toggleBtn, userType === 'seller' && styles.toggleBtnActiveSeller]}
-            onPress={() => navigation.navigate('VendorRegister')}
-          >
+          <TouchableOpacity style={styles.toggleBtn} onPress={() => navigation.navigate('VendorRegister')}>
             <View style={{flexDirection:'row',alignItems:'center',gap:6}}>
-              <Ionicons name="storefront-outline" size={16} color={userType === 'seller' ? '#16A34A' : '#6B7280'} />
-              <Text style={[styles.toggleText, userType === 'seller' && styles.toggleTextActiveSeller]}>Seller</Text>
+              <Ionicons name="storefront-outline" size={16} color="#6B7280" />
+              <Text style={styles.toggleText}>Seller</Text>
             </View>
           </TouchableOpacity>
         </View>
 
-        {/* Register Form */}
         <View style={styles.card}>
-          <Text style={styles.title}>Create Buyer Account 🛒</Text>
-          <Text style={styles.subtitle}>Order from local shops near you</Text>
+          {step === 1 ? (
+            <>
+              <Text style={styles.title}>Create Buyer Account</Text>
+              <Text style={styles.subtitle}>Order from local shops near you</Text>
 
-          <Text style={styles.label}>Full Name</Text>
-          <TextInput
-            style={styles.inputFull}
-            placeholder="Enter your full name"
-            placeholderTextColor="#9CA3AF"
-            value={fullName}
-            onChangeText={setFullName}
-          />
+              <Text style={styles.label}>Full Name</Text>
+              <TextInput
+                style={styles.inputFull}
+                placeholder="Enter your full name"
+                placeholderTextColor="#9CA3AF"
+                value={fullName}
+                onChangeText={setFullName}
+              />
 
-          <Text style={styles.label}>Phone Number</Text>
-          <View style={styles.inputWrapper}>
-            <Text style={styles.inputPrefix}>+91</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="10-digit number"
-              placeholderTextColor="#9CA3AF"
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-              maxLength={10}
-            />
-          </View>
+              <Text style={styles.label}>Phone Number</Text>
+              <View style={styles.inputWrapper}>
+                <Text style={styles.inputPrefix}>+91</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="10-digit number"
+                  placeholderTextColor="#9CA3AF"
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                  maxLength={10}
+                />
+              </View>
 
-          <Text style={styles.label}>Password</Text>
-          <View style={styles.passwordWrapper}>
-            <TextInput
-              style={styles.passwordInput}
-              placeholder="Min 6 characters"
-              placeholderTextColor="#9CA3AF"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-            />
-            <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword(!showPassword)}>
-              <Text style={styles.eyeText}>{showPassword ? 'Hide' : 'Show'}</Text>
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity style={styles.checkboxRow} onPress={() => setAgreedToTerms(!agreedToTerms)} activeOpacity={0.7}>
+                <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
+                  {agreedToTerms && <Text style={styles.checkmark}>checkmark</Text>}
+                </View>
+                <Text style={styles.checkboxText}>
+                  I agree to Univerin's <Text style={styles.checkboxLink} onPress={() => navigation.navigate('TermsAndConditions')}>Terms & Conditions</Text> and <Text style={styles.checkboxLink} onPress={() => navigation.navigate('PrivacyPolicy')}>Privacy Policy</Text>
+                </Text>
+              </TouchableOpacity>
 
-          <Text style={styles.label}>Confirm Password</Text>
-          <View style={styles.passwordWrapper}>
-            <TextInput
-              style={styles.passwordInput}
-              placeholder="Re-enter password"
-              placeholderTextColor="#9CA3AF"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry={!showConfirm}
-            />
-            <TouchableOpacity style={styles.eyeButton} onPress={() => setShowConfirm(!showConfirm)}>
-              <Text style={styles.eyeText}>{showConfirm ? 'Hide' : 'Show'}</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* ── T&C Checkbox ── */}
-          <TouchableOpacity
-            style={styles.checkboxRow}
-            onPress={() => setAgreedToTerms(!agreedToTerms)}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
-              {agreedToTerms && <Text style={styles.checkmark}>✓</Text>}
-            </View>
-            <Text style={styles.checkboxText}>
-              I agree to Univerin's{' '}
-              <Text
-                style={styles.checkboxLink}
-                onPress={() => navigation.navigate('TermsAndConditions')}
+              <TouchableOpacity
+                style={[styles.button, (loading || !agreedToTerms) && styles.buttonDisabled]}
+                onPress={handleSendOTP}
+                disabled={loading || !agreedToTerms}
               >
-                Terms & Conditions
-              </Text>
-              {' '}and{' '}
-              <Text
-                style={styles.checkboxLink}
-                onPress={() => navigation.navigate('PrivacyPolicy')}
+                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Send OTP</Text>}
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                <Text style={styles.link}>Already have an account? <Text style={styles.linkBold}>Login</Text></Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <Text style={styles.title}>Verify Phone</Text>
+              <Text style={styles.subtitle}>We sent a 6-digit OTP to{String.fromCharCode(10)}+91 {phone}</Text>
+
+              <View style={styles.otpRow}>
+                {otp.map((digit, index) => (
+                  <TextInput
+                    key={index}
+                    ref={ref => otpRefs.current[index] = ref}
+                    style={[styles.otpBox, digit && styles.otpBoxFilled]}
+                    value={digit}
+                    onChangeText={val => handleOtpChange(val, index)}
+                    onKeyPress={e => handleOtpKeyPress(e, index)}
+                    keyboardType="numeric"
+                    maxLength={1}
+                    textAlign="center"
+                  />
+                ))}
+              </View>
+
+              <TouchableOpacity
+                style={[styles.button, (loading || otp.join('').length !== 6) && styles.buttonDisabled]}
+                onPress={handleVerifyAndRegister}
+                disabled={loading || otp.join('').length !== 6}
               >
-                Privacy Policy
-              </Text>
-            </Text>
-          </TouchableOpacity>
+                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Verify & Create Account</Text>}
+              </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.button, (loading || !agreedToTerms) && styles.buttonDisabled]}
-            onPress={handleRegister}
-            disabled={loading || !agreedToTerms}
-            disabled={loading || !agreedToTerms}
-          >
-            {loading
-              ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.buttonText}>Create Buyer Account</Text>
-            }
-          </TouchableOpacity>
+              <View style={styles.resendRow}>
+                <Text style={styles.resendText}>Didn't receive OTP? </Text>
+                {canResend ? (
+                  <TouchableOpacity onPress={handleResend}>
+                    <Text style={styles.resendLink}>Resend OTP</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <Text style={styles.resendTimer}>Resend in {resendTimer}s</Text>
+                )}
+              </View>
 
-          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-            <Text style={styles.link}>
-              Already have an account?{' '}
-              <Text style={styles.linkBold}>Login</Text>
-            </Text>
-          </TouchableOpacity>
+              <TouchableOpacity onPress={() => { setStep(1); setOtp(['','','','','','']); }}>
+                <Text style={styles.link}>Wrong number? <Text style={styles.linkBold}>Go Back</Text></Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
-
         <View style={{ height: 40 }} />
       </ScrollView>
     </KeyboardAvoidingView>
@@ -219,8 +237,7 @@ export default function RegisterScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#eff6ff' },
-  inner:     { flexGrow: 1, alignItems: 'center', padding: 24, paddingTop: 60 },
-
+  inner: { flexGrow: 1, alignItems: 'center', padding: 24, paddingTop: 60 },
   logoSection: {
     backgroundColor: '#ffffff', borderRadius: 24, padding: 24,
     alignItems: 'center', justifyContent: 'center',
@@ -230,29 +247,23 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1, shadowRadius: 12, elevation: 4,
   },
   logoImage: { width: 220, height: 70 },
-
   toggleContainer: {
     flexDirection: 'row', backgroundColor: '#E5E7EB',
-    borderRadius: 14, padding: 4,
-    width: '100%', marginBottom: 20,
+    borderRadius: 14, padding: 4, width: '100%', marginBottom: 20,
   },
-  toggleBtn:              { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  toggleBtnActiveBuyer:   { backgroundColor: '#fff', elevation: 2, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4 },
-  toggleBtnActiveSeller:  { backgroundColor: '#fff', elevation: 2, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4 },
-  toggleText:             { fontSize: 15, fontWeight: '600', color: '#6B7280' },
-  toggleTextActiveBuyer:  { color: '#1669ef', fontWeight: '700' },
-  toggleTextActiveSeller: { color: '#16A34A', fontWeight: '700' },
-
+  toggleBtn: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  toggleBtnActiveBuyer: { backgroundColor: '#fff', elevation: 2, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4 },
+  toggleText: { fontSize: 15, fontWeight: '600', color: '#6B7280' },
+  toggleTextActiveBuyer: { color: '#1669ef', fontWeight: '700' },
   card: {
     backgroundColor: '#fff', borderRadius: 20, padding: 20,
     width: '100%', shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06, shadowRadius: 12, elevation: 3, marginBottom: 16,
   },
-  title:    { fontSize: 20, fontWeight: '700', color: '#111', marginBottom: 4 },
-  subtitle: { fontSize: 13, color: '#888', marginBottom: 20 },
-  label:    { fontSize: 13, fontWeight: '600', color: '#444', marginBottom: 8 },
-
+  title: { fontSize: 20, fontWeight: '700', color: '#111', marginBottom: 4 },
+  subtitle: { fontSize: 13, color: '#888', marginBottom: 20, lineHeight: 20 },
+  label: { fontSize: 13, fontWeight: '600', color: '#444', marginBottom: 8 },
   inputWrapper: {
     flexDirection: 'row', alignItems: 'center',
     borderWidth: 1.5, borderColor: '#E5E7EB',
@@ -263,44 +274,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, fontSize: 14, color: '#555',
     borderRightWidth: 1, borderRightColor: '#E5E7EB', paddingVertical: 14,
   },
-  input:     { flex: 1, padding: 14, fontSize: 15, color: '#111' },
+  input: { flex: 1, padding: 14, fontSize: 15, color: '#111' },
   inputFull: {
     borderWidth: 1.5, borderColor: '#E5E7EB', borderRadius: 12,
     padding: 14, fontSize: 15, marginBottom: 14,
     backgroundColor: '#F9FAFB', color: '#111',
   },
-  passwordWrapper: {
-    flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1.5, borderColor: '#E5E7EB',
-    borderRadius: 12, backgroundColor: '#F9FAFB',
-    marginBottom: 14, overflow: 'hidden',
-  },
-  passwordInput: { flex: 1, padding: 14, fontSize: 15, color: '#111' },
-  eyeButton:     { paddingHorizontal: 14, paddingVertical: 14 },
-  eyeText:       { fontSize: 13, color: '#1669ef', fontWeight: '600' },
-
-  // Checkbox
-  checkboxRow: {
-    flexDirection: 'row', alignItems: 'flex-start',
-    marginBottom: 16, gap: 10,
-  },
-  checkbox: {
-    width: 22, height: 22, borderRadius: 6,
-    borderWidth: 2, borderColor: '#D1D5DB',
-    justifyContent: 'center', alignItems: 'center',
-    marginTop: 1, flexShrink: 0,
-  },
+  otpRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24, gap: 8 },
+  otpBox: { width: 46, height: 56, borderRadius: 12, borderWidth: 1.5, borderColor: '#E5E7EB', backgroundColor: '#F9FAFB', fontSize: 22, fontWeight: '700', color: '#111', textAlign: 'center' },
+  otpBoxFilled: { borderColor: '#1669ef', backgroundColor: '#eff6ff' },
+  resendRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 16, marginTop: 4 },
+  resendText: { fontSize: 13, color: '#888' },
+  resendLink: { fontSize: 13, color: '#1669ef', fontWeight: '700' },
+  resendTimer: { fontSize: 13, color: '#9CA3AF' },
+  checkboxRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16, gap: 10 },
+  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: '#D1D5DB', justifyContent: 'center', alignItems: 'center', marginTop: 1, flexShrink: 0 },
   checkboxChecked: { backgroundColor: '#1669ef', borderColor: '#1669ef' },
-  checkmark:       { color: '#fff', fontSize: 13, fontWeight: 'bold' },
-  checkboxText:    { flex: 1, fontSize: 13, color: '#555', lineHeight: 20 },
-  checkboxLink:    { color: '#1669ef', fontWeight: '600' },
-
-  button: {
-    backgroundColor: '#1669ef', padding: 16,
-    borderRadius: 14, alignItems: 'center', marginBottom: 16, marginTop: 4,
-  },
+  checkmark: { color: '#fff', fontSize: 13, fontWeight: 'bold' },
+  checkboxText: { flex: 1, fontSize: 13, color: '#555', lineHeight: 20 },
+  checkboxLink: { color: '#1669ef', fontWeight: '600' },
+  button: { backgroundColor: '#1669ef', padding: 16, borderRadius: 14, alignItems: 'center', marginBottom: 16, marginTop: 4 },
   buttonDisabled: { backgroundColor: '#bfdbfe' },
-  buttonText:     { color: '#fff', fontSize: 16, fontWeight: '700' },
-  link:           { textAlign: 'center', color: '#555', fontSize: 14 },
-  linkBold:       { color: '#1669ef', fontWeight: '700' },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  link: { textAlign: 'center', color: '#555', fontSize: 14 },
+  linkBold: { color: '#1669ef', fontWeight: '700' },
 });

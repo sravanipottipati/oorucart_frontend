@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform,
+  Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, Modal,
 } from 'react-native';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
+import auth from '@react-native-firebase/auth';
 import { useAuth } from '../../context/AuthContext';
 import { Image, Linking } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -42,10 +43,9 @@ export default function VendorRegisterScreen({ navigation }) {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [vendorLat, setVendorLat] = useState(null);
   const [vendorLng, setVendorLng] = useState(null);
-  const [password,  setPassword]  = useState('');
-  const [confirmPw, setConfirmPw] = useState('');
-  const [showPassword,  setShowPassword]  = useState(false);
-  const [showConfirmPw, setShowConfirmPw] = useState(false);
+  const [otpConfirm, setOtpConfirm] = useState(null);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [vendorOtp, setVendorOtp] = useState(['','','','','','']);
 
   const [category,        setCategory]        = useState('restaurant');
   // MOV auto-set based on category
@@ -124,8 +124,7 @@ export default function VendorRegisterScreen({ navigation }) {
       if (!phone.trim() || phone.length !== 10) return Alert.alert('Error', 'Enter valid 10-digit phone number');
       if (!town.trim())      return Alert.alert('Error', 'Please enter your town');
       if (!vendorLat || !vendorLng) return Alert.alert('📍 Location Required', 'Please set your shop location using the GPS button. This helps customers find your shop nearby.');
-      if (!password.trim() || password.length < 6) return Alert.alert('Error', 'Password must be at least 6 characters');
-      if (password !== confirmPw) return Alert.alert('Error', 'Passwords do not match');
+
     }
     setStep(prev => prev + 1);
   };
@@ -158,22 +157,33 @@ export default function VendorRegisterScreen({ navigation }) {
 
     setLoading(true);
     try {
-      // Step 1 — Register user account (skip if already exists)
-      try {
-        await client.post('/users/register/', {
-          full_name:    ownerName,
-          phone_number: phone,
-          password:     password,
-          user_type:    'vendor',
-        });
-      } catch (regErr) {
-        const errMsg = JSON.stringify(regErr.response?.data || '');
-        if (!errMsg.includes('already') && !errMsg.includes('exists')) throw regErr;
-      }
-      // Step 2 — Login
-      await login(phone, password);
+      // Send Firebase OTP first
+      const confirmation = await auth().signInWithPhoneNumber('+91' + phone);
+      setOtpConfirm(confirmation);
+      setLoading(false);
+      setShowOtpModal(true);
+      return;
+    } catch (e) {
+      console.log('Firebase OTP error:', e);
+      Alert.alert('Error', 'Failed to send OTP. Please try again.');
+      setLoading(false);
+    }
+  };
 
-      // Step 3 — Wait for token to save
+  const handleVerifyAndRegisterShop = async () => {
+    const otpCode = vendorOtp.join('');
+    if (otpCode.length !== 6) return Alert.alert('Error', 'Please enter complete OTP');
+    setLoading(true);
+    try {
+      const result = await otpConfirm.confirm(otpCode);
+      const idToken = await result.user.getIdToken();
+      await client.post('/users/firebase-login/', {
+        id_token: idToken,
+        user_type: 'vendor',
+        full_name: ownerName,
+      });
+      await new Promise(resolve => setTimeout(resolve, 500));
+      // Register shop
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Step 4 — Register shop with delivery_radius
@@ -354,25 +364,6 @@ export default function VendorRegisterScreen({ navigation }) {
         </View>
       ) : null}
 
-      <Text style={styles.label}>Password *</Text>
-      <View style={styles.passwordWrapper}>
-        <TextInput style={styles.passwordInput} placeholder="Min 6 characters"
-          placeholderTextColor="#9CA3AF" value={password}
-          onChangeText={setPassword} secureTextEntry={!showPassword} />
-        <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword(!showPassword)}>
-          <Text style={styles.eyeText}>{showPassword ? 'Hide' : 'Show'}</Text>
-        </TouchableOpacity>
-      </View>
-
-      <Text style={styles.label}>Confirm Password *</Text>
-      <View style={styles.passwordWrapper}>
-        <TextInput style={styles.passwordInput} placeholder="Re-enter password"
-          placeholderTextColor="#9CA3AF" value={confirmPw}
-          onChangeText={setConfirmPw} secureTextEntry={!showConfirmPw} />
-        <TouchableOpacity style={styles.eyeButton} onPress={() => setShowConfirmPw(!showConfirmPw)}>
-          <Text style={styles.eyeText}>{showConfirmPw ? 'Hide' : 'Show'}</Text>
-        </TouchableOpacity>
-      </View>
       <View style={{ height: 20 }} />
     </ScrollView>
   );
@@ -629,6 +620,42 @@ export default function VendorRegisterScreen({ navigation }) {
         )}
       </View>
 
+      {/* OTP Verification Modal */}
+      <Modal visible={showOtpModal} animationType="slide" transparent>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: '#111', marginBottom: 6 }}>Verify Phone Number</Text>
+            <Text style={{ fontSize: 13, color: '#888', marginBottom: 20 }}>Enter the 6-digit OTP sent to +91 {phone}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24, gap: 8 }}>
+              {vendorOtp.map((digit, index) => (
+                <TextInput
+                  key={index}
+                  style={{ width: 46, height: 56, borderRadius: 12, borderWidth: 1.5, borderColor: digit ? '#1669ef' : '#E5E7EB', backgroundColor: digit ? '#eff6ff' : '#F9FAFB', fontSize: 22, fontWeight: '700', color: '#111', textAlign: 'center' }}
+                  value={digit}
+                  onChangeText={val => {
+                    const d = val.replace(/[^0-9]/g, '');
+                    const newOtp = [...vendorOtp];
+                    newOtp[index] = d;
+                    setVendorOtp(newOtp);
+                  }}
+                  keyboardType="numeric"
+                  maxLength={1}
+                />
+              ))}
+            </View>
+            <TouchableOpacity
+              style={{ backgroundColor: '#1669ef', padding: 16, borderRadius: 14, alignItems: 'center', marginBottom: 12 }}
+              onPress={handleVerifyAndRegisterShop}
+              disabled={loading}
+            >
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Verify & Register Shop</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowOtpModal(false)}>
+              <Text style={{ textAlign: 'center', color: '#888', fontSize: 14 }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
