@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView, Image } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -38,6 +39,14 @@ export default function VendorEditShopScreen({ navigation, route }) {
   const [deliveryRadius, setDeliveryRadius] = useState(shop?.delivery_radius?.toString() || '5');
   const [minOrder, setMinOrder]         = useState((shop?.min_order || shop?.min_order_value)?.toString() || '100');
   const [deliveryTime, setDeliveryTime] = useState(shop?.delivery_time || '30 mins');
+  const [bannerImage, setBannerImage]   = useState(null);
+
+  const pickBannerImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') { Alert.alert('Permission needed', 'Please allow access to photos'); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7 });
+    if (!result.canceled) setBannerImage(result.assets[0]);
+  };
   const [openTime, setOpenTime]         = useState(shop?.open_time || '9:00 AM');
   const [closeTime, setCloseTime]       = useState(shop?.close_time || '9:00 PM');
   const [weeklyOff, setWeeklyOff]       = useState(shop?.weekly_off || 'None');
@@ -49,6 +58,14 @@ export default function VendorEditShopScreen({ navigation, route }) {
   const [loading, setLoading]           = useState(false);
   const [locLoading, setLocLoading]     = useState(false);
   const [showCatPicker, setShowCatPicker] = useState(false);
+
+  // Pick up location from VendorMapPicker
+  React.useEffect(() => {
+    if (route?.params?.pickedLat && route?.params?.pickedLng) {
+      setLatitude(route.params.pickedLat.toString());
+      setLongitude(route.params.pickedLng.toString());
+    }
+  }, [route?.params?.pickedLat, route?.params?.pickedLng]);
 
   const handleGetLocation = async () => {
     setLocLoading(true);
@@ -69,22 +86,46 @@ export default function VendorEditShopScreen({ navigation, route }) {
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem('access_token');
-      await client.patch('/vendors/myshop/', {
-        shop_name:       shopName.trim(),
-        address:         address.trim(),
-        town:            town.trim(),
-        state:           state.trim(),
-        gstin:           gstin.trim(),
-        pan:             pan.trim(),
-        fssai_number:    fssai.trim(),
-        phone_number:    phone.trim(),
-        description:     description.trim(),
-        category:        category,
-        delivery_radius: parseFloat(deliveryRadius) || 5,
-        min_order:       parseFloat(minOrder) || 100,
-        ...(latitude  && { latitude:  parseFloat(latitude)  }),
-        ...(longitude && { longitude: parseFloat(longitude) }),
-      }, { headers: { Authorization: `Bearer ${token}` } });
+      if (bannerImage) {
+        const formData = new FormData();
+        formData.append('shop_name', shopName.trim());
+        formData.append('address', address.trim());
+        formData.append('town', town.trim());
+        formData.append('state', state.trim());
+        formData.append('gstin', gstin.trim());
+        formData.append('pan', pan.trim());
+        formData.append('fssai_number', fssai.trim());
+        formData.append('phone_number', phone.trim());
+        formData.append('description', description.trim());
+        formData.append('category', category);
+        formData.append('delivery_radius', parseFloat(deliveryRadius) || 5);
+        formData.append('delivery_time', deliveryTime);
+        formData.append('min_order', parseFloat(minOrder) || 100);
+        if (latitude) formData.append('latitude', parseFloat(latitude));
+        if (longitude) formData.append('longitude', parseFloat(longitude));
+        formData.append('banner_image', { uri: bannerImage.uri, name: 'banner.jpg', type: 'image/jpeg' });
+        await client.patch('/vendors/myshop/', formData, {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+        });
+      } else {
+        await client.patch('/vendors/myshop/', {
+          shop_name:       shopName.trim(),
+          address:         address.trim(),
+          town:            town.trim(),
+          state:           state.trim(),
+          gstin:           gstin.trim(),
+          pan:             pan.trim(),
+          fssai_number:    fssai.trim(),
+          phone_number:    phone.trim(),
+          description:     description.trim(),
+          category:        category,
+          delivery_radius: parseFloat(deliveryRadius) || 5,
+          delivery_time:   deliveryTime,
+          min_order:       parseFloat(minOrder) || 100,
+          ...(latitude  && { latitude:  parseFloat(latitude)  }),
+          ...(longitude && { longitude: parseFloat(longitude) }),
+        }, { headers: { Authorization: `Bearer ${token}` } });
+      }
       Alert.alert('✅ Updated!', 'Shop details updated successfully!', [
         { text: 'OK', onPress: () => navigation.goBack() }
       ]);
@@ -108,6 +149,21 @@ export default function VendorEditShopScreen({ navigation, route }) {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Basic Info */}
         <View style={styles.card}>
+          {/* Shop Banner */}
+          <Text style={styles.sectionTitle}>Shop Photo/Banner</Text>
+          <TouchableOpacity onPress={pickBannerImage} style={{ marginBottom: 16, borderRadius: 12, overflow: 'hidden', borderWidth: 1.5, borderColor: bannerImage ? '#16a34a' : '#E5E7EB', borderStyle: 'dashed' }}>
+            {bannerImage ? (
+              <Image source={{ uri: bannerImage.uri }} style={{ width: '100%', height: 160, resizeMode: 'cover' }} />
+            ) : shop?.banner_image ? (
+              <Image source={{ uri: shop.banner_image }} style={{ width: '100%', height: 160, resizeMode: 'cover' }} />
+            ) : (
+              <View style={{ height: 120, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F9FAFB' }}>
+                <Ionicons name="image-outline" size={36} color="#9CA3AF" />
+                <Text style={{ color: '#9CA3AF', marginTop: 8, fontSize: 13 }}>Tap to upload shop photo</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
           <Text style={styles.sectionTitle}>Basic Information</Text>
 
           <Text style={styles.label}>Shop Name *</Text>
@@ -163,9 +219,20 @@ export default function VendorEditShopScreen({ navigation, route }) {
           <TextInput style={styles.input} value={deliveryRadius} onChangeText={setDeliveryRadius}
             placeholder="Custom radius in km" keyboardType="numeric" placeholderTextColor="#9CA3AF" />
 
+          <Text style={styles.label}>Estimated Delivery Time</Text>
+          <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+            {['15 mins', '30 mins', '45 mins', '60 mins', '90 mins', '120 mins'].map(t => (
+              <TouchableOpacity key={t}
+                style={[styles.radiusBtn, deliveryTime === t && styles.radiusBtnActive]}
+                onPress={() => setDeliveryTime(t)}>
+                <Text style={[styles.radiusBtnText, deliveryTime === t && { color: '#fff' }]}>{t}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
           <Text style={styles.label}>Minimum Order (₹)</Text>
-          <TextInput style={styles.input} value={minOrder} onChangeText={setMinOrder}
-            placeholder="e.g. 100" keyboardType="numeric" placeholderTextColor="#9CA3AF" />
+          <View style={[styles.input, { justifyContent: 'center', backgroundColor: '#F3F4F6' }]}>
+            <Text style={{ color: '#555', fontSize: 15 }}>₹{minOrder} <Text style={{ fontSize: 12, color: '#9CA3AF' }}>(Contact support to change)</Text></Text>
+          </View>
         </View>
 
         {/* Location */}
@@ -180,10 +247,7 @@ export default function VendorEditShopScreen({ navigation, route }) {
           <TouchableOpacity style={[styles.gpsBtn, { backgroundColor: '#0891b2', marginTop: 8 }]} onPress={() => navigation.navigate('VendorMapPicker', {
             initialLat: latitude,
             initialLng: longitude,
-            onLocationPicked: (lat, lng) => {
-              setLatitude(lat.toString());
-              setLongitude(lng.toString());
-            }
+            returnScreen: 'VendorEditShop',
           })}>
             <Ionicons name="map-outline" size={18} color="#fff" />
             <Text style={styles.gpsBtnText}>📍 Pick on Map</Text>

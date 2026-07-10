@@ -61,11 +61,11 @@ export default function VendorMapPickerScreen({ navigation, route }) {
 
   const handleConfirm = () => {
     if (!marker) { Alert.alert('Error', 'Please select your shop location'); return; }
-    const { onLocationPicked } = route.params || {};
-    if (onLocationPicked) {
-      onLocationPicked(marker.latitude, marker.longitude);
-    }
-    navigation.goBack();
+    const returnScreen = route.params?.returnScreen || 'VendorEditShop';
+    navigation.navigate(returnScreen, {
+      pickedLat: marker.latitude,
+      pickedLng: marker.longitude,
+    });
   };
 
   return (

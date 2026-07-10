@@ -102,8 +102,15 @@ export default function VendorHomeScreen({ navigation }) {
     navigation.replace('Login');
   };
 
+  // Today's date filter
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayOrders      = orders.filter(o => new Date(o.created_at) >= todayStart);
   const pendingOrders    = orders.filter(o => o.status === 'placed');
   const processingOrders = orders.filter(o => ['accepted', 'preparing', 'dispatched'].includes(o.status));
+  const todayDelivered   = todayOrders.filter(o => o.status === 'delivered');
+  const todayEarnings    = todayDelivered.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
+  const totalEarnings    = orders.filter(o => o.status === 'delivered').reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
 
   const filteredOrders = orders.filter(o => {
     if (!search) return true;
@@ -192,6 +199,7 @@ export default function VendorHomeScreen({ navigation }) {
         </View>
 
         {/* Stats Cards */}
+        <Text style={{ fontSize: 13, fontWeight: '600', color: '#888', marginHorizontal: 16, marginBottom: 8 }}>Today's Summary</Text>
         <View style={styles.statsRow}>
           <TouchableOpacity
             style={[styles.statCard, { backgroundColor: '#FFF7ED' }]}
@@ -216,9 +224,23 @@ export default function VendorHomeScreen({ navigation }) {
             onPress={() => navigation.navigate('VendorOrders')}
           >
             <Ionicons name="checkmark-circle-outline" size={24} color="#16A34A" style={{ marginBottom: 8 }} />
-            <Text style={styles.statCardLabel}>Completed</Text>
-            <Text style={[styles.statCardValue, { color: '#16A34A' }]}>{orders.filter(o => o.status === 'delivered').length}</Text>
+            <Text style={styles.statCardLabel}>Delivered</Text>
+            <Text style={[styles.statCardValue, { color: '#16A34A' }]}>{todayDelivered.length}</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Earnings Card */}
+        <View style={{ marginHorizontal: 16, marginBottom: 16, borderRadius: 14, overflow: 'hidden' }}>
+          <View style={{ backgroundColor: '#1669ef', padding: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View>
+              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600', opacity: 0.8 }}>Today's Earnings</Text>
+              <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>{String.fromCharCode(8377)}{todayEarnings.toFixed(0)}</Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600', opacity: 0.8 }}>Total Earnings</Text>
+              <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>{String.fromCharCode(8377)}{totalEarnings.toFixed(0)}</Text>
+            </View>
+          </View>
         </View>
 
         {/* Recent Orders */}
