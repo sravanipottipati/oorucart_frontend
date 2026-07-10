@@ -496,6 +496,9 @@ export default function ShopDetailScreen({ navigation, route }) {
                 <Text style={{ fontSize: 10, color: '#16A34A', fontWeight: '600' }}>FSSAI: {shop.fssai_number}</Text>
               </View>
             ) : null}
+            {shop?.description ? (
+              <Text style={{ fontSize: 12, color: '#888', marginTop: 6, lineHeight: 18 }}>{shop.description}</Text>
+            ) : null}
           </View>
           <View style={[styles.shopOpenBadge, { backgroundColor: shop?.is_open ? '#DCFCE7' : '#F3F4F6' }]}>
             <View style={[styles.shopOpenDot, { backgroundColor: shop?.is_open ? '#16A34A' : '#9CA3AF' }]} />
