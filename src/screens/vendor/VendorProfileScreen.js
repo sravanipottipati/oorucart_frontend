@@ -165,6 +165,18 @@ export default function VendorProfileScreen({ navigation }) {
 
           <TouchableOpacity
             style={[styles.menuItem, styles.menuItemBorder]}
+            onPress={() => navigation.navigate('VendorProducts')}
+          >
+            <View style={styles.menuLeft}>
+              <View style={[styles.menuIconBox, { backgroundColor: '#FFF7ED' }]}>
+                <Ionicons name="cube-outline" size={20} color="#EA580C" />
+              </View>
+              <Text style={styles.menuLabel}>My Products</Text>
+            </View>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.menuItem, styles.menuItemBorder]}
             onPress={() => navigation.navigate('VendorWallet')}
           >
             <View style={styles.menuLeft}>

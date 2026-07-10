@@ -60,12 +60,17 @@ export default function VendorOrdersScreen({ navigation }) {
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab]   = useState('placed');
+  const [shop, setShop]             = useState(null);
 
   const fetchOrders = async () => {
     try {
-      const res  = await client.get('/orders/vendor/');
+      const [res, shopRes] = await Promise.all([
+        client.get('/orders/vendor/'),
+        client.get('/vendors/myshop/'),
+      ]);
       const data = Array.isArray(res.data) ? res.data : res.data.orders || [];
       setOrders(data);
+      setShop(shopRes.data);
     } catch (e) {
       console.log('Error:', e.message);
     } finally {
@@ -111,7 +116,26 @@ export default function VendorOrdersScreen({ navigation }) {
       </View>
 
       {/* ── New Orders Alert ── */}
-      {pendingOrders.length > 0 && (
+      {/* Shop Pending/Rejected Banner */}
+      {shop?.status === 'pending' && (
+        <View style={{ margin: 16, backgroundColor: '#FEF3C7', borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#FDE68A' }}>
+          <Ionicons name="time-outline" size={22} color="#D97706" />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: '#92400E' }}>Shop Pending Approval</Text>
+            <Text style={{ fontSize: 12, color: '#92400E', marginTop: 2 }}>You cannot accept orders until your shop is approved by admin.</Text>
+          </View>
+        </View>
+      )}
+      {shop?.status === 'rejected' && (
+        <View style={{ margin: 16, backgroundColor: '#FEE2E2', borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#FECACA' }}>
+          <Ionicons name="close-circle-outline" size={22} color="#DC2626" />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: '#991B1B' }}>Shop Rejected</Text>
+            <Text style={{ fontSize: 12, color: '#991B1B', marginTop: 2 }}>Your shop has been rejected. Please contact support.</Text>
+          </View>
+        </View>
+      )}
+      {pendingOrders.length > 0 && shop?.status === 'approved' && (
         <TouchableOpacity
           style={styles.newOrderAlert}
           onPress={() => setActiveTab('placed')}

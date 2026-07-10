@@ -301,7 +301,19 @@ ${order.delivery_address}
           <View style={styles.divider} />
           <View style={styles.infoRow}><Text style={styles.infoLabel}>Date & Time</Text><Text style={styles.infoValue}>{date}</Text></View>
           <View style={styles.divider} />
-          <View style={styles.infoRow}><Text style={styles.infoLabel}>Payment</Text><Text style={[styles.infoValue, { color: '#16A34A' }]}>Cash on Delivery</Text></View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Payment Mode</Text>
+            <Text style={[styles.infoValue, { color: '#16A34A' }]}>
+              {order.payment_mode === 'online' ? 'Online Payment' : 'Cash on Delivery'}
+            </Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Payment Status</Text>
+            <Text style={[styles.infoValue, { color: order.payment_status === 'paid' ? '#16A34A' : '#EA580C', fontWeight: '700' }]}>
+              {order.payment_status === 'paid' ? '✅ Paid' : order.payment_mode === 'cod' ? '⏳ Pending (COD)' : '⏳ Pending'}
+            </Text>
+          </View>
           {order.notes ? <><View style={styles.divider} /><View style={styles.infoRow}><Text style={styles.infoLabel}>Note</Text><Text style={[styles.infoValue, { color: '#EA580C' }]}>{order.notes}</Text></View></> : null}
         </View>
       </ScrollView>

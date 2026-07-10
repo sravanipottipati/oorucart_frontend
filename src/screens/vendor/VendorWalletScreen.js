@@ -17,6 +17,7 @@ export default function VendorWalletScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [shop, setShop]               = useState(null);
+  const [orders, setOrders]           = useState([]);
   const [showBankModal, setShowBankModal] = useState(false);
   const [bankName, setBankName]           = useState('');
   const [bankAccountName, setBankAccountName] = useState('');
@@ -108,10 +109,11 @@ export default function VendorWalletScreen({ navigation }) {
 
   const fetchData = async () => {
     try {
-      const [walletRes, transRes, shopRes] = await Promise.all([
+      const [walletRes, transRes, shopRes, ordersRes] = await Promise.all([
         client.get('/wallet/summary/'),
         client.get('/wallet/transactions/'),
         client.get('/vendors/myshop/'),
+        client.get('/orders/vendor/'),
       ]);
       setWallet(walletRes.data);
       const data = Array.isArray(transRes.data)
@@ -120,6 +122,10 @@ export default function VendorWalletScreen({ navigation }) {
       setTrans(data);
       const shopData = shopRes.data;
       setShop(shopData);
+      const ordersData = Array.isArray(ordersRes.data)
+        ? ordersRes.data
+        : ordersRes.data.orders || [];
+      setOrders(ordersData);
       setBankName(shopData.bank_name || '');
       setBankAccountName(shopData.bank_account_name || '');
       setBankAccountNumber(shopData.bank_account_number || '');
@@ -208,6 +214,35 @@ export default function VendorWalletScreen({ navigation }) {
             <Text style={styles.totalCardIconText}>₹</Text>
           </View>
         </View>
+
+          {/* Today's Earnings */}
+          {(() => {
+            const todayStart = new Date();
+            todayStart.setHours(0, 0, 0, 0);
+            const todayDelivered = orders.filter(o => o.status === 'delivered' && new Date(o.created_at) >= todayStart);
+            const todayTotal = todayDelivered.reduce((sum, o) => sum + parseFloat(o.total_amount || 0), 0);
+            const todayCommission = todayDelivered.reduce((sum, o) => sum + parseFloat(o.platform_fee || 0), 0);
+            const todayNet = todayTotal - todayCommission;
+            return (
+              <View style={{ marginHorizontal: 16, marginBottom: 12, backgroundColor: '#F0FDF4', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#BBF7D0' }}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#16A34A', marginBottom: 10 }}>Today's Earnings</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <View style={{ alignItems: 'center' }}>
+                    <Text style={{ fontSize: 11, color: '#888' }}>Orders Total</Text>
+                    <Text style={{ fontSize: 18, fontWeight: '800', color: '#111' }}>{String.fromCharCode(8377)}{todayTotal.toFixed(0)}</Text>
+                  </View>
+                  <View style={{ alignItems: 'center' }}>
+                    <Text style={{ fontSize: 11, color: '#888' }}>Platform Fee</Text>
+                    <Text style={{ fontSize: 18, fontWeight: '800', color: '#DC2626' }}>-{String.fromCharCode(8377)}{todayCommission.toFixed(0)}</Text>
+                  </View>
+                  <View style={{ alignItems: 'center' }}>
+                    <Text style={{ fontSize: 11, color: '#888' }}>Net Earnings</Text>
+                    <Text style={{ fontSize: 18, fontWeight: '800', color: '#16A34A' }}>{String.fromCharCode(8377)}{todayNet.toFixed(0)}</Text>
+                  </View>
+                </View>
+              </View>
+            );
+          })()}
 
         {/* Pending + Settled */}
         <View style={styles.statsRow}>
@@ -341,6 +376,39 @@ export default function VendorWalletScreen({ navigation }) {
           ))
         )}
 
+
+        {/* Order Transaction History */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Order History</Text>
+        </View>
+        {orders.filter(o => o.status === 'delivered').length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyEmoji}>📦</Text>
+            <Text style={styles.emptyTitle}>No delivered orders yet</Text>
+          </View>
+        ) : (
+          orders.filter(o => o.status === 'delivered').slice(0, 20).map((order, index) => {
+            const total = parseFloat(order.total_amount || 0);
+            const platformFee = parseFloat(order.platform_fee || 0);
+            const net = total - platformFee;
+            return (
+              <View key={index} style={[styles.txnCard, { marginBottom: 8 }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.txnId}>Order #{order.order_number || order.id?.slice(0, 8).toUpperCase()}</Text>
+                  <Text style={styles.txnDate}>{new Date(order.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
+                  <View style={{ flexDirection: 'row', gap: 12, marginTop: 6 }}>
+                    <Text style={{ fontSize: 11, color: '#888' }}>Total: <Text style={{ color: '#111', fontWeight: '600' }}>{String.fromCharCode(8377)}{total.toFixed(0)}</Text></Text>
+                    <Text style={{ fontSize: 11, color: '#888' }}>Fee: <Text style={{ color: '#DC2626', fontWeight: '600' }}>-{String.fromCharCode(8377)}{platformFee.toFixed(0)}</Text></Text>
+                    <Text style={{ fontSize: 11, color: '#888' }}>Net: <Text style={{ color: '#16A34A', fontWeight: '600' }}>{String.fromCharCode(8377)}{net.toFixed(0)}</Text></Text>
+                  </View>
+                </View>
+                <View style={[styles.txnBadge, { backgroundColor: '#DCFCE7' }]}>
+                  <Text style={[styles.txnBadgeText, { color: '#16A34A' }]}>Delivered</Text>
+                </View>
+              </View>
+            );
+          })
+        )}
         <View style={{ height: 80 }} />
       </ScrollView>
       {/* Bank Details Modal */}

@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import client from '../../api/client';
+import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STATUS_COLORS = {
@@ -40,6 +41,7 @@ export default function VendorHomeScreen({ navigation }) {
   const [toggling, setToggling] = useState(false);
   const [search, setSearch]     = useState('');
   const [unreadCount, setUnreadCount] = useState(0); // ← notification badge
+  const [isConnected, setIsConnected] = useState(true);
 
   const fetchData = async () => {
     try {
@@ -72,6 +74,13 @@ export default function VendorHomeScreen({ navigation }) {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      setIsConnected(state.isConnected);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Refresh unread count every time screen is focused
   useFocusEffect(
@@ -198,6 +207,13 @@ export default function VendorHomeScreen({ navigation }) {
           />
         </View>
 
+        {/* Offline Banner */}
+        {!isConnected && (
+          <View style={{ marginHorizontal: 16, marginBottom: 12, backgroundColor: '#111', borderRadius: 12, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Ionicons name="wifi-outline" size={18} color="#fff" />
+            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>No internet connection</Text>
+          </View>
+        )}
         {/* Pending Approval Banner */}
         {shop?.status === 'pending' && (
           <View style={{ marginHorizontal: 16, marginBottom: 12, backgroundColor: '#FEF3C7', borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#FDE68A' }}>
