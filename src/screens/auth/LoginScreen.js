@@ -40,8 +40,13 @@ export default function LoginScreen({ navigation }) {
       startTimer();
       setTimeout(() => otpRefs.current[0]?.focus(), 300);
     } catch (e) {
-      Alert.alert('Error', 'Failed to send OTP. Please try again.');
-      console.log('Firebase OTP error:', e);
+      console.log('Firebase OTP error code:', e.code);
+      console.log('Firebase OTP error message:', e.message);
+      const msg = e.code === 'auth/invalid-phone-number' ? 'Invalid phone number format'
+        : e.code === 'auth/too-many-requests' ? 'Too many attempts. Please try again later.'
+        : e.code === 'auth/network-request-failed' ? 'Network error. Check your internet connection.'
+        : `Failed to send OTP: ${e.code || e.message}`;
+      Alert.alert('Error', msg);
     } finally {
       setLoading(false);
     }
