@@ -2,13 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, RefreshControl, Alert, Switch,
+  ScrollView, ActivityIndicator, RefreshControl, Alert, Switch, Image,
 } from 'react-native';
 import client from '../../api/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function VendorProductsScreen({ navigation }) {
   const [products, setProducts]   = useState([]);
+  const [search, setSearch]         = useState('');
   const [loading, setLoading]     = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -69,6 +70,10 @@ export default function VendorProductsScreen({ navigation }) {
     ]);
   };
 
+  const filteredProducts = search
+    ? products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+    : products;
+
   return (
     <View style={styles.container}>
 
@@ -97,6 +102,25 @@ export default function VendorProductsScreen({ navigation }) {
         </View>
       </View>
 
+
+      {/* Search Bar */}
+      <View style={{ paddingHorizontal: 16, paddingVertical: 8, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F0F0F0' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 10, paddingHorizontal: 12, gap: 8 }}>
+          <Ionicons name="search-outline" size={18} color="#9CA3AF" />
+          <TextInput
+            style={{ flex: 1, paddingVertical: 10, fontSize: 14, color: '#111' }}
+            placeholder="Search products..."
+            placeholderTextColor="#9CA3AF"
+            value={search}
+            onChangeText={setSearch}
+          />
+          {search ? (
+            <TouchableOpacity onPress={() => setSearch('')}>
+              <Ionicons name="close-circle" size={18} color="#9CA3AF" />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      </View>
       {loading ? (
         <ActivityIndicator size="large" color="#1669ef" style={{ marginTop: 40 }} />
       ) : (
@@ -105,7 +129,7 @@ export default function VendorProductsScreen({ navigation }) {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           contentContainerStyle={{ padding: 16 }}
         >
-          {products.length === 0 ? (
+          {filteredProducts.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyEmoji}>📦</Text>
               <Text style={styles.emptyTitle}>No products yet</Text>
@@ -118,10 +142,29 @@ export default function VendorProductsScreen({ navigation }) {
               </TouchableOpacity>
             </View>
           ) : (
-            products.map(product => (
+            filteredProducts.map(product => (
               <View key={product.id} style={styles.productCard}>
+                {/* Product Image */}
+                {(product.image_url || product.image) ? (
+                  <Image
+                    source={{ uri: product.image_url || product.image }}
+                    style={{ width: '100%', height: 120, borderRadius: 10, marginBottom: 8, resizeMode: 'cover' }}
+                  />
+                ) : null}
                 <View style={styles.productInfo}>
-                  <Text style={styles.productName}>{product.name}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                    <Text style={styles.productName}>{product.name}</Text>
+                    {product.is_draft && (
+                      <View style={{ backgroundColor: '#FEF3C7', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: '#FDE68A' }}>
+                        <Text style={{ fontSize: 10, color: '#D97706', fontWeight: '700' }}>DRAFT</Text>
+                      </View>
+                    )}
+                  </View>
+                  {product.variants && product.variants.length > 0 ? (
+                    <Text style={{ fontSize: 11, color: '#1669ef', fontWeight: '600', marginBottom: 4 }}>
+                      {product.variants.length} variant{product.variants.length > 1 ? 's' : ''}: {product.variants.map(v => v.name).join(', ')}
+                    </Text>
+                  ) : null}
                   {product.description ? (
                     <Text style={styles.productDesc} numberOfLines={1}>
                       {product.description}

@@ -52,6 +52,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
   const [category, setCategory]     = useState('');
   const [subcategory, setSubcat]    = useState('');
   const [gst, setGst]               = useState('0');
+  const [isGstRegistered, setIsGstRegistered] = useState(false);
   const [deliveryTime, setDelivery] = useState('30 mins');
   const [isReturnable, setReturnable] = useState(true);
   const [isCod, setCod]             = useState(true);
@@ -69,10 +70,21 @@ export default function VendorAddProductScreen({ navigation, route }) {
     const digitsOnly = text.replace(/[^0-9]/g, '');
     let formatted = digitsOnly;
     if (digitsOnly.length > 4) {
-      formatted = digitsOnly.slice(0, 4) + '-' + digitsOnly.slice(4);
+      // Validate month (01-12)
+      let month = digitsOnly.slice(4, 6);
+      if (month.length === 2 && parseInt(month) > 12) month = '12';
+      if (month.length === 2 && parseInt(month) < 1) month = '01';
+      formatted = digitsOnly.slice(0, 4) + '-' + month;
     }
     if (digitsOnly.length > 6) {
-      formatted = digitsOnly.slice(0, 4) + '-' + digitsOnly.slice(4, 6) + '-' + digitsOnly.slice(6, 8);
+      let month = digitsOnly.slice(4, 6);
+      if (parseInt(month) > 12) month = '12';
+      if (parseInt(month) < 1) month = '01';
+      // Validate day (01-31)
+      let day = digitsOnly.slice(6, 8);
+      if (day.length === 2 && parseInt(day) > 31) day = '31';
+      if (day.length === 2 && parseInt(day) < 1) day = '01';
+      formatted = digitsOnly.slice(0, 4) + '-' + month + '-' + day;
     }
     setExpiryDate(formatted);
   };
@@ -246,6 +258,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
         await AsyncStorage.removeItem('shop_category');
         const res = await client.get('/vendors/myshop/');
         const shopCat = res.data.category;
+        setIsGstRegistered(!!(res.data.gstin && res.data.gstin.trim()));
         await AsyncStorage.setItem('shop_category', shopCat || '');
         const mapped = SHOP_TO_PRODUCT_CATEGORY[shopCat];
         if (mapped) setCategory(mapped.key);
@@ -356,12 +369,12 @@ export default function VendorAddProductScreen({ navigation, route }) {
           <View style={styles.twoCol}>
             <View style={{ flex: 1 }}>
               <Text style={styles.fieldLabel}>Category <Text style={styles.required}>*</Text></Text>
-              <View style={[styles.dropdown, { backgroundColor: '#F0FDF4' }]}>
+              <TouchableOpacity style={[styles.dropdown, { backgroundColor: '#F0FDF4' }]} onPress={() => { setShowCatPicker(!showCatPicker); setShowSubPicker(false); }}>
                 <Text style={[styles.dropdownText, !category && { color: '#9CA3AF' }]}>
                   {selectedCat ? selectedCat.label : 'Select category'}
                 </Text>
                 <Ionicons name="chevron-down" size={16} color="#888" />
-              </View>
+              </TouchableOpacity>
               {showCatPicker && (
                 <View style={styles.pickerDropdown}>
                   {CATEGORIES.map(cat => (
@@ -425,6 +438,19 @@ export default function VendorAddProductScreen({ navigation, route }) {
               <Text style={{ fontWeight: '700', color: !isVeg ? '#DC2626' : '#888' }}>🔴 Non-Veg</Text>
             </TouchableOpacity>
           </View>
+          {/* Price + MRP */}
+          {variants.length === 0 && (
+            <View style={styles.twoCol}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.fieldLabel}>Price (₹) <Text style={styles.required}>*</Text></Text>
+                <TextInput style={styles.input} placeholder="0" placeholderTextColor="#9CA3AF" value={price} onChangeText={setPrice} keyboardType="numeric" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.fieldLabel}>MRP (₹) <Text style={styles.optional}>(optional)</Text></Text>
+                <TextInput style={styles.input} placeholder="Optional" placeholderTextColor="#9CA3AF" value={mrp} onChangeText={setMrp} keyboardType="numeric" />
+              </View>
+            </View>
+          )}
           <Text style={styles.fieldLabel}>Variants <Text style={styles.optional}>(Optional)</Text></Text>
           {variants.length > 0 && (
             <View style={styles.variantTable}>
@@ -472,15 +498,19 @@ export default function VendorAddProductScreen({ navigation, route }) {
             </View>
           )}
 
-          {/* GST */}
-          <Text style={styles.fieldLabel}>GST % <Text style={styles.optional}>(0 if not applicable)</Text></Text>
-          <View style={styles.gstRow}>
-            {['0','5','12','18','28','40'].map(g => (
-              <TouchableOpacity key={g} style={[styles.gstChip, gst === g && styles.gstChipActive]} onPress={() => setGst(g)}>
-                <Text style={[styles.gstChipText, gst === g && styles.gstChipTextActive]}>{g}%</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {/* GST — only show if seller is GST registered */}
+          {isGstRegistered && (
+            <>
+              <Text style={styles.fieldLabel}>GST % <Text style={styles.optional}>(0 if not applicable)</Text></Text>
+              <View style={styles.gstRow}>
+                {['0','5','12','18','28','40'].map(g => (
+                  <TouchableOpacity key={g} style={[styles.gstChip, gst === g && styles.gstChipActive]} onPress={() => setGst(g)}>
+                    <Text style={[styles.gstChipText, gst === g && styles.gstChipTextActive]}>{g}%</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
 
           {/* Returnable */}
           <View style={styles.toggleRow}>

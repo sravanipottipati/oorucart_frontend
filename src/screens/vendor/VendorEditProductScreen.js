@@ -54,10 +54,19 @@ export default function VendorEditProductScreen({ navigation, route }) {
     const digitsOnly = text.replace(/[^0-9]/g, '');
     let formatted = digitsOnly;
     if (digitsOnly.length > 4) {
-      formatted = digitsOnly.slice(0, 4) + '-' + digitsOnly.slice(4);
+      let month = digitsOnly.slice(4, 6);
+      if (month.length === 2 && parseInt(month) > 12) month = '12';
+      if (month.length === 2 && parseInt(month) < 1) month = '01';
+      formatted = digitsOnly.slice(0, 4) + '-' + month;
     }
     if (digitsOnly.length > 6) {
-      formatted = digitsOnly.slice(0, 4) + '-' + digitsOnly.slice(4, 6) + '-' + digitsOnly.slice(6, 8);
+      let month = digitsOnly.slice(4, 6);
+      if (parseInt(month) > 12) month = '12';
+      if (parseInt(month) < 1) month = '01';
+      let day = digitsOnly.slice(6, 8);
+      if (day.length === 2 && parseInt(day) > 31) day = '31';
+      if (day.length === 2 && parseInt(day) < 1) day = '01';
+      formatted = digitsOnly.slice(0, 4) + '-' + month + '-' + day;
     }
     setExpiryDate(formatted);
   };
@@ -113,7 +122,7 @@ export default function VendorEditProductScreen({ navigation, route }) {
       }
       const result = source === 'camera'
         ? await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1,1], quality: 0.7 })
-        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaType.IMAGE, allowsEditing: true, aspect: [1,1], quality: 0.7 });
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1,1], quality: 0.7 });
       if (!result.canceled) setImage(result.assets[0]);
     } catch (err) { Alert.alert('Error', 'Could not pick image'); }
   };
