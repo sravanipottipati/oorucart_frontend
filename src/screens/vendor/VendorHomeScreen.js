@@ -198,6 +198,25 @@ export default function VendorHomeScreen({ navigation }) {
           />
         </View>
 
+        {/* Pending Approval Banner */}
+        {shop?.status === 'pending' && (
+          <View style={{ marginHorizontal: 16, marginBottom: 12, backgroundColor: '#FEF3C7', borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#FDE68A' }}>
+            <Ionicons name="time-outline" size={22} color="#D97706" />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#92400E' }}>Shop Pending Approval</Text>
+              <Text style={{ fontSize: 12, color: '#92400E', marginTop: 2 }}>Your shop is under review. You will be notified once approved.</Text>
+            </View>
+          </View>
+        )}
+        {shop?.status === 'rejected' && (
+          <View style={{ marginHorizontal: 16, marginBottom: 12, backgroundColor: '#FEE2E2', borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#FECACA' }}>
+            <Ionicons name="close-circle-outline" size={22} color="#DC2626" />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#991B1B' }}>Shop Rejected</Text>
+              <Text style={{ fontSize: 12, color: '#991B1B', marginTop: 2 }}>Your shop registration was rejected. Please contact support.</Text>
+            </View>
+          </View>
+        )}
         {/* Stats Cards */}
         <Text style={{ fontSize: 13, fontWeight: '600', color: '#888', marginHorizontal: 16, marginBottom: 8 }}>Today's Summary</Text>
         <View style={styles.statsRow}>
