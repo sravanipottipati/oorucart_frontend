@@ -34,7 +34,7 @@ export default function LoginScreen({ navigation }) {
     if (cleanPhone.length !== 10) return Alert.alert('Error', 'Enter a valid 10-digit number');
     setLoading(true);
     try {
-      const confirmation = await auth().signInWithPhoneNumber('+91' + cleanPhone);
+      const confirmation = await auth().signInWithPhoneNumber('+91' + cleanPhone, true);
       setConfirm(confirmation);
       setStep(2);
       startTimer();
@@ -106,7 +106,7 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     try {
       const cleanPhone = phone.replace(/^\+91/, '').replace(/\s/g, '');
-      const confirmation = await auth().signInWithPhoneNumber('+91' + cleanPhone);
+      const confirmation = await auth().signInWithPhoneNumber('+91' + cleanPhone, true);
       setConfirm(confirmation);
       setOtp(['', '', '', '', '', '']);
       startTimer();

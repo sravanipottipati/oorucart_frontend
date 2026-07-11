@@ -158,7 +158,7 @@ export default function VendorRegisterScreen({ navigation }) {
     setLoading(true);
     try {
       // Send Firebase OTP first
-      const confirmation = await auth().signInWithPhoneNumber('+91' + phone);
+      const confirmation = await auth().signInWithPhoneNumber('+91' + phone, true);
       setOtpConfirm(confirmation);
       setLoading(false);
       setShowOtpModal(true);

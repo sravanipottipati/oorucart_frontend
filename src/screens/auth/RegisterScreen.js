@@ -38,7 +38,7 @@ export default function RegisterScreen({ navigation }) {
     if (!agreedToTerms) return Alert.alert('Error', 'Please agree to Terms & Conditions and Privacy Policy');
     setLoading(true);
     try {
-      const confirmation = await auth().signInWithPhoneNumber('+91' + phone);
+      const confirmation = await auth().signInWithPhoneNumber('+91' + phone, true);
       setConfirm(confirmation);
       setStep(2);
       startTimer();
@@ -99,7 +99,7 @@ export default function RegisterScreen({ navigation }) {
     if (!canResend) return;
     setLoading(true);
     try {
-      const confirmation = await auth().signInWithPhoneNumber('+91' + phone);
+      const confirmation = await auth().signInWithPhoneNumber('+91' + phone, true);
       setConfirm(confirmation);
       setOtp(['', '', '', '', '', '']);
       startTimer();
