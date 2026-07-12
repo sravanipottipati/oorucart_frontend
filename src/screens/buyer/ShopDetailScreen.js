@@ -473,6 +473,9 @@ export default function ShopDetailScreen({ navigation, route }) {
     <View style={styles.container}>
       {/* Shop Banner */}
       <View style={[styles.shopBanner, { backgroundColor: shopColor }]}>
+        {shop?.banner_image ? (
+          <Image source={{ uri: shop.banner_image }} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} resizeMode="cover" />
+        ) : null}
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={20} color="#fff" />
         </TouchableOpacity>
