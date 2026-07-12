@@ -3,7 +3,6 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image,
 } from 'react-native';
-import auth from '@react-native-firebase/auth';
 import client from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,7 +13,6 @@ export default function RegisterScreen({ navigation }) {
   const [otp, setOtp]                     = useState(['', '', '', '', '', '']);
   const [step, setStep]                   = useState(1);
   const [loading, setLoading]             = useState(false);
-  const [confirm, setConfirm]             = useState(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [resendTimer, setResendTimer]     = useState(30);
   const [canResend, setCanResend]         = useState(false);
@@ -35,17 +33,20 @@ export default function RegisterScreen({ navigation }) {
   const handleSendOTP = async () => {
     if (!fullName.trim()) return Alert.alert('Error', 'Please enter your full name');
     if (phone.length !== 10) return Alert.alert('Error', 'Enter a valid 10-digit number');
-    if (!agreedToTerms) return Alert.alert('Error', 'Please agree to Terms & Conditions and Privacy Policy');
+    if (!agreedToTerms) return Alert.alert('Error', 'Please agree to Terms & Conditions');
     setLoading(true);
     try {
-      const confirmation = await auth().signInWithPhoneNumber('+91' + phone, true);
-      setConfirm(confirmation);
+      await client.post('/users/send-register-otp/', {
+        phone_number: phone,
+        full_name: fullName,
+        user_type: 'buyer',
+      });
       setStep(2);
       startTimer();
       setTimeout(() => otpRefs.current[0]?.focus(), 300);
     } catch (e) {
-      Alert.alert('Error', 'Failed to send OTP. Please try again.');
-      console.log('Firebase OTP error:', e);
+      const msg = e.response?.data?.error || 'Failed to send OTP. Please try again.';
+      Alert.alert('Error', msg);
     } finally {
       setLoading(false);
     }
@@ -57,9 +58,7 @@ export default function RegisterScreen({ navigation }) {
       const newOtp = [...otp];
       for (let i = 0; i < 6; i++) newOtp[i] = digitsOnly[i] || '';
       setOtp(newOtp);
-      const lastIdx = Math.min(digitsOnly.length, 6) - 1;
-      otpRefs.current[Math.min(lastIdx, 5)]?.focus();
-      if (digitsOnly.length >= 6) otpRefs.current[5]?.blur();
+      otpRefs.current[Math.min(digitsOnly.length - 1, 5)]?.focus();
       return;
     }
     const newOtp = [...otp];
@@ -78,18 +77,17 @@ export default function RegisterScreen({ navigation }) {
     if (otpCode.length !== 6) return Alert.alert('Error', 'Please enter the complete OTP');
     setLoading(true);
     try {
-      const result = await confirm.confirm(otpCode);
-      const idToken = await result.user.getIdToken();
-      const res = await client.post('/users/firebase-login/', {
-        id_token: idToken,
-        user_type: 'buyer',
+      const res = await client.post('/users/verify-register-otp/', {
+        phone_number: phone,
+        otp: otpCode,
         full_name: fullName,
+        user_type: 'buyer',
       });
       await loginWithTokens(res.data.tokens, res.data.user);
       navigation.replace('TownSelection');
     } catch (e) {
-      console.log('OTP verify error:', e);
-      Alert.alert('Error', 'Incorrect OTP. Please check and try again.');
+      const msg = e.response?.data?.error || 'Incorrect OTP. Please try again.';
+      Alert.alert('Error', msg);
     } finally {
       setLoading(false);
     }
@@ -99,8 +97,7 @@ export default function RegisterScreen({ navigation }) {
     if (!canResend) return;
     setLoading(true);
     try {
-      const confirmation = await auth().signInWithPhoneNumber('+91' + phone, true);
-      setConfirm(confirmation);
+      await client.post('/users/send-register-otp/', { phone_number: phone, full_name: fullName, user_type: 'buyer' });
       setOtp(['', '', '', '', '', '']);
       startTimer();
       setTimeout(() => otpRefs.current[0]?.focus(), 300);
@@ -164,7 +161,7 @@ export default function RegisterScreen({ navigation }) {
 
               <TouchableOpacity style={styles.checkboxRow} onPress={() => setAgreedToTerms(!agreedToTerms)} activeOpacity={0.7}>
                 <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
-                  {agreedToTerms && <Text style={styles.checkmark}>checkmark</Text>}
+                  {agreedToTerms && <Text style={styles.checkmark}>✓</Text>}
                 </View>
                 <Text style={styles.checkboxText}>
                   I agree to Univerin's <Text style={styles.checkboxLink} onPress={() => navigation.navigate('TermsAndConditions')}>Terms & Conditions</Text> and <Text style={styles.checkboxLink} onPress={() => navigation.navigate('PrivacyPolicy')}>Privacy Policy</Text>

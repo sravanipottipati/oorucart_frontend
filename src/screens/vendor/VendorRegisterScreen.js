@@ -6,7 +6,6 @@ import {
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
-import auth from '@react-native-firebase/auth';
 import { useAuth } from '../../context/AuthContext';
 import { Image, Linking } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -157,15 +156,16 @@ export default function VendorRegisterScreen({ navigation }) {
 
     setLoading(true);
     try {
-      // Send Firebase OTP first
-      const confirmation = await auth().signInWithPhoneNumber('+91' + phone, true);
-      setOtpConfirm(confirmation);
+      await client.post('/users/send-register-otp/', {
+        phone_number: phone,
+        full_name: ownerName,
+        user_type: 'vendor',
+      });
       setLoading(false);
       setShowOtpModal(true);
-      return;
     } catch (e) {
-      console.log('Firebase OTP error:', e);
-      Alert.alert('Error', 'Failed to send OTP. Please try again.');
+      const msg = e.response?.data?.error || 'Failed to send OTP. Please try again.';
+      Alert.alert('Error', msg);
       setLoading(false);
     }
   };
@@ -175,12 +175,11 @@ export default function VendorRegisterScreen({ navigation }) {
     if (otpCode.length !== 6) return Alert.alert('Error', 'Please enter complete OTP');
     setLoading(true);
     try {
-      const result = await otpConfirm.confirm(otpCode);
-      const idToken = await result.user.getIdToken();
-      await client.post('/users/firebase-login/', {
-        id_token: idToken,
-        user_type: 'vendor',
+      await client.post('/users/verify-register-otp/', {
+        phone_number: phone,
+        otp: otpCode,
         full_name: ownerName,
+        user_type: 'vendor',
       });
       await new Promise(resolve => setTimeout(resolve, 500));
       // Register shop
