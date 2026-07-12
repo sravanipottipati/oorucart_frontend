@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, RefreshControl, Alert, Switch, Image,
+  ScrollView, ActivityIndicator, RefreshControl, Alert, Switch, Image, TextInput,
 } from 'react-native';
 import client from '../../api/client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
