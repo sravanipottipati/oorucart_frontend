@@ -3,7 +3,6 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image,
 } from 'react-native';
-import auth from '@react-native-firebase/auth';
 import client from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 
@@ -12,7 +11,6 @@ export default function LoginScreen({ navigation }) {
   const [otp, setOtp]             = useState(['', '', '', '', '', '']);
   const [step, setStep]           = useState(1);
   const [loading, setLoading]     = useState(false);
-  const [confirm, setConfirm]     = useState(null);
   const [resendTimer, setResendTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
   const otpRefs = useRef([]);
@@ -34,18 +32,12 @@ export default function LoginScreen({ navigation }) {
     if (cleanPhone.length !== 10) return Alert.alert('Error', 'Enter a valid 10-digit number');
     setLoading(true);
     try {
-      const confirmation = await auth().signInWithPhoneNumber('+91' + cleanPhone, true);
-      setConfirm(confirmation);
+      await client.post('/users/send-login-otp/', { phone_number: cleanPhone });
       setStep(2);
       startTimer();
       setTimeout(() => otpRefs.current[0]?.focus(), 300);
     } catch (e) {
-      console.log('Firebase OTP error code:', e.code);
-      console.log('Firebase OTP error message:', e.message);
-      const msg = e.code === 'auth/invalid-phone-number' ? 'Invalid phone number format'
-        : e.code === 'auth/too-many-requests' ? 'Too many attempts. Please try again later.'
-        : e.code === 'auth/network-request-failed' ? 'Network error. Check your internet connection.'
-        : `Failed to send OTP: ${e.code || e.message}`;
+      const msg = e.response?.data?.error || 'Failed to send OTP. Please try again.';
       Alert.alert('Error', msg);
     } finally {
       setLoading(false);
@@ -58,9 +50,7 @@ export default function LoginScreen({ navigation }) {
       const newOtp = [...otp];
       for (let i = 0; i < 6; i++) newOtp[i] = digitsOnly[i] || '';
       setOtp(newOtp);
-      const lastIdx = Math.min(digitsOnly.length, 6) - 1;
-      otpRefs.current[Math.min(lastIdx, 5)]?.focus();
-      if (digitsOnly.length >= 6) otpRefs.current[5]?.blur();
+      otpRefs.current[Math.min(digitsOnly.length - 1, 5)]?.focus();
       return;
     }
     const newOtp = [...otp];
@@ -79,11 +69,10 @@ export default function LoginScreen({ navigation }) {
     if (otpCode.length !== 6) return Alert.alert('Error', 'Please enter the complete OTP');
     setLoading(true);
     try {
-      const result = await confirm.confirm(otpCode);
-      const idToken = await result.user.getIdToken();
-      const res = await client.post('/users/firebase-login/', {
-        id_token: idToken,
-        user_type: 'buyer',
+      const cleanPhone = phone.replace(/^\+91/, '').replace(/\s/g, '');
+      const res = await client.post('/users/verify-login-otp/', {
+        phone_number: cleanPhone,
+        otp: otpCode,
       });
       await loginWithTokens(res.data.tokens, res.data.user);
       if (res.data.user.user_type === 'vendor') {
@@ -94,8 +83,8 @@ export default function LoginScreen({ navigation }) {
         navigation.replace('Home');
       }
     } catch (e) {
-      console.log('OTP verify error:', e);
-      Alert.alert('Error', 'Incorrect OTP. Please check and try again.');
+      const msg = e.response?.data?.error || 'Incorrect OTP. Please try again.';
+      Alert.alert('Error', msg);
     } finally {
       setLoading(false);
     }
@@ -106,8 +95,7 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     try {
       const cleanPhone = phone.replace(/^\+91/, '').replace(/\s/g, '');
-      const confirmation = await auth().signInWithPhoneNumber('+91' + cleanPhone, true);
-      setConfirm(confirmation);
+      await client.post('/users/send-login-otp/', { phone_number: cleanPhone });
       setOtp(['', '', '', '', '', '']);
       startTimer();
       setTimeout(() => otpRefs.current[0]?.focus(), 300);
@@ -180,7 +168,7 @@ export default function LoginScreen({ navigation }) {
                 {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Verify OTP</Text>}
               </TouchableOpacity>
               <View style={styles.resendRow}>
-                <Text style={styles.resendText}>Didnt receive OTP? </Text>
+                <Text style={styles.resendText}>Didn't receive OTP? </Text>
                 {canResend ? (
                   <TouchableOpacity onPress={handleResend}>
                     <Text style={styles.resendLink}>Resend OTP</Text>
