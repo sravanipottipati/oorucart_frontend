@@ -248,6 +248,7 @@ export default function VendorEditShopScreen({ navigation, route }) {
             initialLat: latitude,
             initialLng: longitude,
             returnScreen: 'VendorEditShop',
+            extraParams: { shop },
           })}>
             <Ionicons name="map-outline" size={18} color="#fff" />
             <Text style={styles.gpsBtnText}>📍 Pick on Map</Text>

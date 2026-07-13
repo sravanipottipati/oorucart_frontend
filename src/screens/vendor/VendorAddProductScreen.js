@@ -91,6 +91,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
   const [showScanner, setShowScanner] = useState(false);
   const [scannerPermission, requestScannerPermission] = useCameraPermissions();
   const [loading, setLoading]       = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const [variants, setVariants]     = useState([]);
   const [isVeg, setIsVeg]           = useState(true);
   const [showCatPicker, setShowCatPicker]   = useState(false);
@@ -138,7 +139,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
         else if (categories.some(c => c.includes('rice') || c.includes('cereal'))) hsn = '1006';
         else if (categories.some(c => c.includes('oil'))) hsn = '1511';
         if (hsn) setHsnCode(hsn);
-        Alert.alert('Product Found!', `${productName || 'Product'} details auto-filled!`);
+        Alert.alert('Product Found! ✅', `${productName || 'Product'} details filled from barcode.\n\nPlease fill manually:\n• Price & MRP\n• Category\n• GST %\n• Product image`);
       } else {
         Alert.alert('Not Found', 'Product not found in database. Please fill manually.');
       }
@@ -540,7 +541,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
           <Ionicons name="document-outline" size={16} color="#1669ef" />
           <Text style={styles.draftBtnText}>Save as Draft</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.previewBtn} onPress={() => Alert.alert('Preview', 'Coming soon!')} disabled={loading}>
+        <TouchableOpacity style={styles.previewBtn} onPress={() => setShowPreview(true)} disabled={loading}>
           <Ionicons name="eye-outline" size={16} color="#1669ef" />
           <Text style={styles.previewBtnText}>Preview Product</Text>
         </TouchableOpacity>
@@ -551,6 +552,45 @@ export default function VendorAddProductScreen({ navigation, route }) {
         </TouchableOpacity>
       </View>
     </View>
+      {/* Product Preview Modal */}
+      <Modal visible={showPreview} animationType="slide" transparent>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 40, maxHeight: '90%' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: '#111' }}>Preview (Buyer View)</Text>
+              <TouchableOpacity onPress={() => setShowPreview(false)}>
+                <Ionicons name="close" size={24} color="#888" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {image && <Image source={{ uri: image.uri }} style={{ width: '100%', height: 200, borderRadius: 12, marginBottom: 12, resizeMode: 'cover' }} />}
+              <Text style={{ fontSize: 18, fontWeight: '700', color: '#111', marginBottom: 4 }}>{name || 'Product Name'}</Text>
+              {brand ? <Text style={{ fontSize: 13, color: '#888', marginBottom: 4 }}>Brand: {brand}</Text> : null}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <Text style={{ fontSize: 20, fontWeight: '800', color: '#1669ef' }}>{String.fromCharCode(8377)}{price || '0'}</Text>
+                {mrp && parseFloat(mrp) > parseFloat(price) ? <Text style={{ fontSize: 14, color: '#888', textDecorationLine: 'line-through' }}>{String.fromCharCode(8377)}{mrp}</Text> : null}
+              </View>
+              {description ? <Text style={{ fontSize: 13, color: '#555', marginBottom: 8 }}>{description}</Text> : null}
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+                <View style={{ backgroundColor: isVeg ? '#F0FDF4' : '#FEF2F2', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 }}>
+                  <Text style={{ fontSize: 12, color: isVeg ? '#16A34A' : '#DC2626', fontWeight: '600' }}>{isVeg ? 'Veg' : 'Non-Veg'}</Text>
+                </View>
+              </View>
+              {variants.length > 0 && (
+                <View style={{ marginBottom: 8 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#111', marginBottom: 6 }}>Variants:</Text>
+                  {variants.map((v, i) => (
+                    <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 10, backgroundColor: '#F9FAFB', borderRadius: 8, marginBottom: 4 }}>
+                      <Text style={{ fontSize: 13, color: '#111' }}>{v.name}</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: '#1669ef' }}>{String.fromCharCode(8377)}{v.price}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
