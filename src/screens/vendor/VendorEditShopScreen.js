@@ -37,7 +37,11 @@ export default function VendorEditShopScreen({ navigation, route }) {
   const [phone, setPhone]               = useState(shop?.phone_number || '');
   const [category, setCategory]         = useState(shop?.category || 'restaurant');
   const [deliveryRadius, setDeliveryRadius] = useState(shop?.delivery_radius?.toString() || '5');
-  const [minOrder, setMinOrder]         = useState((shop?.min_order || shop?.min_order_value)?.toString() || '100');
+  const getDefaultMOV = (cat) => {
+    const mov = { 'restaurant': '499', 'supermarket': '699', 'bakery': '399', 'veg_fruits': '199', 'vegetables': '199', 'fruits': '199' };
+    return mov[cat?.toLowerCase()] || '199';
+  };
+  const [minOrder, setMinOrder]         = useState((shop?.min_order && parseFloat(shop.min_order) > 0 ? shop.min_order.toString() : null) || (shop?.min_order_value && parseFloat(shop.min_order_value) > 0 ? shop.min_order_value.toString() : null) || getDefaultMOV(shop?.category));
   const [deliveryTime, setDeliveryTime] = useState(shop?.delivery_time || '30 mins');
   const [bannerImage, setBannerImage]   = useState(null);
 
