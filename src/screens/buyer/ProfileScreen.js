@@ -37,11 +37,9 @@ export default function ProfileScreen({ navigation }) {
           onPress: async () => {
             try {
               await client.post('/users/delete-account-request/');
-              Alert.alert('Account Deleted', 'Your account has been deleted successfully.', [
-                { text: 'OK', onPress: () => logout() }
-              ]);
+              await logout();
             } catch (e) {
-              Alert.alert('Error', 'Failed to submit request. Please email contact@univerin.in');
+              Alert.alert('Error', 'Failed to delete account. Please email contact@univerin.in');
             }
           }
         }
