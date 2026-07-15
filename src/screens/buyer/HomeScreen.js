@@ -474,7 +474,7 @@ export default function HomeScreen({ navigation, route }) {
 
       <TouchableOpacity style={styles.searchBar} onPress={() => navigation.navigate('Search')} activeOpacity={0.8}>
         <Ionicons name="search-outline" size={18} color={GRAY} />
-        <Text style={styles.searchPlaceholder}>Search Univerin...</Text>
+        <Text style={styles.searchPlaceholder}>Search food, groceries & more...</Text>
       </TouchableOpacity>
 
       <ScrollView
