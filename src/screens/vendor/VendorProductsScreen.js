@@ -145,13 +145,13 @@ export default function VendorProductsScreen({ navigation }) {
             filteredProducts.map(product => (
               <View key={product.id} style={styles.productCard}>
                 {/* Product Image */}
-                {(product.image_url || product.image) ? (
-                  <Image
-                    source={{ uri: product.image_url || product.image }}
-                    style={{ width: '100%', height: 120, borderRadius: 10, marginBottom: 8, resizeMode: 'cover' }}
-                  />
-                ) : null}
                 <View style={styles.productInfo}>
+                  {(product.image_url || product.image) ? (
+                    <Image
+                      source={{ uri: product.image_url || product.image }}
+                      style={{ width: '100%', height: 100, borderRadius: 10, marginBottom: 8, resizeMode: 'cover' }}
+                    />
+                  ) : null}
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 }}>
                     <Text style={styles.productName}>{product.name}</Text>
                     {product.is_draft && (
