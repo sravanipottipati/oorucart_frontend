@@ -729,10 +729,10 @@ const styles = StyleSheet.create({
   dot2:      { width: 6, height: 6, borderRadius: 3, backgroundColor: '#D1D5DB' },
   dotActive: { backgroundColor: TEAL, width: 20, borderRadius: 3 },
 
-  categoriesRow: { paddingLeft: 16, marginBottom: 8 },
+  categoriesRow: { paddingLeft: 16, marginBottom: 16 },
   categoryItem:  { alignItems: 'center', marginRight: 12, marginBottom: 8, width: 72 },
   categoryCard: {
-    width: 64, height: 64, borderRadius: 20,
+    width: 64, height: 64, borderRadius: 16,
     justifyContent: 'center', alignItems: 'center', marginBottom: 8,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08, shadowRadius: 4, elevation: 2,
@@ -741,7 +741,7 @@ const styles = StyleSheet.create({
     shadowColor: '#1669ef', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
   },
-  categoryLabel: { fontSize: 11, color: '#555', textAlign: 'center', fontWeight: '500', lineHeight: 14 },
+  categoryLabel: { fontSize: 11, color: '#333', textAlign: 'center', fontWeight: '600', lineHeight: 14 },
 
   // ── Subcategory Chips ────────────────────────────────────────────────────────
   subCatRow: { marginBottom: 12 },
@@ -761,7 +761,7 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', marginRight: 16, marginBottom: 4,
+    alignItems: 'center', marginRight: 16, marginBottom: 12,
   },
   shopCount: { fontSize: 13, color: '#888', marginRight: 4 },
 
@@ -769,10 +769,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', marginHorizontal: 16, marginBottom: 12,
     borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.07, shadowRadius: 8, elevation: 3,
-    flexDirection: 'row', alignItems: 'center', padding: 12, gap: 14,
+    flexDirection: 'row', alignItems: 'center', padding: 16, gap: 16,
   },
   shopThumb: {
-    width: 76, height: 76, borderRadius: 14,
+    width: 84, height: 84, borderRadius: 16,
     justifyContent: 'center', alignItems: 'center', flexShrink: 0,
   },
   shopCardBody:  { flex: 1 },
