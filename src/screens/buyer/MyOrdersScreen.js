@@ -8,13 +8,13 @@ import client from '../../api/client';
 import { useCart } from '../../context/CartContext';
 
 const STATUS_COLORS = {
-  placed:     { bg: '#eff6ff', text: '#1669ef' },
-  accepted:   { bg: '#F0FDF4', text: '#16A34A' },
-  preparing:  { bg: '#FFFBEB', text: '#D97706' },
-  dispatched: { bg: '#F0FDF4', text: '#16A34A' },
-  delivered:  { bg: '#F0FDF4', text: '#16A34A' },
-  cancelled:  { bg: '#FEF2F2', text: '#DC2626' },
-  rejected:   { bg: '#FEF2F2', text: '#DC2626' },
+  placed:     { bg: '#1669ef', text: '#fff', border: '#1350c9' },
+  accepted:   { bg: '#16A34A', text: '#fff', border: '#15803d' },
+  preparing:  { bg: '#D97706', text: '#fff', border: '#b45309' },
+  dispatched: { bg: '#0891b2', text: '#fff', border: '#0e7490' },
+  delivered:  { bg: '#16A34A', text: '#fff', border: '#15803d' },
+  cancelled:  { bg: '#DC2626', text: '#fff', border: '#b91c1c' },
+  rejected:   { bg: '#DC2626', text: '#fff', border: '#b91c1c' },
 };
 
 const STATUS_LABELS = {
@@ -140,14 +140,14 @@ export default function MyOrdersScreen({ navigation }) {
 
     return (
       <TouchableOpacity
-        style={styles.orderCard}
+        style={[styles.orderCard, { borderLeftColor: statusColor.bg }]}
         onPress={() => navigation.navigate('OrderDetail', { orderId: order.id })}
         activeOpacity={0.9}
       >
         {/* Shop row */}
         <View style={styles.orderTop}>
           <View style={styles.shopIconBox}>
-            <Ionicons name="storefront-outline" size={22} color="#1669ef" />
+            <Ionicons name="storefront-outline" size={22} color="#fff" />
           </View>
           <View style={styles.orderInfo}>
             <Text style={styles.shopName}>{order.shop_name || order.vendor_name || 'Shop'}</Text>
@@ -324,11 +324,12 @@ const styles = StyleSheet.create({
     padding: 16, marginBottom: 12,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06, shadowRadius: 6, elevation: 2,
+    borderLeftWidth: 4, borderLeftColor: '#1669ef',
   },
   orderTop:    { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   shopIconBox: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: '#eff6ff', justifyContent: 'center',
+    width: 48, height: 48, borderRadius: 24,
+    backgroundColor: '#1669ef', justifyContent: 'center',
     alignItems: 'center', marginRight: 12,
   },
   shopIconText: { fontSize: 22 },
