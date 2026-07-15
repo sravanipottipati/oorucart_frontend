@@ -481,7 +481,11 @@ export default function ShopDetailScreen({ navigation, route }) {
         </TouchableOpacity>
 
         <View style={styles.shopLogoCircle}>
-          <Ionicons name="storefront-outline" size={40} color="#fff" />
+          {shop?.banner_image ? (
+            <Image source={{ uri: shop.banner_image }} style={{ width: 80, height: 80, borderRadius: 40 }} resizeMode="cover" />
+          ) : (
+            <Ionicons name="storefront-outline" size={40} color="#fff" />
+          )}
         </View>
       </View>
 
