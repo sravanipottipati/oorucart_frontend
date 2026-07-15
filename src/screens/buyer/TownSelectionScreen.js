@@ -76,6 +76,9 @@ export default function TownSelectionScreen({ navigation }) {
       await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
       globalStore.homeLocation = { lat: detected.lat, lng: detected.lng, address: detected.address };
+      globalStore.hasCustomLocation = false;
+      globalStore.lastPickedLocation = null;
+      await AsyncStorage.removeItem('lastPickedLocation');
       navigation.replace('Home');
     } catch (e) {
       console.log('Town update error:', e.message);
@@ -84,6 +87,9 @@ export default function TownSelectionScreen({ navigation }) {
       await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
       globalStore.homeLocation = { lat: detected.lat, lng: detected.lng, address: detected.address };
+      globalStore.hasCustomLocation = false;
+      globalStore.lastPickedLocation = null;
+      await AsyncStorage.removeItem('lastPickedLocation');
       navigation.replace('Home');
     } finally {
       setLoading(false);
