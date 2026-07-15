@@ -164,6 +164,22 @@ export default function HomeScreen({ navigation, route }) {
   );
   const [town, setTown]                          = useState(globalStore.hasCustomLocation && globalStore.lastPickedLocation ? (globalStore.lastPickedLocation.address?.split(',').slice(0, 2).join(',') || 'Selected Location') : (user?.town || 'Nellore'));
 
+  // Load saved location on app start
+  useEffect(() => {
+    AsyncStorage.getItem('lastPickedLocation').then(saved => {
+      if (saved) {
+        try {
+          const loc = JSON.parse(saved);
+          const shortAddress = loc.address?.split(',').slice(0, 2).join(',') || 'Selected Location';
+          globalStore.lastPickedLocation = loc;
+          globalStore.hasCustomLocation = true;
+          hasCustomLocationRef.current = true;
+          setTown(shortAddress);
+        } catch (e) { console.log('Location parse error:', e); }
+      }
+    });
+  }, []);
+
   useEffect(() => {
     const timer = setInterval(() => {
       setBannerIndex(prev => {
@@ -257,6 +273,7 @@ export default function HomeScreen({ navigation, route }) {
         setLocationDenied(false);
         // Save persistently so Checkout can use it as a fallback address
         globalStore.lastPickedLocation = { lat: loc.lat, lng: loc.lng, address: loc.address };
+        AsyncStorage.setItem('lastPickedLocation', JSON.stringify({ lat: loc.lat, lng: loc.lng, address: loc.address }));
         setTown(shortAddress);
         setLoading(true);
         lastFetchRef.current = Date.now();
