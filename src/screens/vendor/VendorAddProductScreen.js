@@ -92,7 +92,7 @@ export default function VendorAddProductScreen({ navigation, route }) {
   const [scannerPermission, requestScannerPermission] = useCameraPermissions();
   const [loading, setLoading]       = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [variants, setVariants]     = useState([]);
+  const [variants, setVariants]     = useState([{ name: '', price: '', mrp: '' }]);
   const [isVeg, setIsVeg]           = useState(true);
   const [showCatPicker, setShowCatPicker]   = useState(false);
   const [showSubPicker, setShowSubPicker]   = useState(false);
@@ -183,7 +183,8 @@ export default function VendorAddProductScreen({ navigation, route }) {
 
   const handleSave = async (saveAsDraft = false) => {
     if (!name.trim())  { Alert.alert('Error', 'Please enter product name'); return; }
-    if (!price.trim() && variants.length === 0) { Alert.alert('Error', 'Please enter price or add variants'); return; }
+    const filledVariants = variants.filter(v => v.name.trim() && v.price.trim());
+    if (!price.trim() && filledVariants.length === 0) { Alert.alert('Error', 'Please enter at least one variant with name and price'); return; }
     if (!category)     { Alert.alert('Error', 'Please select category'); return; }
     setLoading(true);
     try {
