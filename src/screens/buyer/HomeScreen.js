@@ -11,6 +11,7 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import client from '../../api/client';
 import { globalStore } from '../../utils/globalStore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 const DEFAULT_PRODUCT_IMG = require('../../../assets/default_product.png');
