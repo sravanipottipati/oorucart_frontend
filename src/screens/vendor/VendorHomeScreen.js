@@ -265,7 +265,7 @@ export default function VendorHomeScreen({ navigation }) {
         </View>
 
         {/* Earnings Card */}
-        <View style={{ marginHorizontal: 16, marginBottom: 16, borderRadius: 14, overflow: 'hidden' }}>
+        <View style={{ marginHorizontal: 16, marginBottom: 24, marginTop: 8, borderRadius: 14, overflow: 'hidden' }}>
           <View style={{ backgroundColor: '#1669ef', padding: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View>
               <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600', opacity: 0.8 }}>Today's Earnings</Text>
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, fontSize: 14, color: '#111' },
 
-  statsRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 10, marginTop: 12 },
+  statsRow: { flexDirection: 'row', paddingHorizontal: 16, gap: 10, marginTop: 12, marginBottom: 8 },
   statCard: {
     flex: 1, borderRadius: 16, padding: 14, alignItems: 'center',
   },
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', paddingHorizontal: 16,
-    marginTop: 20, marginBottom: 12,
+    marginTop: 12, marginBottom: 12,
   },
   sectionTitle: { fontSize: 17, fontWeight: 'bold', color: '#111' },
   viewAll:      { fontSize: 13, color: '#1669ef', fontWeight: '600' },
