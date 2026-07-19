@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, Modal,, Image
+  Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, Modal, Image, Linking
 } from 'react-native';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import client from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import { Image, Linking } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 const CATEGORIES = [
