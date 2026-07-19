@@ -35,6 +35,16 @@ export default function VendorProductsScreen({ navigation }) {
   useEffect(() => { fetchProducts(); }, []);
   const onRefresh = () => { setRefreshing(true); fetchProducts(); };
 
+  const handlePublish = async (productId, productName) => {
+    try {
+      await client.patch(`/vendors/products/${productId}/`, { is_draft: false });
+      Alert.alert('Published! ✅', `"${productName}" is now live for buyers.`);
+      fetchProducts();
+    } catch (e) {
+      Alert.alert('Error', 'Failed to publish product. Please try again.');
+    }
+  };
+
   const handleToggleAvailable = async (product) => {
     // Update UI immediately
     setProducts(prev => prev.map(p =>
@@ -189,6 +199,14 @@ export default function VendorProductsScreen({ navigation }) {
                       ? Math.min(...product.variants.map(v => parseFloat(v.price))).toFixed(2)
                       : parseFloat(product.price).toFixed(2)}
                   </Text>
+                  {product.is_draft && (
+                    <TouchableOpacity
+                      style={{ backgroundColor: '#16A34A', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 6 }}
+                      onPress={() => handlePublish(product.id, product.name)}
+                    >
+                      <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>Publish</Text>
+                    </TouchableOpacity>
+                  )}
                   <View style={styles.actionBtns}>
                     <TouchableOpacity
                       style={styles.editBtn}
