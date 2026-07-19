@@ -78,7 +78,8 @@ export default function VendorProfileScreen({ navigation }) {
     const mov = { 'restaurant': 499, 'supermarket': 699, 'bakery': 399, 'veg_fruits': 199, 'vegetables': 199, 'fruits': 199 };
     return mov[cat] || 199;
   };
-  const minOrderValue = shop?.min_order || shop?.min_order_value || getMinOrderValue(shop?.category);
+  const storedMOV = parseFloat(shop?.min_order || shop?.min_order_value || 0);
+  const minOrderValue = storedMOV > 100 ? storedMOV : getMinOrderValue(shop?.category);
 
   return (
     <View style={styles.container}>
