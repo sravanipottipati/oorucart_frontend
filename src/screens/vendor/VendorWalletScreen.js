@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, RefreshControl,
+  ScrollView, ActivityIndicator, RefreshControl,, Modal, TextInput
 } from 'react-native';
 import client from '../../api/client';
 import { Alert, TextInput, Modal, KeyboardAvoidingView, Platform } from 'react-native';
