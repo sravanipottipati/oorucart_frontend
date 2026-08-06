@@ -77,6 +77,8 @@ export default function LoginScreen({ navigation }) {
       await loginWithTokens(res.data.tokens, res.data.user);
       if (res.data.user.user_type === 'vendor') {
         navigation.replace('VendorHome');
+      } else if (res.data.user.user_type === 'delivery_partner') {
+        navigation.replace('DPHome');
       } else if (!res.data.user.town) {
         navigation.replace('TownSelection');
       } else {

@@ -179,6 +179,10 @@ export default function RegisterScreen({ navigation }) {
               <TouchableOpacity onPress={() => navigation.navigate('Login')}>
                 <Text style={styles.link}>Already have an account? <Text style={styles.linkBold}>Login</Text></Text>
               </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => navigation.navigate('DPRegister')} style={{ marginTop: 10 }}>
+                <Text style={styles.link}>Want to deliver with Univerin? <Text style={styles.linkBold}>Register as a Delivery Partner</Text></Text>
+              </TouchableOpacity>
             </>
           ) : (
             <>

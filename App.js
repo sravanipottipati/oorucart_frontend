@@ -36,6 +36,7 @@ import { ActivityIndicator, View } from 'react-native';
 
 import LoginScreen from './src/screens/auth/LoginScreen';
 import RegisterScreen from './src/screens/auth/RegisterScreen';
+import DPRegisterScreen from './src/screens/deliveryPartner/DPRegisterScreen';
 import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
 
 import HomeScreen from './src/screens/buyer/HomeScreen';
@@ -65,6 +66,7 @@ import VendorMapPickerScreen from './src/screens/vendor/VendorMapPickerScreen';
 import ReturnOrderScreen from './src/screens/buyer/ReturnOrderScreen';
 
 import VendorHomeScreen from './src/screens/vendor/VendorHomeScreen';
+import DPHomeScreen from './src/screens/deliveryPartner/DPHomeScreen';
 import VendorOrdersScreen from './src/screens/vendor/VendorOrdersScreen';
 import VendorOrderDetailScreen from './src/screens/vendor/VendorOrderDetailScreen';
 import VendorProductsScreen from './src/screens/vendor/VendorProductsScreen';
@@ -103,6 +105,7 @@ function AppNavigator() {
   const getInitialRoute = () => {
     if (!user) return 'Login';
     if (user.user_type === 'vendor') return 'VendorHome';
+    if (user.user_type === 'delivery_partner') return 'DPHome';
     if (user.user_type === 'buyer' && !user.town) return 'TownSelection';
     return 'Home';
   };
@@ -116,6 +119,7 @@ function AppNavigator() {
         {/* ── Auth ── */}
         <Stack.Screen name="Login"          component={LoginScreen} />
         <Stack.Screen name="Register"       component={RegisterScreen} />
+        <Stack.Screen name="DPRegister"     component={DPRegisterScreen} />
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
 
         {/* ── Buyer ── */}
@@ -147,6 +151,7 @@ function AppNavigator() {
 
         {/* ── Vendor ── */}
         <Stack.Screen name="VendorHome"          component={VendorHomeScreen} />
+        <Stack.Screen name="DPHome"               component={DPHomeScreen} />
         <Stack.Screen name="VendorOrders"        component={VendorOrdersScreen} />
         <Stack.Screen name="VendorOrderDetail"   component={VendorOrderDetailScreen} />
         <Stack.Screen name="VendorProducts"      component={VendorProductsScreen} />
