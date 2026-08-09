@@ -78,7 +78,21 @@ export default function LoginScreen({ navigation }) {
       if (res.data.user.user_type === 'vendor') {
         navigation.replace('VendorHome');
       } else if (res.data.user.user_type === 'delivery_partner') {
-        navigation.replace('DPHome');
+        try {
+          const statusRes = await client.get('/dp/onboarding/status/', {
+            headers: { Authorization: `Bearer ${res.data.tokens.access}` },
+          });
+          const dpStatus = statusRes.data.status;
+          if (dpStatus === 'approved') {
+            navigation.replace('DPHome');
+          } else if (dpStatus === 'pending_verification') {
+            navigation.replace('DPPendingVerification');
+          } else {
+            navigation.replace('DPVehicleDetails');
+          }
+        } catch (e) {
+          navigation.replace('DPVehicleDetails');
+        }
       } else if (!res.data.user.town) {
         navigation.replace('TownSelection');
       } else {
