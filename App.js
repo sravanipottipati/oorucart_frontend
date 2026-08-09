@@ -67,6 +67,9 @@ import ReturnOrderScreen from './src/screens/buyer/ReturnOrderScreen';
 
 import VendorHomeScreen from './src/screens/vendor/VendorHomeScreen';
 import DPHomeScreen from './src/screens/deliveryPartner/DPHomeScreen';
+import DPVehicleDetailsScreen from './src/screens/deliveryPartner/DPVehicleDetailsScreen';
+import DPDocumentUploadScreen from './src/screens/deliveryPartner/DPDocumentUploadScreen';
+import DPPendingVerificationScreen from './src/screens/deliveryPartner/DPPendingVerificationScreen';
 import VendorOrdersScreen from './src/screens/vendor/VendorOrdersScreen';
 import VendorOrderDetailScreen from './src/screens/vendor/VendorOrderDetailScreen';
 import VendorProductsScreen from './src/screens/vendor/VendorProductsScreen';
@@ -152,6 +155,9 @@ function AppNavigator() {
         {/* ── Vendor ── */}
         <Stack.Screen name="VendorHome"          component={VendorHomeScreen} />
         <Stack.Screen name="DPHome"               component={DPHomeScreen} />
+        <Stack.Screen name="DPVehicleDetails"      component={DPVehicleDetailsScreen} />
+        <Stack.Screen name="DPDocumentUpload"      component={DPDocumentUploadScreen} />
+        <Stack.Screen name="DPPendingVerification" component={DPPendingVerificationScreen} />
         <Stack.Screen name="VendorOrders"        component={VendorOrdersScreen} />
         <Stack.Screen name="VendorOrderDetail"   component={VendorOrderDetailScreen} />
         <Stack.Screen name="VendorProducts"      component={VendorProductsScreen} />

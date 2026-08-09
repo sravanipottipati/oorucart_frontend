@@ -84,7 +84,7 @@ export default function DPRegisterScreen({ navigation }) {
         user_type: 'delivery_partner',
       });
       await loginWithTokens(res.data.tokens, res.data.user);
-      navigation.replace('DPHome');
+      navigation.replace('DPVehicleDetails');
     } catch (e) {
       const msg = e.response?.data?.error || 'Incorrect OTP. Please try again.';
       Alert.alert('Error', msg);
