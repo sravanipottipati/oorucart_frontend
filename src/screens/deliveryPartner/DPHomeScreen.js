@@ -1,18 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Location from 'expo-location';
+import * as TaskManager from 'expo-task-manager';
 import { useAuth } from '../../context/AuthContext';
 import client from '../../api/client';
+import { DP_LOCATION_TASK } from '../../tasks/locationTask';
 
-export default function DPHomeScreen() {
+export default function DPHomeScreen({ navigation }) {
   const { logout } = useAuth();
   const [isOnline, setIsOnline] = useState(false);
   const [toggling, setToggling] = useState(false);
 
+  useEffect(() => {
+    // On mount, check if the task is already running (e.g. app was reopened while online)
+    (async () => {
+      const running = await TaskManager.isTaskRegisteredAsync(DP_LOCATION_TASK);
+      setIsOnline(running);
+    })();
+  }, []);
+
+  const startLocationTracking = async () => {
+    const fg = await Location.requestForegroundPermissionsAsync();
+    if (fg.status !== 'granted') {
+      Alert.alert('Permission needed', 'Location access is required to go online');
+      return false;
+    }
+    const bg = await Location.requestBackgroundPermissionsAsync();
+    if (bg.status !== 'granted') {
+      Alert.alert(
+        'Background location needed',
+        'Please allow "Always" location access in your device settings so we can match you with nearby orders even when the app is in the background.'
+      );
+      return false;
+    }
+
+    await Location.startLocationUpdatesAsync(DP_LOCATION_TASK, {
+      accuracy: Location.Accuracy.High,
+      timeInterval: 15000, // every 15 seconds
+      distanceInterval: 30, // or every 30 meters, whichever comes first
+      foregroundService: {
+        notificationTitle: 'Univerin — You are Online',
+        notificationBody: 'Sharing your location to receive delivery orders',
+      },
+      showsBackgroundLocationIndicator: true,
+    });
+    return true;
+  };
+
+  const stopLocationTracking = async () => {
+    const running = await TaskManager.isTaskRegisteredAsync(DP_LOCATION_TASK);
+    if (running) {
+      await Location.stopLocationUpdatesAsync(DP_LOCATION_TASK);
+    }
+  };
+
   const handleToggle = async (value) => {
     setToggling(true);
     try {
+      if (value) {
+        const started = await startLocationTracking();
+        if (!started) {
+          setToggling(false);
+          return; // permission denied, don't flip the switch or call backend
+        }
+      } else {
+        await stopLocationTracking();
+      }
+
       const token = await AsyncStorage.getItem('access_token');
       await client.post(
         '/dp/duty/toggle/',
@@ -30,7 +86,14 @@ export default function DPHomeScreen() {
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to logout?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Logout', style: 'destructive', onPress: async () => await logout() },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          await stopLocationTracking();
+          await logout();
+        },
+      },
     ]);
   };
 
@@ -41,7 +104,7 @@ export default function DPHomeScreen() {
         <View style={{ flex: 1 }}>
           <Text style={styles.statusLabel}>{isOnline ? 'You are Online' : 'You are Offline'}</Text>
           <Text style={styles.statusSubtext}>
-            {isOnline ? 'Ready to receive orders' : 'Turn on to start receiving orders'}
+            {isOnline ? 'Sharing location — ready for orders' : 'Turn on to start receiving orders'}
           </Text>
         </View>
         <Switch
@@ -58,6 +121,14 @@ export default function DPHomeScreen() {
         <Text style={styles.placeholderText}>
           {isOnline ? 'Waiting for orders...' : 'Go online to start receiving orders'}
         </Text>
+        {isOnline && (
+          <TouchableOpacity
+            style={styles.checkOrdersBtn}
+            onPress={() => navigation.navigate('DPOrderOffer')}
+          >
+            <Text style={styles.checkOrdersText}>Check for Orders</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
@@ -85,4 +156,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24, paddingVertical: 12, alignItems: 'center', marginBottom: 20,
   },
   logoutText: { color: '#1669ef', fontSize: 15, fontWeight: '700' },
+  checkOrdersBtn: {
+    backgroundColor: '#1669ef', borderRadius: 10, paddingHorizontal: 24,
+    paddingVertical: 12, marginTop: 16,
+  },
+  checkOrdersText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 });
