@@ -121,6 +121,13 @@ export default function DPHomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      <View style={styles.topBar}>
+        <Text style={styles.topBarTitle}>Univerin</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('DPProfile')}>
+          <Ionicons name="person-circle-outline" size={30} color="#1669ef" />
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.statusCard}>
         <View style={[styles.statusDot, isOnline ? styles.dotOnline : styles.dotOffline]} />
         <View style={{ flex: 1 }}>
@@ -167,15 +174,14 @@ export default function DPHomeScreen({ navigation }) {
         )}
       </View>
 
-      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', padding: 20, paddingTop: 60 },
+  topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  topBarTitle: { fontSize: 18, fontWeight: '700', color: '#111827' },
   statusCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 14, padding: 16,

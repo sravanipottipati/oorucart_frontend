@@ -73,6 +73,8 @@ import DPPendingVerificationScreen from './src/screens/deliveryPartner/DPPending
 import DPOrderOfferScreen from './src/screens/deliveryPartner/DPOrderOfferScreen';
 import DPActiveOrderScreen from './src/screens/deliveryPartner/DPActiveOrderScreen';
 import DPDeliveryOtpScreen from './src/screens/deliveryPartner/DPDeliveryOtpScreen';
+import DPProfileScreen from './src/screens/deliveryPartner/DPProfileScreen';
+import DPHelpScreen from './src/screens/deliveryPartner/DPHelpScreen';
 import VendorOrdersScreen from './src/screens/vendor/VendorOrdersScreen';
 import VendorOrderDetailScreen from './src/screens/vendor/VendorOrderDetailScreen';
 import VendorProductsScreen from './src/screens/vendor/VendorProductsScreen';
@@ -164,6 +166,8 @@ function AppNavigator() {
         <Stack.Screen name="DPOrderOffer"  component={DPOrderOfferScreen} />
         <Stack.Screen name="DPActiveOrder" component={DPActiveOrderScreen} />
         <Stack.Screen name="DPDeliveryOtp" component={DPDeliveryOtpScreen} />
+        <Stack.Screen name="DPProfile" component={DPProfileScreen} />
+        <Stack.Screen name="DPHelp"    component={DPHelpScreen} />
         <Stack.Screen name="VendorOrders"        component={VendorOrdersScreen} />
         <Stack.Screen name="VendorOrderDetail"   component={VendorOrderDetailScreen} />
         <Stack.Screen name="VendorProducts"      component={VendorProductsScreen} />
