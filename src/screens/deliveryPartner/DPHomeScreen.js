@@ -78,17 +78,13 @@ export default function DPHomeScreen({ navigation }) {
     setToggling(true);
     try {
       if (value) {
-        try {
-          await startLocationTracking();
-        } catch (locErr) {
-          console.log('[TEMP TEST MODE] Location tracking failed, continuing anyway:', locErr.message);
+        const started = await startLocationTracking();
+        if (!started) {
+          setToggling(false);
+          return; // permission denied, don't flip the switch or call backend
         }
       } else {
-        try {
-          await stopLocationTracking();
-        } catch (locErr) {
-          console.log('[TEMP TEST MODE] Stop location failed:', locErr.message);
-        }
+        await stopLocationTracking();
       }
 
       const token = await AsyncStorage.getItem('access_token');
