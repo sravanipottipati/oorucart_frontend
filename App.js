@@ -76,6 +76,7 @@ import DPDeliveryOtpScreen from './src/screens/deliveryPartner/DPDeliveryOtpScre
 import DPProfileScreen from './src/screens/deliveryPartner/DPProfileScreen';
 import DPHelpScreen from './src/screens/deliveryPartner/DPHelpScreen';
 import DPEarningsScreen from './src/screens/deliveryPartner/DPEarningsScreen';
+import DPNotificationsScreen from './src/screens/deliveryPartner/DPNotificationsScreen';
 import VendorOrdersScreen from './src/screens/vendor/VendorOrdersScreen';
 import VendorOrderDetailScreen from './src/screens/vendor/VendorOrderDetailScreen';
 import VendorProductsScreen from './src/screens/vendor/VendorProductsScreen';
@@ -170,6 +171,7 @@ function AppNavigator() {
         <Stack.Screen name="DPProfile" component={DPProfileScreen} />
         <Stack.Screen name="DPHelp"    component={DPHelpScreen} />
         <Stack.Screen name="DPEarnings" component={DPEarningsScreen} />
+        <Stack.Screen name="DPNotifications" component={DPNotificationsScreen} />
         <Stack.Screen name="VendorOrders"        component={VendorOrdersScreen} />
         <Stack.Screen name="VendorOrderDetail"   component={VendorOrderDetailScreen} />
         <Stack.Screen name="VendorProducts"      component={VendorProductsScreen} />

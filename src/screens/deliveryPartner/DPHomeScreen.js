@@ -123,9 +123,14 @@ export default function DPHomeScreen({ navigation }) {
     <View style={styles.container}>
       <View style={styles.topBar}>
         <Text style={styles.topBarTitle}>Univerin</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('DPProfile')}>
-          <Ionicons name="person-circle-outline" size={30} color="#1669ef" />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+          <TouchableOpacity onPress={() => navigation.navigate('DPNotifications')}>
+            <Ionicons name="notifications-outline" size={26} color="#1669ef" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('DPProfile')}>
+            <Ionicons name="person-circle-outline" size={30} color="#1669ef" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.statusCard}>
