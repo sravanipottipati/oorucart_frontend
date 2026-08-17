@@ -96,6 +96,12 @@ export default function DPProfileScreen({ navigation }) {
       </View>
 
       <View style={styles.menuCard}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('DPEarnings')}>
+          <Ionicons name="wallet-outline" size={20} color="#6B7280" />
+          <Text style={styles.menuText}>Earnings</Text>
+          <Ionicons name="chevron-forward" size={18} color="#D1D5DB" />
+        </TouchableOpacity>
+        <View style={styles.menuDivider} />
         <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('DPHelp')}>
           <Ionicons name="help-circle-outline" size={20} color="#6B7280" />
           <Text style={styles.menuText}>Help & Support</Text>
